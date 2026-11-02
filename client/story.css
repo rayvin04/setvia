@@ -1,0 +1,94 @@
+.capability-section {
+  border-top: 1px solid #ffffff15;
+}
+.capability-context {
+  color: #9dafbb;
+  font-size: 12px;
+  margin-top: 25px;
+}
+.capability-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 70px;
+  margin-top: 40px;
+}
+.capability-grid article {
+  padding: 32px 0;
+  border-top: 1px solid #29404e;
+}
+.capability-grid article > svg {
+  color: #55b7e4;
+  margin-bottom: 20px;
+}
+.capability-grid h3 {
+  font-size: 23px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+.capability-grid article > p {
+  font-size: 14px;
+  line-height: 1.9;
+  color: #afc1ce;
+  margin-top: 15px;
+  max-width: 490px;
+}
+.capability-grid ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 13px 18px;
+  padding: 0;
+  margin: 23px 0 0;
+  list-style: none;
+}
+.capability-grid li {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+  color: #cedbe3;
+}
+.capability-grid li > svg {
+  color: #fc9e82;
+}
+.workflow-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #29404e;
+  margin-top: 35px;
+  padding-top: 30px;
+  gap: 15px;
+}
+.workflow-line > span {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  font-size: 13px;
+  color: #c5d4de;
+}
+.workflow-line svg {
+  color: #628598;
+  flex-shrink: 0;
+}
+@media (max-width: 760px) {
+  .capability-grid {
+    grid-template-columns: 1fr;
+    margin-top: 30px;
+  }
+  .capability-grid h3 {
+    font-size: 22px;
+  }
+  .workflow-line {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px 18px;
+  }
+  .workflow-line > span {
+    font-size: 12px;
+    justify-content: space-between;
+    line-height: 1.8;
+  }
+  .workflow-line > span:last-child {
+    color: #fcad95;
+  }
+}

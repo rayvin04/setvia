@@ -19,3 +19,4 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 import "./refinement.css";
 import "./demo-refinement.css";
 import "./pass3.css";
+import "./story.css";

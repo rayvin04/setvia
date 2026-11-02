@@ -1,3 +1,4 @@
+import { Capabilities } from "./Capabilities";
 import { Reveal } from "./MotionUI";
 import {
   ArrowRight,
@@ -44,7 +45,11 @@ export function Home() {
           <Attribution />
         </Reveal>
       </section>
-      <section id="how-it-works" className="problem-section section-shell">
+      <Reveal
+        section
+        id="how-it-works"
+        className="problem-section section-shell"
+      >
         <div className="section-heading">
           <h2>
             Sound like
@@ -70,6 +75,10 @@ export function Home() {
               {
                 name: "Jamie",
                 quote: "“I can drive, but only if we leave early.”",
+              },
+              {
+                name: "Drew",
+                quote: "Anywhere is fine, as long as we stay nearby.",
               },
             ].map((q, i) => (
               <div className="chat-message" key={q.name}>
@@ -144,7 +153,8 @@ export function Home() {
             <ArrowRight size={17} aria-hidden="true" />
           </ButtonLink>
         </div>
-      </section>
+      </Reveal>
+      <Capabilities />
       <ScenarioLinks />
     </>
   );
