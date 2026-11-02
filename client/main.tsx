@@ -1,3 +1,4 @@
+import { MotionConfig } from "motion/react";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
@@ -9,9 +10,12 @@ import App from "./App";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <App />
+      <MotionConfig reducedMotion="user">
+        <App />
+      </MotionConfig>
     </BrowserRouter>
   </React.StrictMode>,
 );
 import "./refinement.css";
 import "./demo-refinement.css";
+import "./pass3.css";

@@ -1,3 +1,4 @@
+import { Reveal } from "./MotionUI";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -17,15 +18,15 @@ export function Home() {
     <>
       <section className="hero">
         <Waves />
-        <div className="hero-content">
+        <Reveal className="hero-content">
           <h1>
             Make plans that survive
             <br className="desktop-break" /> <span>the group chat.</span>
           </h1>
           <p className="hero-description">
-            Different budgets. Busy calendars. Strong opinions.
+            Everyone has a say. Now give the plan a way forward.
             <br />
-            Turn them into a plan everyone can agree on.
+            Turn busy calendars and different budgets into common ground.
           </p>
           <div className="hero-actions">
             <div className="mascot-button">
@@ -41,7 +42,7 @@ export function Home() {
             </ButtonLink>
           </div>
           <Attribution />
-        </div>
+        </Reveal>
       </section>
       <section id="how-it-works" className="problem-section section-shell">
         <div className="section-heading">

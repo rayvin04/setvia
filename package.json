@@ -12,6 +12,7 @@
     "@fontsource-variable/lexend": "latest",
     "clsx": "latest",
     "lucide-react": "latest",
+    "motion": "^14.9.0",
     "react": "latest",
     "react-dom": "latest",
     "react-router-dom": "latest",

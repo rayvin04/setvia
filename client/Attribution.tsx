@@ -4,9 +4,8 @@ export function Attribution() {
       <div className="attribution-lockup">
         <span>Built with</span>
         <strong>Meta AI</strong>
-        <span>· Muse models</span>
+        <span>Muse models</span>
       </div>
-      <small>UI preview · AI integration pending</small>
     </div>
   );
 }

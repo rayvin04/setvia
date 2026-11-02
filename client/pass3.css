@@ -1,0 +1,140 @@
+.header {
+  position: fixed;
+  top: max(18px, env(safe-area-inset-top));
+  padding-inline: max(15px, env(safe-area-inset-left))
+    max(15px, env(safe-area-inset-right));
+  pointer-events: none;
+}
+.header-inner {
+  pointer-events: auto;
+  transform-origin: top center;
+  transition:
+    background-color 180ms ease-out,
+    border-color 180ms ease-out;
+}
+.header.is-scrolled .header-inner {
+  background: #10212be8;
+  border-color: #ffffff32;
+}
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  color: #cad5dd;
+}
+.header nav .github-link {
+  padding: 0;
+}
+.attribution-lockup > span:last-child {
+  padding-left: 14px;
+  margin-left: 3px;
+  border-left: 1px solid #ffffff32;
+}
+.hero-content {
+  animation: none !important;
+}
+.hero-description {
+  max-width: 650px;
+}
+.hero-actions .button-secondary {
+  border-color: #7698ac;
+  background: #0e253395;
+  position: relative;
+}
+.hero-actions .button-secondary > svg {
+  transition: transform 150ms ease-out;
+}
+.hero-actions .button-secondary:focus-visible {
+  outline-offset: 6px;
+}
+.route-frame {
+  min-width: 0;
+}
+.route-frame h1:focus:not(:focus-visible) {
+  outline: none;
+}
+.mascot-button .mascot > path:first-child,
+.mascot-button .mascot ellipse {
+  transition: transform 200ms ease-out;
+}
+.hero h1 {
+  font-optical-sizing: auto;
+}
+@media (hover: hover) {
+  .github-link:hover {
+    color: #fc734d;
+    background: #ffffff0c;
+  }
+  .hero-actions .button-secondary:hover {
+    background: #123c54;
+    border-color: #6ac5f0;
+  }
+}
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .hero-actions .button-secondary:hover > svg {
+    transform: translate(2px, -2px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mascot-button .mascot > path:first-child,
+  .mascot-button .mascot ellipse {
+    transition: none;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .header-inner {
+    background: #10212b;
+    backdrop-filter: none;
+  }
+}
+@media (prefers-contrast: more) {
+  .header-inner {
+    background: #02070a;
+    border-color: #b7c9d3;
+  }
+}
+@media (max-width: 760px) {
+  .header {
+    top: max(12px, env(safe-area-inset-top));
+  }
+  .header nav {
+    gap: 13px;
+  }
+  .github-link {
+    width: 34px;
+    height: 34px;
+  }
+  .header-inner {
+    padding: 0 15px;
+  }
+  .attribution-lockup > span:last-child {
+    padding-left: 9px;
+    margin-left: 0;
+  }
+  .footer .attribution-lockup > span:last-child {
+    display: none;
+  }
+}
+@media (max-width: 440px) {
+  .header nav > a[href="/demos"] {
+    display: none;
+  }
+  .header nav {
+    gap: 7px;
+  }
+  .header .wordmark {
+    font-size: 22px;
+  }
+  .header .join-link {
+    font-size: 12px;
+    padding: 9px 10px;
+  }
+}
+.github-mark {
+  filter: invert(1);
+  opacity: 0.85;
+}

@@ -1,3 +1,4 @@
+import { PageTransition } from "./MotionUI";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Routes, Route, Link } from "react-router-dom";
@@ -108,13 +109,15 @@ export default function App() {
       </a>
       <Header />
       <main id="main">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/start" element={<FormPage />} />
-          <Route path="/join" element={<FormPage join />} />
-          <Route path="/demos" element={<Demos />} />
-          <Route path="*" element={<Missing />} />
-        </Routes>
+        <PageTransition>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/start" element={<FormPage />} />
+            <Route path="/join" element={<FormPage join />} />
+            <Route path="/demos" element={<Demos />} />
+            <Route path="*" element={<Missing />} />
+          </Routes>
+        </PageTransition>
       </main>
       <Footer />
     </>
