@@ -2,7 +2,11 @@
 
 Make plans that survive the group chat.
 
-Phase 1 local UI prototype. All planning content is mocked. There is no backend, live room collaboration, production model inference, or real export generation yet.
+**Live site:** [https://setvia.r4yv.tech](https://setvia.r4yv.tech)
+
+![Setvia cover with the Setvia cat mascot](docs/setvia-cover.jpg)
+
+Setvia is a Phase 1 UI prototype. All planning content is mocked. There is no backend, live room collaboration, production model inference, or real export generation.
 
 ## Local development
 
@@ -22,4 +26,4 @@ Open http://127.0.0.1:5173. Run `npm run build` for the TypeScript and productio
 - `/join`: nickname and room link form preview
 - `/demos`: fictional scenario entry point
 
-The deployed application is planned to use Meta models only. This prototype sends no data to model APIs. Lexend is provided by @fontsource-variable/lexend (OFL-1.1); icons use lucide-react (ISC). Respect reduced-motion preferences.
+This prototype sends no data to model APIs. Future production inference is planned to use Meta models. Lexend is provided by @fontsource-variable/lexend (OFL-1.1); icons use lucide-react (ISC). Respect reduced-motion preferences.
