@@ -138,7 +138,11 @@ test("client uses the Responses endpoint and reports safe usage metadata", async
     onUsage: (usage) => metadata.push(usage),
   });
 
-  const result = await client.createResponse({ input: "small test request" });
+  const result = await client.createResponse({
+    input: "small test request",
+    reasoning: { effort: "low" },
+  });
+  assert.deepEqual(requestBody.reasoning, { effort: "low" });
   assert.equal(requestUrl, "https://api.meta.ai/v1/responses");
   assert.equal(client.baseUrl, META_API_BASE_URL);
   assert.equal(client.model, META_SPARK_MODEL);
@@ -288,6 +292,40 @@ test("malformed API JSON is returned as a safe error", async () => {
       return true;
     },
   );
+});
+
+test("an incomplete response at the output-token limit returns a safe actionable error and usage", async () => {
+  const reportedUsage: Array<{ outputTokens: number | null }> = [];
+  const client = createMetaClient({
+    config: testConfig,
+    fetchImpl: async () =>
+      jsonResponse({
+        id: "resp_incomplete",
+        model: META_SPARK_MODEL,
+        status: "incomplete",
+        incomplete_details: { reason: "max_output_tokens" },
+        output: [
+          {
+            type: "message",
+            content: [{ type: "output_text", text: "Partial answer." }],
+          },
+        ],
+        usage: { input_tokens: 3, output_tokens: 5, total_tokens: 8 },
+      }),
+    onUsage: (metadata) => reportedUsage.push(metadata),
+  });
+
+  await assert.rejects(
+    client.createResponse({ input: "small test request" }),
+    (error: unknown) => {
+      assert.ok(error instanceof MetaApiError);
+      assert.equal(error.code, "invalid_response");
+      assert.match(error.message, /output-token limit/);
+      assert.equal(error.message.includes("resp_incomplete"), false);
+      return true;
+    },
+  );
+  assert.equal(reportedUsage[0]?.outputTokens, 5);
 });
 
 test("structured extraction validates valid JSON and rejects malformed output", async () => {

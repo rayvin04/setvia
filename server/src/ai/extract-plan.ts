@@ -62,7 +62,8 @@ export async function extractPlanFromInputs(
   const response = await client.createResponse({
     instructions: EXTRACTION_INSTRUCTIONS,
     input: [{ type: "message", role: "user", content }],
-    max_output_tokens: 900,
+    reasoning: { effort: "minimal" },
+    max_output_tokens: 3000,
     text: {
       format: {
         type: "json_schema",

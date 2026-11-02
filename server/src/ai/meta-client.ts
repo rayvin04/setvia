@@ -23,6 +23,9 @@ export interface MetaResponsesRequest {
       }>;
   instructions?: string;
   max_output_tokens?: number;
+  reasoning?: {
+    effort: "minimal" | "low" | "medium" | "high" | "xhigh" | "max";
+  };
   text?: {
     format: {
       type: "json_schema";
@@ -166,6 +169,17 @@ function textFromResponse(value: unknown): string | null {
     }
   }
   return textParts.length > 0 ? textParts.join("") : null;
+}
+
+function incompleteResponseMessage(value: unknown): string | null {
+  if (!isRecord(value) || value.status !== "incomplete") return null;
+  const details = isRecord(value.incomplete_details)
+    ? value.incomplete_details
+    : undefined;
+  if (details?.reason === "max_output_tokens") {
+    return "Meta response hit its output-token limit before finishing the result.";
+  }
+  return "Meta returned an incomplete response; no complete result was accepted.";
 }
 
 function usageFromResponse(value: unknown): MetaUsage | null {
@@ -370,15 +384,6 @@ export function createMetaClient(
           );
         }
 
-        const outputText = textFromResponse(payload);
-        if (outputText === null) {
-          throw new MetaApiError(
-            "invalid_response",
-            "Meta returned a response without readable output text.",
-            { status: response.status },
-          );
-        }
-
         const responseRecord = isRecord(payload) ? payload : {};
         if (
           typeof responseRecord.model === "string" &&
@@ -387,6 +392,27 @@ export function createMetaClient(
           throw new MetaApiError(
             "unexpected_model",
             "Meta returned an unexpected model ID; the result was rejected.",
+          );
+        }
+        const outputText = textFromResponse(payload);
+        const incompleteMessage = incompleteResponseMessage(payload);
+        if (outputText === null || incompleteMessage !== null) {
+          const incompleteResult: MetaResponseResult = {
+            id: typeof responseRecord.id === "string" ? responseRecord.id : null,
+            model: config.model,
+            outputText: "",
+            usage: usageFromResponse(payload),
+            durationMs: Math.round(performance.now() - startedAt),
+          };
+          try {
+            options.onUsage?.(asSafeUsage(incompleteResult));
+          } catch {
+            // Observability callbacks must not hide an incomplete response.
+          }
+          throw new MetaApiError(
+            "invalid_response",
+            incompleteMessage ?? "Meta returned a response without readable output text.",
+            { status: response.status },
           );
         }
         const usage = usageFromResponse(payload);

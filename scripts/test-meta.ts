@@ -63,6 +63,20 @@ function formatUsage(metadata: SafeUsageMetadata): string {
   return parts.join(", ");
 }
 
+function boundedTestSetting(
+  name: string,
+  fallback: number,
+  maximum: number,
+  minimum = 0,
+): number {
+  const configured = process.env[name];
+  const value = configured === undefined ? fallback : Number(configured);
+  if (!Number.isInteger(value) || value < minimum || value > maximum) {
+    throw new Error(name + " must be an integer from " + minimum + " to " + maximum + ".");
+  }
+  return value;
+}
+
 async function main(): Promise<void> {
   const config = readMetaConfig();
   if (process.env.META_TESTS_BILLING_CHECKED !== "1") {
@@ -72,17 +86,23 @@ async function main(): Promise<void> {
   }
 
   const usage: SafeUsageMetadata[] = [];
+  const maxRetries = boundedTestSetting("META_TESTS_MAX_RETRIES", 1, 1);
+  const maxTotalRequests = boundedTestSetting("META_TESTS_MAX_REQUESTS", 4, 4, 1);
   const client = createMetaClient({
     config,
-    maxRetries: 1,
-    maxTotalRequests: 4,
-    onUsage: (metadata) => usage.push(metadata),
+    maxRetries,
+    maxTotalRequests,
+    onUsage: (metadata) => {
+      usage.push(metadata);
+      console.log(formatUsage(metadata));
+    },
   });
 
   try {
     const smoke = await client.createResponse({
       instructions:
         "Give exactly three concise clarification questions. Do not use tools or web search.",
+      reasoning: { effort: "minimal" },
       input: [
         {
           type: "message",
@@ -95,13 +115,16 @@ async function main(): Promise<void> {
           ],
         },
       ],
-      max_output_tokens: 180,
+      max_output_tokens: 2048,
     });
     console.log("Connectivity smoke test");
     console.log("Endpoint: " + config.baseUrl + "/responses");
     console.log("Model: " + smoke.model + " (Standard)");
     console.log(smoke.outputText);
-    console.log(formatUsage(usage[usage.length - 1]!));
+    if (client.getRequestCount() >= maxTotalRequests) {
+      console.log("Structured extraction skipped: no HTTP request budget remains.");
+      return;
+    }
 
     const plan = await extractPlanFromText(
       "Our friends want to go to the beach next weekend. Maybe 8 people are coming. Some have school on Saturday, and the budget is around 500 pesos each. We haven't decided on a location.",
@@ -109,7 +132,6 @@ async function main(): Promise<void> {
     );
     console.log("Structured planning extraction");
     console.log(JSON.stringify(plan, null, 2));
-    console.log(formatUsage(usage[usage.length - 1]!));
     const schoolConstraint = plan.constraints.some(
       (item) =>
         item.kind === "hard_requirement" &&
@@ -149,6 +171,10 @@ async function main(): Promise<void> {
       },
     ]);
 
+    if (client.getRequestCount() >= maxTotalRequests) {
+      console.log("Screenshot extraction skipped: no HTTP request budget remains.");
+      return;
+    }
     const imageUrl = new URL(
       "../server/src/ai/fixtures/planning-screenshot.png",
       import.meta.url,
@@ -160,7 +186,6 @@ async function main(): Promise<void> {
     );
     console.log("Synthetic screenshot extraction");
     console.log(JSON.stringify(imagePlan, null, 2));
-    console.log(formatUsage(usage[usage.length - 1]!));
     const imageDetails = [...imagePlan.constraints, ...imagePlan.preferences];
     const hasDriveNote = imageDetails.some((item) =>
       /drive|driver/i.test(item.description + " " + (item.evidence ?? "")),
@@ -200,7 +225,7 @@ async function main(): Promise<void> {
     console.log(
       "Real Meta API HTTP request attempts: " +
         client.getRequestCount() +
-        " (maximum 4, including retries).",
+        " (maximum " + maxTotalRequests + " this run, including retries).",
     );
   }
 }
