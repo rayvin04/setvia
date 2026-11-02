@@ -2,9 +2,7 @@ export function Attribution() {
   return (
     <div className="attribution">
       <div className="attribution-lockup">
-        <span>Built with</span>
-        <strong>Meta AI</strong>
-        <span>Muse models</span>
+        <span>Built for the Meta Global AI Developer Hackathon 2026</span>
       </div>
     </div>
   );

@@ -13,7 +13,6 @@ import { ButtonLink } from "./components";
 import { Waves } from "./Waves";
 import { Mascot, Avatar } from "./Mascot";
 import { ScenarioLinks } from "./Scenarios";
-import { Attribution } from "./Attribution";
 export function Home() {
   return (
     <>
@@ -41,7 +40,6 @@ export function Home() {
               <ArrowUpRight size={18} aria-hidden="true" />
             </ButtonLink>
           </div>
-          <Attribution />
         </Reveal>
       </section>
       <Reveal

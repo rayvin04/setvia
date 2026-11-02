@@ -384,7 +384,7 @@
   .footer .attribution {
     margin: 0;
   }
-  .footer .attribution-lockup > span:last-child {
+  .footer .attribution-lockup > span:last-child:not(:only-child) {
     display: none;
   }
   .footer > span {

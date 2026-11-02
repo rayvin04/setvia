@@ -29,7 +29,7 @@
 .header nav .github-link {
   padding: 0;
 }
-.attribution-lockup > span:last-child {
+.attribution-lockup > span:last-child:not(:only-child) {
   padding-left: 14px;
   margin-left: 3px;
   border-left: 1px solid #ffffff32;
@@ -111,11 +111,11 @@
   .header-inner {
     padding: 0 15px;
   }
-  .attribution-lockup > span:last-child {
+  .attribution-lockup > span:last-child:not(:only-child) {
     padding-left: 9px;
     margin-left: 0;
   }
-  .footer .attribution-lockup > span:last-child {
+  .footer .attribution-lockup > span:last-child:not(:only-child) {
     display: none;
   }
 }
