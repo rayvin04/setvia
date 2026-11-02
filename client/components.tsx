@@ -1,3 +1,4 @@
+import { Attribution } from "./Attribution";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
@@ -61,7 +62,7 @@ export function Footer() {
   return (
     <footer className="footer">
       <Wordmark />
-      <p>Made for the plans that matter.</p>
+      <Attribution />
       <span>UI prototype · Mocked data</span>
     </footer>
   );
