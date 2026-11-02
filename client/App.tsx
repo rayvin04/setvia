@@ -1,18 +1,9 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { Routes, Route, Link } from "react-router-dom";
-import {
-  ArrowRight,
-  ArrowUpRight,
-  Check,
-  MessageCircle,
-  SlidersHorizontal,
-  CircleCheck,
-  ArrowLeft,
-} from "lucide-react";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 import { ButtonLink, Header, Footer } from "./components";
-import { Waves } from "./Waves";
-import { Mascot } from "./Mascot";
+
 import { Demos } from "./Scenarios";
 import { Home } from "./Home";
 
