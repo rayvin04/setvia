@@ -7,7 +7,7 @@ import {
 } from "motion/react";
 import { Attribution } from "./Attribution";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -96,11 +96,13 @@ export function Header() {
   );
 }
 export function Footer() {
+  const { pathname } = useLocation();
+  const status = pathname === "/start" ? "Muse Spark extraction · local draft" : pathname === "/join" ? "Room joining preview" : "Fictional demo data";
   return (
     <footer className="footer">
       <Wordmark />
       <Attribution />
-      <span>UI prototype · Mocked data</span>
+      <span>{status}</span>
     </footer>
   );
 }

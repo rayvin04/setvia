@@ -4,6 +4,7 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import "@fontsource-variable/lexend";
 import "./styles.css";
+import "./planning.css";
 import "./waves.css";
 import "./scenarios.css";
 import App from "./App";

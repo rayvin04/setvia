@@ -5,15 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "dev:server": "node --env-file-if-exists=.env --import tsx server/src/index.ts",
     "build": "npm run check:server && tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "check:server": "tsc --noEmit -p server/tsconfig.json",
-    "test": "tsx --test server/src/ai/ai.test.ts",
+    "test": "tsx --test server/src/ai/ai.test.ts server/src/http/app.test.ts client/plan-api.test.ts client/plan-mapping.test.ts client/draft-store.test.ts",
     "test:meta": "node --env-file-if-exists=.env --import tsx scripts/test-meta.ts"
   },
   "dependencies": {
     "@fontsource-variable/lexend": "latest",
     "clsx": "latest",
+    "express": "^5.3.0",
     "lucide-react": "latest",
     "motion": "^14.9.0",
     "react": "latest",
@@ -24,6 +26,7 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "latest",
+    "@types/express": "^5.0.6",
     "@types/node": "^26.6.6",
     "@types/react": "latest",
     "@types/react-dom": "latest",

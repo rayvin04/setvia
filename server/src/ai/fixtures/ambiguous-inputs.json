@@ -9,7 +9,8 @@
       "estimatedParticipants": {
         "value": null,
         "isApproximate": false,
-        "evidence": null
+        "evidence": null,
+        "attendanceStatus": "unknown"
       },
       "dateOrDateRange": {
         "value": null,
@@ -34,13 +35,36 @@
           "description": "Unavailable Saturday because of school.",
           "evidence": "I can't go on Saturday because I have school.",
           "kind": "hard_requirement",
-          "certainty": "confirmed"
+          "certainty": "confirmed",
+          "speaker": null
         }
       ],
       "preferences": [],
       "uncertainties": [],
-      "missingInformation": ["An alternative day that works"],
-      "suggestedQuestions": ["Which other day works for you?"]
+      "missingInformation": [
+        "An alternative day that works"
+      ],
+      "suggestedQuestions": [
+        "Which other day works for you?"
+      ],
+      "time": {
+        "value": null,
+        "isAmbiguous": false,
+        "evidence": null
+      },
+      "duration": {
+        "value": null,
+        "isApproximate": false,
+        "evidence": null
+      },
+      "objective": {
+        "value": null,
+        "evidence": null
+      },
+      "importantNotes": [],
+      "titleEvidence": null,
+      "eventTypeEvidence": null,
+      "descriptionEvidence": null
     }
   },
   {
@@ -53,7 +77,8 @@
       "estimatedParticipants": {
         "value": null,
         "isApproximate": false,
-        "evidence": null
+        "evidence": null,
+        "attendanceStatus": "unknown"
       },
       "dateOrDateRange": {
         "value": null,
@@ -78,13 +103,36 @@
           "description": "Unavailable Saturday because of class.",
           "evidence": "Di ako pwede Saturday, may class ako.",
           "kind": "hard_requirement",
-          "certainty": "confirmed"
+          "certainty": "confirmed",
+          "speaker": null
         }
       ],
       "preferences": [],
       "uncertainties": [],
-      "missingInformation": ["An alternative day that works"],
-      "suggestedQuestions": ["Which other day works for you?"]
+      "missingInformation": [
+        "An alternative day that works"
+      ],
+      "suggestedQuestions": [
+        "Which other day works for you?"
+      ],
+      "time": {
+        "value": null,
+        "isAmbiguous": false,
+        "evidence": null
+      },
+      "duration": {
+        "value": null,
+        "isApproximate": false,
+        "evidence": null
+      },
+      "objective": {
+        "value": null,
+        "evidence": null
+      },
+      "importantNotes": [],
+      "titleEvidence": null,
+      "eventTypeEvidence": null,
+      "descriptionEvidence": null
     }
   },
   {
@@ -97,7 +145,8 @@
       "estimatedParticipants": {
         "value": null,
         "isApproximate": false,
-        "evidence": null
+        "evidence": null,
+        "attendanceStatus": "unknown"
       },
       "dateOrDateRange": {
         "value": null,
@@ -123,12 +172,37 @@
           "description": "Keep costs low; no specific budget amount was provided.",
           "evidence": "I'm short on money this month.",
           "kind": "preference",
-          "certainty": "confirmed"
+          "certainty": "confirmed",
+          "speaker": null
         }
       ],
-      "uncertainties": ["The affordable amount is unknown."],
-      "missingInformation": ["A comfortable spending limit"],
-      "suggestedQuestions": ["What spending limit would feel comfortable?"]
+      "uncertainties": [
+        "The affordable amount is unknown."
+      ],
+      "missingInformation": [
+        "A comfortable spending limit"
+      ],
+      "suggestedQuestions": [
+        "What spending limit would feel comfortable?"
+      ],
+      "time": {
+        "value": null,
+        "isAmbiguous": false,
+        "evidence": null
+      },
+      "duration": {
+        "value": null,
+        "isApproximate": false,
+        "evidence": null
+      },
+      "objective": {
+        "value": null,
+        "evidence": null
+      },
+      "importantNotes": [],
+      "titleEvidence": null,
+      "eventTypeEvidence": null,
+      "descriptionEvidence": null
     }
   },
   {
@@ -141,7 +215,8 @@
       "estimatedParticipants": {
         "value": null,
         "isApproximate": false,
-        "evidence": null
+        "evidence": null,
+        "attendanceStatus": "unknown"
       },
       "dateOrDateRange": {
         "value": "Sunday",
@@ -167,14 +242,37 @@
           "description": "Sunday is a tentative option.",
           "evidence": "Maybe Sunday? Not sure yet.",
           "kind": "preference",
-          "certainty": "tentative"
+          "certainty": "tentative",
+          "speaker": null
         }
       ],
-      "uncertainties": ["Sunday is not confirmed and has no calendar date."],
-      "missingInformation": ["Whether Sunday works and which date is meant"],
+      "uncertainties": [
+        "Sunday is not confirmed and has no calendar date."
+      ],
+      "missingInformation": [
+        "Whether Sunday works and which date is meant"
+      ],
       "suggestedQuestions": [
         "Do you mean this coming Sunday, and is it confirmed?"
-      ]
+      ],
+      "time": {
+        "value": null,
+        "isAmbiguous": false,
+        "evidence": null
+      },
+      "duration": {
+        "value": null,
+        "isApproximate": false,
+        "evidence": null
+      },
+      "objective": {
+        "value": null,
+        "evidence": null
+      },
+      "importantNotes": [],
+      "titleEvidence": null,
+      "eventTypeEvidence": null,
+      "descriptionEvidence": null
     }
   },
   {
@@ -187,7 +285,8 @@
       "estimatedParticipants": {
         "value": 8,
         "isApproximate": true,
-        "evidence": "Maybe 8 people are coming."
+        "evidence": "Maybe 8 people are coming.",
+        "attendanceStatus": "estimated"
       },
       "dateOrDateRange": {
         "value": "next weekend",
@@ -212,7 +311,8 @@
           "description": "Some attendees have school on Saturday.",
           "evidence": "Some have school on Saturday.",
           "kind": "hard_requirement",
-          "certainty": "confirmed"
+          "certainty": "confirmed",
+          "speaker": null
         }
       ],
       "preferences": [],
@@ -230,7 +330,25 @@
         "Which exact date works for the group?",
         "Which beach destination should the group consider?",
         "How many people are confirmed?"
-      ]
+      ],
+      "time": {
+        "value": null,
+        "isAmbiguous": false,
+        "evidence": null
+      },
+      "duration": {
+        "value": null,
+        "isApproximate": false,
+        "evidence": null
+      },
+      "objective": {
+        "value": null,
+        "evidence": null
+      },
+      "importantNotes": [],
+      "titleEvidence": null,
+      "eventTypeEvidence": null,
+      "descriptionEvidence": null
     }
   }
 ]

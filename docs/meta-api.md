@@ -45,7 +45,21 @@ Screenshot bytes are validated in memory and sent as a data URL to Meta. This im
 - In-memory PNG, JPEG, and WebP validation and image extraction.
 - Offline fixtures for English, Tagalog, uncertain dates, and unspecified budget concerns.
 
-There is no Express endpoint or UI connection in this phase.
+## Phase 2C local API and form integration
+
+The local Express server exposes these same-origin routes through the Vite proxy:
+
+- GET /api/health for readiness.
+- POST /api/ai/extract/text accepts JSON with up to 8,000 characters; the request body limit is 40 KiB.
+- POST /api/ai/extract/image accepts raw PNG, JPEG, or WebP bytes up to 5 MiB.
+
+The backend enforces per-IP rate limiting, safe errors, response validation, security headers, and no-store caching. It pins Muse Spark 1.3 Standard using the existing server-only Meta client. The local browser never receives the key. Input text and image bytes are sent to Meta for extraction and are not persisted by this app. No upload temp files are created.
+
+The /start form accepts text or an invitation image, maps extracted candidates to adaptive form fields, and shows evidence, uncertainty, approximate counts or costs, and invited/confirmed/estimated attendance. Users can accept, reject, keep their edit, or use a conflicting suggestion. Missing values remain blank. Proxy statements are session-only and unconfirmed by default.
+
+Optional device-local draft saving stores only structured editable form fields. It does not store source text, image data, extraction evidence, or proxy statements. Users can disable and clear it.
+
+Phase 2C build, offline tests, and browser checks used mocked API responses. No Phase 2C live Meta requests were made, so the UI-to-Meta path still needs a separately authorized live smoke check. This note records the actual verification scope as of 2026-11-03.
 
 ## Official API references
 

@@ -24,7 +24,7 @@ import {
   MAX_IMAGE_PIXELS,
   validatePlanningImage,
 } from "./extract-image.js";
-import { PlanExtractionSchema } from "./schemas.js";
+import { PlanExtractionSchema, type PlanExtraction } from "./schemas.js";
 
 const testConfig = {
   apiKey: "unit-test-key",
@@ -87,6 +87,29 @@ function pngHeader(width: number, height: number): Uint8Array {
   return bytes;
 }
 
+function emptyPlan(): PlanExtraction {
+  return {
+    title: null,
+    titleEvidence: null,
+    eventType: null,
+    eventTypeEvidence: null,
+    description: null,
+    descriptionEvidence: null,
+    estimatedParticipants: { value: null, isApproximate: false, attendanceStatus: "unknown", evidence: null },
+    dateOrDateRange: { value: null, isRelative: false, isAmbiguous: false, evidence: null },
+    time: { value: null, isAmbiguous: false, evidence: null },
+    duration: { value: null, isApproximate: false, evidence: null },
+    location: { value: null, isConfirmed: false, evidence: null },
+    budget: { amount: null, currency: null, isPerPerson: null, isApproximate: false, evidence: null },
+    objective: { value: null, evidence: null },
+    constraints: [],
+    preferences: [],
+    importantNotes: [],
+    uncertainties: [],
+    missingInformation: [],
+    suggestedQuestions: [],
+  };
+}
 test("configuration requires a key and pins Meta host plus Standard Spark", () => {
   assert.throws(() => readMetaConfig({}), MetaConfigurationError);
   assert.throws(
@@ -498,4 +521,77 @@ test("a real-test request budget can include retries without exceeding its cap",
     },
   );
   assert.equal(client.getRequestCount(), 2);
+});
+
+test("synthetic group-chat screenshot retains speaker evidence without inventing attendance", async () => {
+  const imageUrl = new URL("./fixtures/planning-screenshot.png", import.meta.url);
+  const bytes = new Uint8Array(await readFile(imageUrl));
+  const expected = emptyPlan();
+  expected.title = "Beach on Sunday?";
+  expected.titleEvidence = "Beach on Sunday?";
+  expected.eventType = "trip";
+  expected.eventTypeEvidence = "GROUP PLAN";
+  expected.description = "Friends are considering a beach outing.";
+  expected.descriptionEvidence = "A few notes from the group chat";
+  expected.dateOrDateRange = { value: "Sunday", isRelative: true, isAmbiguous: true, evidence: "Beach on Sunday?" };
+  expected.budget = { amount: 500, currency: "PHP", isPerPerson: true, isApproximate: false, evidence: "Alex can only spend ₱500." };
+  expected.location = { value: null, isConfirmed: false, evidence: "Destination still undecided." };
+  expected.constraints = [{
+    description: "Sam is unavailable Saturday.",
+    evidence: "Sam isn't available Saturday.",
+    speaker: "Sam",
+    kind: "hard_requirement",
+    certainty: "confirmed",
+  }];
+  expected.importantNotes = [{
+    description: "Jamie can drive.",
+    evidence: "Jamie can drive.",
+    speaker: "Jamie",
+    kind: "unknown",
+    certainty: "tentative",
+  }];
+  expected.uncertainties = ["The exact Sunday date is unclear.", "The destination is undecided."];
+  expected.missingInformation = ["The exact date", "The destination", "Who is attending"];
+  expected.suggestedQuestions = ["Which Sunday is intended?", "Where should the group go?"];
+
+  const result = await extractPlanFromImage(
+    { bytes, mimeType: "image/png" },
+    mockClient(JSON.stringify(expected)),
+  );
+
+  assert.equal(result.budget.isPerPerson, true);
+  assert.equal(result.estimatedParticipants.value, null);
+  assert.equal(result.estimatedParticipants.attendanceStatus, "unknown");
+  assert.equal(result.constraints[0]?.speaker, "Sam");
+  assert.equal(result.importantNotes[0]?.speaker, "Jamie");
+  assert.deepEqual(result.missingInformation, expected.missingInformation);
+});
+
+test("professional meeting announcement preserves agenda, schedule, and open details", async () => {
+  const expected = emptyPlan();
+  expected.title = "Quarterly Planning Review";
+  expected.titleEvidence = "Quarterly Planning Review";
+  expected.eventType = "meeting";
+  expected.eventTypeEvidence = "Team Meeting";
+  expected.description = "Review priorities and assign next steps.";
+  expected.descriptionEvidence = "Agenda: Review priorities and assign next steps";
+  expected.dateOrDateRange = { value: "December 2, 2026", isRelative: false, isAmbiguous: false, evidence: "December 2, 2026" };
+  expected.time = { value: "10:30 AM", isAmbiguous: false, evidence: "10:30 AM" };
+  expected.duration = { value: "45 minutes", isApproximate: false, evidence: "10:30–11:15 AM" };
+  expected.location = { value: "Conference Room B", isConfirmed: true, evidence: "Conference Room B" };
+  expected.estimatedParticipants = { value: 8, isApproximate: false, attendanceStatus: "invited", evidence: "Required: 8 project leads" };
+  expected.objective = { value: "Review priorities and assign next steps.", evidence: "Agenda: Review priorities and assign next steps" };
+  expected.missingInformation = ["Remote meeting link"];
+  expected.suggestedQuestions = ["Should a remote meeting link be added?"];
+
+  const result = await extractPlanFromText(
+    "Quarterly Planning Review. Team meeting December 2, 2026, 10:30 to 11:15 AM, Conference Room B. Required: 8 project leads. Agenda: review priorities and assign next steps.",
+    mockClient(JSON.stringify(expected)),
+  );
+
+  assert.equal(result.eventType, "meeting");
+  assert.equal(result.duration.value, "45 minutes");
+  assert.equal(result.estimatedParticipants.attendanceStatus, "invited");
+  assert.equal(result.objective.value, expected.objective.value);
+  assert.deepEqual(result.missingInformation, ["Remote meeting link"]);
 });

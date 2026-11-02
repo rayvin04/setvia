@@ -1,5 +1,5 @@
 import { PageTransition } from "./MotionUI";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import type { FormEvent } from "react";
 import { Routes, Route, Link } from "react-router-dom";
 import { ArrowRight, ArrowLeft } from "lucide-react";
@@ -7,6 +7,7 @@ import { ButtonLink, Header, Footer } from "./components";
 
 import { Demos } from "./Scenarios";
 import { Home } from "./Home";
+const StartPlanning = lazy(() => import("./StartPlanning").then((module) => ({ default: module.StartPlanning })));
 
 function FormPage({ join = false }: { join?: boolean }) {
   const [message, setMessage] = useState("");
@@ -112,7 +113,7 @@ export default function App() {
         <PageTransition>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/start" element={<FormPage />} />
+            <Route path="/start" element={<Suspense fallback={<div className="planning-loading" role="status">Opening planner…</div>}><StartPlanning /></Suspense>} />
             <Route path="/join" element={<FormPage join />} />
             <Route path="/demos" element={<Demos />} />
             <Route path="*" element={<Missing />} />
