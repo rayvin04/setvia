@@ -25,8 +25,7 @@ export function Home() {
             <br className="desktop-break" /> <span>the group chat.</span>
           </h1>
           <p className="hero-description">
-            Everyone has a say. Now give the plan a way forward.
-            <br />
+            Everyone has a say. Now give the plan a way forward. <br />
             Turn busy calendars and different budgets into common ground.
           </p>
           <div className="hero-actions">

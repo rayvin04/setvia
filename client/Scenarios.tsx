@@ -1,3 +1,6 @@
+import { useId } from "react";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
+import { Reveal } from "./MotionUI";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
@@ -19,7 +22,7 @@ import { Avatar } from "./Mascot";
 import { ButtonLink, cn } from "./components";
 const icons = [TreePalm, House, BriefcaseBusiness, GraduationCap, Heart];
 function CoverArt({ index, variant = 0 }: { index: number; variant?: number }) {
-  const Icon = icons[index];
+  const selected = scenarios[index];
   return (
     <div
       aria-hidden="true"
@@ -29,27 +32,27 @@ function CoverArt({ index, variant = 0 }: { index: number; variant?: number }) {
         "cover-variant-" + variant,
       )}
     >
-      <span className="cover-disc" />
-      <span className="cover-arc" />
-      <Icon strokeWidth={1.1} />
-      <span className="cover-line" />
-      <span className="cover-type">
-        {
-          [
-            "TAKE THE\nSCENIC ROUTE",
-            "ALL TOGETHER\nAGAIN",
-            "START\nSOMETHING",
-            "IDEAS INTO\nACTION",
-            "A DAY TO\nREMEMBER",
-          ][index]
-        }
-      </span>
+      <AnimatePresence initial={false}>
+        <motion.img
+          key={selected.id + "-" + variant}
+          src={"/covers/" + selected.id + "-" + (variant + 1) + ".svg"}
+          width={600}
+          height={450}
+          alt=""
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        />
+      </AnimatePresence>
     </div>
   );
 }
+const MotionLink = motion.create(Link);
 export function ScenarioLinks() {
+  const reduced = useReducedMotion();
   return (
-    <section className="scenario-strip section-shell">
+    <Reveal section className="scenario-strip section-shell">
       <div className="section-heading">
         <h2>
           Different people.
@@ -64,20 +67,28 @@ export function ScenarioLinks() {
       </div>
       <div className="world-links">
         {scenarios.map((s, i) => (
-          <Link key={s.id} to={"/demos?scenario=" + s.id}>
+          <MotionLink
+            key={s.id}
+            to={"/demos?scenario=" + s.id}
+            whileHover={reduced ? { opacity: 0.9 } : { y: -4 }}
+            whileTap={reduced ? { opacity: 0.8 } : { scale: 0.98 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.25 }}
+          >
             <CoverArt index={i} />
             <div>
               <span>{s.title}</span>
               <ArrowRight size={18} aria-hidden="true" />
             </div>
             <small>{s.audience}</small>
-          </Link>
+          </MotionLink>
         ))}
       </div>
-    </section>
+    </Reveal>
   );
 }
 export function Demos() {
+  const selectionId = useId();
+  const reduced = useReducedMotion();
   const [params, setParams] = useSearchParams();
   const selected =
     scenarios.find((s) => s.id === params.get("scenario")) || scenarios[0];
@@ -117,6 +128,17 @@ export function Demos() {
               aria-current={selected.id === s.id ? "page" : undefined}
               className={cn("world-tab", selected.id === s.id && "selected")}
             >
+              {selected.id === s.id && (
+                <motion.span
+                  className="world-tab-indicator"
+                  layoutId={selectionId}
+                  transition={{
+                    type: "spring",
+                    bounce: 0,
+                    duration: reduced ? 0 : 0.3,
+                  }}
+                />
+              )}
               <Icon size={20} aria-hidden="true" />
               <span>
                 {s.title}
@@ -127,7 +149,13 @@ export function Demos() {
           );
         })}
       </nav>
-      <article className="demo-workspace" key={selected.id}>
+      <motion.article
+        className="demo-workspace"
+        key={selected.id}
+        initial={{ opacity: 0.35, y: reduced ? 0 : 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ type: "spring", bounce: 0, duration: 0.3 }}
+      >
         <div className="demo-overview">
           <div className="demo-cover">
             <CoverArt index={index} variant={cover} />
@@ -227,11 +255,11 @@ export function Demos() {
             ))}
           </fieldset>
           <p className="cover-disclosure">
-            Muse Image concept preview · Authored mock designs, not AI-generated
-            results. Generation is not connected.
+            Muse Image workflow preview · Authored mock designs, not
+            AI-generated results. Generation is not connected.
           </p>
         </section>
-      </article>
+      </motion.article>
     </section>
   );
 }

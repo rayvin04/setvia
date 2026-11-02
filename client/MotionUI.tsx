@@ -17,6 +17,7 @@ export function Reveal({
   const Element = section ? motion.section : motion.div;
   return (
     <Element
+      data-reveal
       id={id}
       className={className}
       initial={{ opacity: 0, y: reduced ? 0 : 16 }}

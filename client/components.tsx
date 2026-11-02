@@ -25,10 +25,11 @@ export function ButtonLink({
   secondary?: boolean;
   className?: string;
 }) {
+  const reduced = useReducedMotion();
   return (
     <MotionLink
-      whileTap={{ scale: 0.96 }}
-      whileHover={{ y: -2 }}
+      whileTap={reduced ? { opacity: 0.8 } : { scale: 0.96 }}
+      whileHover={reduced ? { opacity: 0.9 } : { y: -2 }}
       transition={{ type: "spring", bounce: 0, duration: 0.2 }}
       className={cn(
         "button",
