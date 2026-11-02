@@ -1,0 +1,264 @@
+.mascot-button {
+  position: relative;
+  display: inline-flex;
+}
+.mascot {
+  width: 90px;
+  height: 72px;
+  position: absolute;
+  right: 4px;
+  bottom: calc(100% - 4px);
+  pointer-events: none;
+}
+.hero-actions {
+  margin-top: 74px;
+}
+.mascot-button .button {
+  position: relative;
+}
+.mascot-button .mascot {
+  z-index: 3;
+}
+.scenario-strip {
+  border-top: 1px solid #ffffff12;
+}
+.scenario-links {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  margin-top: 45px;
+  gap: 22px;
+}
+.scenario-links > a {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 17px;
+  padding: 25px 0;
+  border-top: 1px solid #34424b;
+}
+.scenario-links > a > svg:first-child {
+  color: #fc734d;
+}
+.scenario-links > a > svg:last-child {
+  margin-left: auto;
+}
+.scenario-links span {
+  display: block;
+  font-size: 13px;
+  flex-basis: 100%;
+  order: 2;
+}
+.scenario-links small {
+  display: block;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #a4afb8;
+}
+.demo-page {
+  padding-top: 50px;
+  min-height: 80svh;
+}
+.demo-page h1 {
+  font-size: 46px;
+  font-weight: 500;
+}
+.demo-intro {
+  font-size: 15px;
+  line-height: 1.8;
+  color: #b6c0c7;
+  margin-top: 20px;
+}
+.prototype-disclosure {
+  color: #a4afb8;
+  font-size: 12px;
+  margin-top: 17px;
+}
+.scenario-layout {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 55px;
+  margin-top: 45px;
+}
+.scenario-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.scenario-option {
+  display: flex;
+  gap: 20px;
+  padding: 22px 18px;
+  border-radius: 12px;
+  align-items: center;
+  border: 1px solid transparent;
+}
+.scenario-option > svg:last-child {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.scenario-option > svg:first-child {
+  color: #a4afb8;
+  flex-shrink: 0;
+}
+.scenario-option span {
+  font-size: 15px;
+}
+.scenario-option small {
+  display: block;
+  font-size: 12px;
+  color: #a4afb8;
+  margin-top: 6px;
+}
+.scenario-option.selected {
+  border-color: #456271;
+  background: #0b1a24;
+}
+.scenario-option.selected > svg {
+  color: #0297de;
+}
+.scenario-detail {
+  background: #0a1217;
+  padding: 38px;
+  border-radius: 15px;
+}
+.scenario-detail > svg {
+  color: #fc734d;
+  margin-bottom: 20px;
+}
+.scenario-audience {
+  font-size: 12px;
+  color: #fc734d;
+}
+.scenario-detail h2 {
+  font-size: 30px;
+  line-height: 1.4;
+  font-weight: 500;
+  margin-top: 10px;
+  max-width: 520px;
+}
+.scenario-detail > p:not(.scenario-audience) {
+  font-size: 13px;
+  line-height: 1.9;
+  color: #a4afb8;
+  margin-top: 17px;
+  max-width: 520px;
+}
+.scenario-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 24px;
+}
+.scenario-tags span {
+  font-size: 12px;
+  color: #c5d5df;
+  padding: 8px 10px;
+  border-radius: 5px;
+  background: #17252e;
+}
+.fictional-people {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin: 30px 0;
+}
+.avatar-row {
+  display: flex;
+  padding-left: 0;
+}
+.avatar-row > span + span {
+  margin-left: -8px;
+}
+.avatar {
+  width: 35px;
+  height: 35px;
+  border: 2px solid #0a1217;
+  border-radius: 50%;
+  display: block;
+}
+.fictional-people > span {
+  font-size: 12px;
+  line-height: 1.8;
+}
+.fictional-people small {
+  color: #a4afb8;
+  font-size: 12px;
+}
+.scenario-limit {
+  display: block;
+  font-size: 12px;
+  line-height: 1.7;
+  color: #a4afb8;
+  margin-top: 20px;
+}
+.scenario-detail .button {
+  font-size: 12px;
+  min-height: 49px;
+}
+@media (hover: hover) {
+  .scenario-links > a:hover {
+    border-color: #fc734d;
+  }
+  .scenario-option:hover {
+    background: #0d202d;
+  }
+}
+@media (max-width: 760px) {
+  .scenario-links {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px 25px;
+  }
+  .scenario-links > a:last-child {
+    grid-column: 1/-1;
+  }
+  .scenario-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+    margin-top: 30px;
+  }
+  .scenario-menu {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  .scenario-option {
+    padding: 15px 10px;
+    gap: 10px;
+  }
+  .scenario-option span {
+    font-size: 12px;
+  }
+  .scenario-option small {
+    font-size: 12px;
+  }
+  .scenario-option > svg:last-child {
+    display: none;
+  }
+  .scenario-option > svg:first-child {
+    width: 19px;
+  }
+  .scenario-detail {
+    padding: 27px;
+  }
+  .demo-page h1 {
+    font-size: 34px;
+  }
+  .scenario-detail h2 {
+    font-size: 26px;
+  }
+  .hero-actions {
+    margin-top: 74px;
+  }
+  .mascot {
+    width: 80px;
+    height: 64px;
+  }
+  .fictional-people {
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 760px) {
+  .scenario-option span {
+    font-size: 13px;
+  }
+}

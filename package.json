@@ -11,17 +11,18 @@
   "dependencies": {
     "@fontsource-variable/lexend": "latest",
     "clsx": "latest",
-    "tailwind-merge": "latest",
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-router-dom": "latest"
+    "react-router-dom": "latest",
+    "tailwind-merge": "latest"
   },
   "devDependencies": {
     "@tailwindcss/vite": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
     "@vitejs/plugin-react": "latest",
+    "prettier": "^3.9.10",
     "tailwindcss": "latest",
     "typescript": "latest",
     "vite": "latest"
