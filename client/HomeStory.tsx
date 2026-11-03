@@ -7,8 +7,6 @@ import {
   Check,
   ChevronDown,
   CircleAlert,
-  CircleCheck,
-  MessageCircle,
   ShieldCheck,
   Sparkles,
   UsersRound,
@@ -21,13 +19,6 @@ import { ButtonLink } from "./components";
 import { scenarios } from "./demoData";
 import { Reveal } from "./MotionUI";
 import "./home-story.css";
-
-const chatMessages = [
-  { name: "Sam", quote: "Saturday’s out. I have class." },
-  { name: "Alex", quote: "I’m keeping this under ₱2,500." },
-  { name: "Jamie", quote: "I can drive if we leave early." },
-  { name: "Drew", quote: "Somewhere close works for me." },
-];
 
 const realityChecks = [
   { label: "Schedule Check", icon: CalendarDays },
@@ -74,39 +65,23 @@ function ConversationToPlan() {
       </StoryHeading>
 
       <div className="story-translation" data-visual-slot="chat-demo">
-        {/* Keep this framed preview independent of the story grid so a future loop can replace or sit beside it without shifting the plan panel. */}
-        <div
-          className="story-chat-surface"
-          aria-label="Fictional group chat preview"
+        <picture
+          className="story-demo-media story-chat-media"
+          data-visual-slot="animated-chat-demo"
         >
-          <div className="story-chat-head">
-            <span className="story-chat-icon">
-              <MessageCircle size={18} aria-hidden="true" />
-            </span>
-            <div>
-              <strong>The weekend chat</strong>
-              <small>4 people · fictional example</small>
-            </div>
-            <span className="story-chat-live">
-              <span /> Illustrative
-            </span>
-          </div>
-          <div className="story-message-stream">
-            {chatMessages.map((message, index) => (
-              <div className="story-message" key={message.name}>
-                <Avatar index={index} />
-                <div className="story-message-content">
-                  <span>{message.name}</span>
-                  <p>{message.quote}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="story-chat-footnote">
-            <Sparkles size={16} aria-hidden="true" />
-            <span>Four voices. A few things to work out.</span>
-          </div>
-        </div>
+          <source
+            media="(prefers-reduced-motion: reduce)"
+            srcSet="/story-media/setvia-chat-animated-final.png"
+            type="image/png"
+          />
+          <img
+            src="/story-media/setvia-chat-animated-4-5s.gif"
+            width={681}
+            height={495}
+            alt="Fictional group chat: Hu Tao cannot make Saturday, Selena has a ₱2,500 budget, Furina can drive early, and Manta Ray wants somewhere nearby."
+            decoding="async"
+          />
+        </picture>
 
         <div className="story-bridge" aria-hidden="true">
           <span>
@@ -115,58 +90,15 @@ function ConversationToPlan() {
           <small>find the overlap</small>
         </div>
 
-        <div className="story-plan-surface" aria-label="Fictional plan preview">
-          <div className="story-plan-topline">
-            <span className="story-plan-label">
-              <CircleCheck size={15} aria-hidden="true" />
-              Plan taking shape
-            </span>
-            <span>Version 3</span>
-          </div>
-          <h3>A Sunday that works.</h3>
-          <p className="story-plan-summary">
-            Keep the day. Cut the cost. Give everyone a clear next step.
-          </p>
-          <dl className="story-plan-details">
-            <div>
-              <CalendarDays size={17} aria-hidden="true" />
-              <dt>When</dt>
-              <dd>Sunday · leave at 7 AM</dd>
-            </div>
-            <div>
-              <Wallet size={17} aria-hidden="true" />
-              <dt>Budget</dt>
-              <dd>Agree on a per-person limit</dd>
-            </div>
-            <div>
-              <CarFront size={17} aria-hidden="true" />
-              <dt>Travel</dt>
-              <dd>Jamie drives · split fuel</dd>
-            </div>
-          </dl>
-          <div className="story-open-decision">
-            <span className="story-open-dot" />
-            <div>
-              <small>Still open</small>
-              <strong>Budget and who brings food</strong>
-            </div>
-            <ArrowUpRight size={16} aria-hidden="true" />
-          </div>
-          <div className="story-plan-approval">
-            <div className="story-avatar-stack" aria-hidden="true">
-              {[0, 1, 2, 3].map((index) => (
-                <Avatar key={index} index={index} />
-              ))}
-            </div>
-            <div>
-              <strong>2 of 4 approvals</strong>
-              <small>For this version only</small>
-            </div>
-            <span className="story-approval-meter" aria-hidden="true">
-              <span />
-            </span>
-          </div>
-        </div>
+        <picture className="story-demo-media story-plan-media">
+          <img
+            src="/story-media/sunday-planning-agenda-card.png"
+            width={1484}
+            height={1060}
+            alt="Fictional Sunday agenda: leave at 7 AM, agree on a per-person budget, and split fuel with Jamie driving. Budget and food are still open; two of four have approved."
+            decoding="async"
+          />
+        </picture>
       </div>
       <p className="story-caption">
         Setvia surfaces the trade-offs. The group makes the call.
