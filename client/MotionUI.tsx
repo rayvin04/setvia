@@ -20,13 +20,13 @@ export function Reveal({
       data-reveal
       id={id}
       className={className}
-      initial={{ opacity: 0, y: reduced ? 0 : 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={false}
+      whileInView={reduced ? undefined : { y: [8, 0] }}
       viewport={{ once: true, amount: 0.12 }}
       transition={
         reduced
           ? { duration: 0.16 }
-          : { type: "spring", bounce: 0, duration: 0.5 }
+          : { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
       }
     >
       {children}
