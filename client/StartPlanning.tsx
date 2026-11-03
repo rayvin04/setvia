@@ -216,6 +216,7 @@ export function StartPlanning() {
   const [availability, setAvailability] = useState<
     "checking" | "available" | "unavailable"
   >("checking");
+  const [availabilityCheck, setAvailabilityCheck] = useState(0);
   const [formErrors, setFormErrors] = useState<
     Partial<Record<CoreField, string>>
   >({});
@@ -231,6 +232,7 @@ export function StartPlanning() {
   const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setAvailability("checking");
     let active = true;
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), 4000);
@@ -243,7 +245,7 @@ export function StartPlanning() {
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, []);
+  }, [availabilityCheck]);
   useEffect(() => {
     if (started) resultRef.current?.focus();
   }, [started]);
@@ -740,291 +742,501 @@ export function StartPlanning() {
           noValidate
           aria-busy={busy}
         >
-          <div className="core-fields">
-            <div className="plan-field">
-              <label htmlFor="core-title">Plan name</label>
-              <input
-                id="core-title"
-                name="title"
-                value={draft.title}
-                maxLength={120}
-                autoComplete="off"
-                placeholder="Weekend Beach Trip"
-                required
-                aria-invalid={Boolean(formErrors.title)}
-                aria-describedby={formErrors.title ? "title-error" : undefined}
-                onChange={(event) =>
-                  updateCore("title", event.currentTarget.value)
-                }
-              />
-              {formErrors.title && (
-                <p id="title-error" className="inline-error" role="alert">
-                  {formErrors.title}
-                </p>
-              )}
-            </div>
-            <div className="plan-field">
-              <label htmlFor="core-location">Location</label>
-              <input
-                id="core-location"
-                name="location"
-                value={draft.location}
-                maxLength={240}
-                placeholder="Caramoan, Camarines Sur"
-                autoComplete="off"
-                onChange={(event) =>
-                  updateCore("location", event.currentTarget.value)
-                }
-              />
-            </div>
-            <div className="core-field-pair">
+          <div className="planning-basics">
+            <div className="core-fields">
               <div className="plan-field">
-                <label htmlFor="core-people">Number of people</label>
+                <label htmlFor="core-title">Plan name</label>
                 <input
-                  id="core-people"
-                  name="people"
-                  type="text"
-                  inputMode="numeric"
-                  value={peopleValue(draft)}
-                  maxLength={8}
-                  placeholder="8, or leave open"
-                  aria-invalid={Boolean(formErrors.people)}
+                  id="core-title"
+                  name="title"
+                  value={draft.title}
+                  maxLength={120}
+                  autoComplete="off"
+                  placeholder="Weekend Beach Trip"
+                  required
+                  aria-invalid={Boolean(formErrors.title)}
                   aria-describedby={
-                    formErrors.people
-                      ? "people-error people-help"
-                      : "people-help"
+                    formErrors.title ? "title-error" : undefined
                   }
                   onChange={(event) =>
-                    updateCore("people", event.currentTarget.value)
+                    updateCore("title", event.currentTarget.value)
                   }
                 />
-                <p id="people-help" className="field-helper">
-                  Expected attendees, including people outside the room.
-                </p>
-                {formErrors.people && (
-                  <p id="people-error" className="inline-error" role="alert">
-                    {formErrors.people}
+                {formErrors.title && (
+                  <p id="title-error" className="inline-error" role="alert">
+                    {formErrors.title}
                   </p>
                 )}
               </div>
               <div className="plan-field">
-                <label htmlFor="core-schedule">Date and time</label>
+                <label htmlFor="core-location">Location</label>
                 <input
-                  id="core-schedule"
-                  name="schedule"
-                  value={scheduleValue(draft)}
-                  maxLength={160}
-                  placeholder="Not decided yet"
+                  id="core-location"
+                  name="location"
+                  value={draft.location}
+                  maxLength={240}
+                  placeholder="Caramoan, Camarines Sur"
+                  autoComplete="off"
                   onChange={(event) =>
-                    updateCore("schedule", event.currentTarget.value)
+                    updateCore("location", event.currentTarget.value)
+                  }
+                />
+              </div>
+              <div className="core-field-pair">
+                <div className="plan-field">
+                  <label htmlFor="core-people">Number of people</label>
+                  <input
+                    id="core-people"
+                    name="people"
+                    type="text"
+                    inputMode="numeric"
+                    value={peopleValue(draft)}
+                    maxLength={8}
+                    placeholder="8, or leave open"
+                    aria-invalid={Boolean(formErrors.people)}
+                    aria-describedby={
+                      formErrors.people
+                        ? "people-error people-help"
+                        : "people-help"
+                    }
+                    onChange={(event) =>
+                      updateCore("people", event.currentTarget.value)
+                    }
+                  />
+                  <p id="people-help" className="field-helper">
+                    Expected attendees, including people outside the room.
+                  </p>
+                  {formErrors.people && (
+                    <p id="people-error" className="inline-error" role="alert">
+                      {formErrors.people}
+                    </p>
+                  )}
+                </div>
+                <div className="plan-field">
+                  <label htmlFor="core-schedule">Date and time</label>
+                  <input
+                    id="core-schedule"
+                    name="schedule"
+                    value={scheduleValue(draft)}
+                    maxLength={160}
+                    placeholder="Not decided yet"
+                    onChange={(event) =>
+                      updateCore("schedule", event.currentTarget.value)
+                    }
+                  />
+                </div>
+              </div>
+              <div className="plan-field">
+                <label htmlFor="core-description">Short description</label>
+                <textarea
+                  id="core-description"
+                  name="description"
+                  rows={3}
+                  value={draft.description}
+                  maxLength={2000}
+                  placeholder="A weekend away with friends. We still need to figure out transport and the budget."
+                  onChange={(event) =>
+                    updateCore("description", event.currentTarget.value)
                   }
                 />
               </div>
             </div>
-            <div className="plan-field">
-              <label htmlFor="core-description">Short description</label>
-              <textarea
-                id="core-description"
-                name="description"
-                rows={3}
-                value={draft.description}
-                maxLength={2000}
-                placeholder="A weekend away with friends. We still need to figure out transport and the budget."
-                onChange={(event) =>
-                  updateCore("description", event.currentTarget.value)
-                }
-              />
-            </div>
-          </div>
-          <details className="simple-extraction">
-            <summary>
-              <span>
-                <ImagePlus size={16} aria-hidden="true" />
-                Use text or an invitation
-              </span>
-              <ChevronDown size={16} aria-hidden="true" />
-            </summary>
-            {availability !== "available" ? (
-              <p className="extraction-unavailable" role="status">
-                {availability === "checking"
-                  ? "Checking extraction availability…"
-                  : "AI extraction isn’t connected here. You can still fill in the plan yourself."}
-              </p>
-            ) : (
-              <>
-                <div
-                  className="source-mode"
-                  role="group"
-                  aria-label="Choose an autofill source"
-                >
-                  <button
-                    type="button"
-                    aria-pressed={sourceMode === "text"}
-                    className={sourceMode === "text" ? "is-active" : ""}
-                    onClick={() => {
-                      setSourceMode("text");
-                      setStatusMessage("");
-                    }}
-                  >
-                    Paste text
-                  </button>
-                  <button
-                    type="button"
-                    aria-pressed={sourceMode === "image"}
-                    className={sourceMode === "image" ? "is-active" : ""}
-                    onClick={() => {
-                      setSourceMode("image");
-                      setStatusMessage("");
-                    }}
-                  >
-                    Upload an image
-                  </button>
-                </div>
-                {sourceMode === "text" ? (
-                  <div className="source-panel">
-                    <label htmlFor="plan-source-text">Planning notes</label>
-                    <textarea
-                      id="plan-source-text"
-                      value={sourceText}
-                      maxLength={8000}
-                      rows={4}
-                      placeholder="Paste an invitation or what the group has discussed."
-                      onChange={(event) =>
-                        setSourceText(event.currentTarget.value)
-                      }
-                    />
+
+            <div className="plan-option-row">
+              <details className="more-fields simple-more" ref={detailsRef}>
+                <summary>
+                  More details
+                  <ChevronDown size={16} aria-hidden="true" />
+                </summary>
+                <fieldset className="category-fieldset">
+                  <legend>Category</legend>
+                  <div className="category-grid">
+                    {CATEGORY_OPTIONS.map((option) => (
+                      <label
+                        className="category-option"
+                        key={option.value}
+                        htmlFor={"category-" + option.value}
+                      >
+                        <input
+                          id={"category-" + option.value}
+                          type="radio"
+                          name="category"
+                          value={option.value}
+                          checked={draft.category === option.value}
+                          onChange={() => updateField("category", option.value)}
+                        />
+                        <span>{option.label}</span>
+                      </label>
+                    ))}
                   </div>
-                ) : (
-                  <div className="source-panel">
-                    <label
-                      className="upload-drop"
-                      htmlFor="plan-source-image"
-                      data-drag-active={dragActive}
-                      onDragEnter={(event) => {
-                        event.preventDefault();
-                        setDragActive(true);
-                      }}
-                      onDragOver={(event) => {
-                        event.preventDefault();
-                        setDragActive(true);
-                      }}
-                      onDragLeave={(event) => {
-                        if (
-                          !event.currentTarget.contains(
-                            event.relatedTarget as Node | null,
-                          )
-                        )
-                          setDragActive(false);
-                      }}
-                      onDrop={handleDrop}
+                </fieldset>
+                <div className="plan-field-grid">
+                  {ALL_EXTRA_FIELDS.map(renderField)}
+                </div>
+              </details>
+
+              <details className="simple-utilities">
+                <summary>
+                  Draft settings
+                  <ChevronDown size={16} aria-hidden="true" />
+                </summary>
+                <details className="simple-storage">
+                  <summary>
+                    Save on this device
+                    <ChevronDown size={16} aria-hidden="true" />
+                  </summary>
+                  <label className="draft-toggle">
+                    <input
+                      type="checkbox"
+                      checked={saveEnabled}
+                      onChange={toggleLocalDraft}
+                    />
+                    <span>Remember this draft in this browser</span>
+                  </label>
+                  <p>
+                    Only form fields are saved. Source text, images, evidence,
+                    and statements on someone’s behalf are excluded.
+                  </p>
+                  <p className="draft-status" role="status">
+                    {draftMessage}
+                  </p>
+                  {confirmClear ? (
+                    <div className="confirm-clear">
+                      <p>Clear the form and the saved draft?</p>
+                      <button
+                        type="button"
+                        className="text-button clear-draft"
+                        onClick={clearDraft}
+                      >
+                        Yes, clear draft
+                      </button>
+                      <button
+                        type="button"
+                        className="text-button"
+                        onClick={() => setConfirmClear(false)}
+                      >
+                        Keep draft
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-button clear-draft"
+                      onClick={() => setConfirmClear(true)}
                     >
-                      <input
-                        ref={fileInputRef}
-                        id="plan-source-image"
-                        className="visually-hidden"
-                        type="file"
-                        accept="image/png,image/jpeg,image/webp"
-                        aria-describedby="image-upload-help"
-                        onChange={handleFileChange}
-                      />
-                      <ImagePlus size={23} aria-hidden="true" />
-                      <span className="upload-title">
-                        Choose or drop an image
+                      <Trash2 size={15} aria-hidden="true" />
+                      Clear draft and form
+                    </button>
+                  )}
+                </details>
+
+                <section className="proxy-card" aria-labelledby="proxy-heading">
+                  <details>
+                    <summary id="proxy-heading">
+                      <span>
+                        <Plus size={16} aria-hidden="true" />
+                        Add on someone’s behalf
                       </span>
-                      <span id="image-upload-help" className="upload-help">
-                        PNG, JPEG, or WebP · up to 5 MiB
-                      </span>
-                    </label>
-                    {imageError && (
+                      <small>Unconfirmed by default</small>
+                    </summary>
+                    <p className="proxy-explanation">
+                      Record what someone told you without treating it as their
+                      approval or final attendance decision. These notes stay in
+                      this page session.
+                    </p>
+                    <div className="proxy-input-grid">
+                      <div className="plan-field">
+                        <label htmlFor="proxy-person">Who is this about?</label>
+                        <input
+                          id="proxy-person"
+                          type="text"
+                          maxLength={80}
+                          value={proxyForm.representedParticipant}
+                          onChange={(event) =>
+                            setProxyForm({
+                              ...proxyForm,
+                              representedParticipant: event.currentTarget.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="plan-field">
+                        <label htmlFor="proxy-supplier">Who told you?</label>
+                        <input
+                          id="proxy-supplier"
+                          type="text"
+                          maxLength={80}
+                          value={proxyForm.suppliedBy}
+                          onChange={(event) =>
+                            setProxyForm({
+                              ...proxyForm,
+                              suppliedBy: event.currentTarget.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="plan-field proxy-statement">
+                        <label htmlFor="proxy-statement">
+                          What did they say?
+                        </label>
+                        <textarea
+                          id="proxy-statement"
+                          rows={2}
+                          maxLength={300}
+                          value={proxyForm.statement}
+                          onChange={(event) =>
+                            setProxyForm({
+                              ...proxyForm,
+                              statement: event.currentTarget.value,
+                            })
+                          }
+                        />
+                      </div>
+                      <label className="proxy-confirm">
+                        <input
+                          type="checkbox"
+                          checked={proxyForm.confirmedByParticipant}
+                          onChange={(event) =>
+                            setProxyForm({
+                              ...proxyForm,
+                              confirmedByParticipant:
+                                event.currentTarget.checked,
+                            })
+                          }
+                        />
+                        Confirmed directly by this participant
+                      </label>
+                    </div>
+                    {proxyError && (
                       <p className="inline-error" role="alert">
-                        {imageError}
+                        {proxyError}
                       </p>
                     )}
-                    {selectedImage && previewUrl && (
-                      <div className="image-preview">
-                        <img src={previewUrl} alt="Selected planning image" />
-                        <div className="image-preview-meta">
-                          <span>{selectedImage.name}</span>
-                        </div>
-                        <button
-                          type="button"
-                          className="icon-button"
-                          aria-label="Remove selected image"
-                          onClick={() => {
-                            setSelectedImage(null);
-                            if (fileInputRef.current)
-                              fileInputRef.current.value = "";
-                          }}
-                        >
-                          <X size={17} aria-hidden="true" />
-                        </button>
-                      </div>
+                    <button
+                      type="button"
+                      className="button button-secondary proxy-add"
+                      onClick={addProxyStatement}
+                    >
+                      <Plus size={16} aria-hidden="true" />
+                      Add statement
+                    </button>
+                    {proxyStatements.length > 0 && (
+                      <ul className="proxy-list">
+                        {proxyStatements.map((item, index) => (
+                          <li key={item.representedParticipant + "-" + index}>
+                            <div>
+                              <strong>{item.representedParticipant}</strong>
+                              <span>
+                                {item.confirmedByParticipant
+                                  ? "Confirmed directly"
+                                  : "Not confirmed"}
+                              </span>
+                              <p>
+                                “{item.statement}”{" "}
+                                <small>Reported by {item.suppliedBy}</small>
+                              </p>
+                            </div>
+                            <button
+                              type="button"
+                              className="icon-button"
+                              aria-label={
+                                "Remove statement about " +
+                                item.representedParticipant
+                              }
+                              onClick={() =>
+                                setProxyStatements((items) =>
+                                  items.filter(
+                                    (_, itemIndex) => itemIndex !== index,
+                                  ),
+                                )
+                              }
+                            >
+                              <X size={16} aria-hidden="true" />
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
                     )}
+                  </details>
+                </section>
+              </details>
+            </div>
+            <div className="simple-submit-row">
+              <p>
+                Local draft preview. Shared rooms aren’t connected here yet.
+              </p>
+              <motion.button
+                className="button button-primary"
+                type="submit"
+                disabled={busy}
+                whileTap={reducedMotion ? undefined : { scale: 0.97 }}
+              >
+                Start Planning
+                <ArrowRight size={17} aria-hidden="true" />
+              </motion.button>
+            </div>
+
+            {initial.enabled && saveEnabled && !started && (
+              <p className="restored-draft-note" role="status">
+                Your saved draft is restored, including additional details.
+              </p>
+            )}
+          </div>
+          <aside
+            className="planning-autofill"
+            aria-labelledby="autofill-heading"
+          >
+            <div className="autofill-heading">
+              <Sparkles size={19} aria-hidden="true" />
+              <h2 id="autofill-heading">AI autofill</h2>
+            </div>
+            <p className="autofill-intro">
+              Paste notes or upload an invitation.
+            </p>
+            <div
+              className="source-mode"
+              role="group"
+              aria-label="Choose an autofill source"
+            >
+              <button
+                type="button"
+                aria-pressed={sourceMode === "text"}
+                className={sourceMode === "text" ? "is-active" : ""}
+                onClick={() => {
+                  setSourceMode("text");
+                  setStatusMessage("");
+                }}
+              >
+                Paste text
+              </button>
+              <button
+                type="button"
+                aria-pressed={sourceMode === "image"}
+                className={sourceMode === "image" ? "is-active" : ""}
+                onClick={() => {
+                  setSourceMode("image");
+                  setStatusMessage("");
+                }}
+              >
+                Upload an image
+              </button>
+            </div>
+            {sourceMode === "text" ? (
+              <div className="source-panel">
+                <label htmlFor="plan-source-text">Planning notes</label>
+                <textarea
+                  id="plan-source-text"
+                  value={sourceText}
+                  maxLength={8000}
+                  rows={4}
+                  placeholder="Paste an invitation or what the group has discussed."
+                  onChange={(event) => setSourceText(event.currentTarget.value)}
+                />
+              </div>
+            ) : (
+              <div className="source-panel">
+                <label
+                  className="upload-drop"
+                  htmlFor="plan-source-image"
+                  data-drag-active={dragActive}
+                  onDragEnter={(event) => {
+                    event.preventDefault();
+                    setDragActive(true);
+                  }}
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                    setDragActive(true);
+                  }}
+                  onDragLeave={(event) => {
+                    if (
+                      !event.currentTarget.contains(
+                        event.relatedTarget as Node | null,
+                      )
+                    )
+                      setDragActive(false);
+                  }}
+                  onDrop={handleDrop}
+                >
+                  <input
+                    ref={fileInputRef}
+                    id="plan-source-image"
+                    className="visually-hidden"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp"
+                    aria-describedby="image-upload-help"
+                    onChange={handleFileChange}
+                  />
+                  <ImagePlus size={23} aria-hidden="true" />
+                  <span className="upload-title">Choose or drop an image</span>
+                  <span id="image-upload-help" className="upload-help">
+                    PNG, JPEG, or WebP · up to 5 MiB
+                  </span>
+                </label>
+                {imageError && (
+                  <p className="inline-error" role="alert">
+                    {imageError}
+                  </p>
+                )}
+                {selectedImage && previewUrl && (
+                  <div className="image-preview">
+                    <img src={previewUrl} alt="Selected planning image" />
+                    <div className="image-preview-meta">
+                      <span>{selectedImage.name}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label="Remove selected image"
+                      onClick={() => {
+                        setSelectedImage(null);
+                        if (fileInputRef.current)
+                          fileInputRef.current.value = "";
+                      }}
+                    >
+                      <X size={17} aria-hidden="true" />
+                    </button>
                   </div>
                 )}
-                <div className="source-privacy">
-                  <LockKeyhole size={15} aria-hidden="true" />
-                  <p>
-                    Only when you extract: your source is sent to Meta through
-                    Setvia’s server. Images stay in request memory. Review
-                    suggestions before using them.
-                  </p>
-                </div>
-                <button
-                  className="button button-secondary autofill-button"
-                  type="button"
-                  disabled={busy}
-                  onClick={requestAutofill}
-                >
-                  <Sparkles size={16} aria-hidden="true" />
-                  {busy ? "Extracting suggestions…" : "Extract suggestions"}
-                </button>
-              </>
-            )}
-          </details>
-          <details className="more-fields simple-more" ref={detailsRef}>
-            <summary>
-              More details
-              <ChevronDown size={16} aria-hidden="true" />
-            </summary>
-            <fieldset className="category-fieldset">
-              <legend>Category</legend>
-              <div className="category-grid">
-                {CATEGORY_OPTIONS.map((option) => (
-                  <label
-                    className="category-option"
-                    key={option.value}
-                    htmlFor={"category-" + option.value}
-                  >
-                    <input
-                      id={"category-" + option.value}
-                      type="radio"
-                      name="category"
-                      value={option.value}
-                      checked={draft.category === option.value}
-                      onChange={() => updateField("category", option.value)}
-                    />
-                    <span>{option.label}</span>
-                  </label>
-                ))}
               </div>
-            </fieldset>
-            <div className="plan-field-grid">
-              {ALL_EXTRA_FIELDS.map(renderField)}
+            )}
+            <div className="source-privacy">
+              <LockKeyhole size={15} aria-hidden="true" />
+              <p>
+                Only when you extract: your source is sent to Meta through
+                Setvia’s server. Images stay in request memory. Review
+                suggestions before using them.
+              </p>
             </div>
-          </details>
-          <div className="simple-submit-row">
-            <p>Local draft preview. Shared rooms aren’t connected here yet.</p>
-            <motion.button
-              className="button button-primary"
-              type="submit"
-              disabled={busy}
-              whileTap={reducedMotion ? undefined : { scale: 0.97 }}
+            <button
+              className="button button-secondary autofill-button"
+              type="button"
+              disabled={busy || availability !== "available"}
+              aria-describedby="autofill-availability"
+              onClick={requestAutofill}
             >
-              Start Planning
-              <ArrowRight size={17} aria-hidden="true" />
-            </motion.button>
-          </div>
+              <Sparkles size={16} aria-hidden="true" />
+              {busy ? "Extracting suggestions…" : "Autofill with Setvia"}
+            </button>
+
+            <div className="autofill-availability" data-state={availability}>
+              <p id="autofill-availability" role="status">
+                {availability === "checking"
+                  ? "Checking AI connection…"
+                  : availability === "available"
+                    ? "AI connection ready. Review any suggested details."
+                    : "AI connection unavailable. You can still fill in the plan."}
+              </p>
+              {availability === "unavailable" && (
+                <button
+                  type="button"
+                  className="text-button"
+                  onClick={() => setAvailabilityCheck((value) => value + 1)}
+                >
+                  Check connection
+                </button>
+              )}
+            </div>
+          </aside>
           {started && (
             <motion.div
               className="starting-point-ready"
@@ -1061,7 +1273,7 @@ export function StartPlanning() {
                 This is a local draft, not a shared room.{" "}
                 {saveEnabled
                   ? "Your form fields are saved on this device."
-                  : "Keep this page open, or turn on browser saving below."}
+                  : "Keep this page open, or turn on browser saving in Draft settings."}
               </p>
               <Link className="text-button" to="/demos">
                 Explore a fictional planning room
@@ -1069,60 +1281,7 @@ export function StartPlanning() {
               </Link>
             </motion.div>
           )}
-          <details className="simple-storage">
-            <summary>
-              Save on this device
-              <ChevronDown size={16} aria-hidden="true" />
-            </summary>
-            <label className="draft-toggle">
-              <input
-                type="checkbox"
-                checked={saveEnabled}
-                onChange={toggleLocalDraft}
-              />
-              <span>Remember this draft in this browser</span>
-            </label>
-            <p>
-              Only form fields are saved. Source text, images, evidence, and
-              statements on someone’s behalf are excluded.
-            </p>
-            <p className="draft-status" role="status">
-              {draftMessage}
-            </p>
-            {confirmClear ? (
-              <div className="confirm-clear">
-                <p>Clear the form and the saved draft?</p>
-                <button
-                  type="button"
-                  className="text-button clear-draft"
-                  onClick={clearDraft}
-                >
-                  Yes, clear draft
-                </button>
-                <button
-                  type="button"
-                  className="text-button"
-                  onClick={() => setConfirmClear(false)}
-                >
-                  Keep draft
-                </button>
-              </div>
-            ) : (
-              <button
-                type="button"
-                className="text-button clear-draft"
-                onClick={() => setConfirmClear(true)}
-              >
-                <Trash2 size={15} aria-hidden="true" />
-                Clear draft and form
-              </button>
-            )}
-          </details>
-          {initial.enabled && saveEnabled && !started && (
-            <p className="restored-draft-note" role="status">
-              Your saved draft is restored, including additional details.
-            </p>
-          )}
+
           {reviewEntries.length > 0 && (
             <motion.section
               className="review-card"
@@ -1356,131 +1515,6 @@ export function StartPlanning() {
                 )}
             </section>
           )}
-
-          <section className="proxy-card" aria-labelledby="proxy-heading">
-            <details>
-              <summary id="proxy-heading">
-                <span>
-                  <Plus size={16} aria-hidden="true" />
-                  Add on someone’s behalf
-                </span>
-                <small>Unconfirmed by default</small>
-              </summary>
-              <p className="proxy-explanation">
-                Record what someone told you without treating it as their
-                approval or final attendance decision. These notes stay in this
-                page session.
-              </p>
-              <div className="proxy-input-grid">
-                <div className="plan-field">
-                  <label htmlFor="proxy-person">Who is this about?</label>
-                  <input
-                    id="proxy-person"
-                    type="text"
-                    maxLength={80}
-                    value={proxyForm.representedParticipant}
-                    onChange={(event) =>
-                      setProxyForm({
-                        ...proxyForm,
-                        representedParticipant: event.currentTarget.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="plan-field">
-                  <label htmlFor="proxy-supplier">Who told you?</label>
-                  <input
-                    id="proxy-supplier"
-                    type="text"
-                    maxLength={80}
-                    value={proxyForm.suppliedBy}
-                    onChange={(event) =>
-                      setProxyForm({
-                        ...proxyForm,
-                        suppliedBy: event.currentTarget.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="plan-field proxy-statement">
-                  <label htmlFor="proxy-statement">What did they say?</label>
-                  <textarea
-                    id="proxy-statement"
-                    rows={2}
-                    maxLength={300}
-                    value={proxyForm.statement}
-                    onChange={(event) =>
-                      setProxyForm({
-                        ...proxyForm,
-                        statement: event.currentTarget.value,
-                      })
-                    }
-                  />
-                </div>
-                <label className="proxy-confirm">
-                  <input
-                    type="checkbox"
-                    checked={proxyForm.confirmedByParticipant}
-                    onChange={(event) =>
-                      setProxyForm({
-                        ...proxyForm,
-                        confirmedByParticipant: event.currentTarget.checked,
-                      })
-                    }
-                  />
-                  Confirmed directly by this participant
-                </label>
-              </div>
-              {proxyError && (
-                <p className="inline-error" role="alert">
-                  {proxyError}
-                </p>
-              )}
-              <button
-                type="button"
-                className="button button-secondary proxy-add"
-                onClick={addProxyStatement}
-              >
-                <Plus size={16} aria-hidden="true" />
-                Add statement
-              </button>
-              {proxyStatements.length > 0 && (
-                <ul className="proxy-list">
-                  {proxyStatements.map((item, index) => (
-                    <li key={item.representedParticipant + "-" + index}>
-                      <div>
-                        <strong>{item.representedParticipant}</strong>
-                        <span>
-                          {item.confirmedByParticipant
-                            ? "Confirmed directly"
-                            : "Not confirmed"}
-                        </span>
-                        <p>
-                          “{item.statement}”{" "}
-                          <small>Reported by {item.suppliedBy}</small>
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        className="icon-button"
-                        aria-label={
-                          "Remove statement about " +
-                          item.representedParticipant
-                        }
-                        onClick={() =>
-                          setProxyStatements((items) =>
-                            items.filter((_, itemIndex) => itemIndex !== index),
-                          )
-                        }
-                      >
-                        <X size={16} aria-hidden="true" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </details>
-          </section>
         </form>
         <div
           className="simple-live-status"

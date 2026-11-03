@@ -14,6 +14,7 @@ import {
   currentQuestion,
   questionQuickReplies,
   virtualKeyboardInset,
+  composerInputHeight,
 } from "./composer-model.js";
 import {
   MessageComposer,
@@ -41,19 +42,42 @@ type PreviewFixtureData = Record<
 function loadPreviewFixture(scenario: string): PreviewFixtureData {
   return JSON.parse(
     readFileSync(
-      new URL("../../public/dashboard-preview/" + scenario + ".json", import.meta.url),
+      new URL(
+        "../../public/dashboard-preview/" + scenario + ".json",
+        import.meta.url,
+      ),
       "utf8",
     ),
   ) as PreviewFixtureData;
 }
 const beach = loadPreviewFixture("beach");
 
+test("composer grows from real content, shrinks to one line, and leaves room above a mobile keyboard", () => {
+  assert.equal(composerInputHeight(44, 120, 900), 44);
+  assert.equal(composerInputHeight(110, 120, 900), 110);
+  assert.equal(composerInputHeight(900, 120, 900), 240);
+  assert.equal(composerInputHeight(12, 120, 900), 44);
+  assert.equal(composerInputHeight(900, 150, 360), 94);
+  assert.equal(composerInputHeight(900, 180, 240), 64);
+});
+
 test("published fixtures contain only schema-validated synthetic snapshots", () => {
-  for (const scenario of ["hike", "beach", "family", "kickoff", "safety", "blocked", "empty"]) {
+  for (const scenario of [
+    "hike",
+    "beach",
+    "family",
+    "kickoff",
+    "safety",
+    "blocked",
+    "empty",
+  ]) {
     const fixture = loadPreviewFixture(scenario);
     for (const frame of Object.values(fixture))
       for (const snapshot of Object.values(frame))
-        assert.equal(DashboardSnapshotSchema.parse(snapshot).source, "synthetic");
+        assert.equal(
+          DashboardSnapshotSchema.parse(snapshot).source,
+          "synthetic",
+        );
   }
 });
 function messageFor(
@@ -504,7 +528,7 @@ test("validated choices accept only current structured options for this particip
   );
 });
 test("a private question cannot be submitted by a different participant", async () => {
-  const snapshot = (loadPreviewFixture("family")).initial.alex!;
+  const snapshot = loadPreviewFixture("family").initial.alex!;
   const other = snapshot.room.participants.find(
     (p) => p.id !== snapshot.room.viewerId,
   )!;

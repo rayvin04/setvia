@@ -21,12 +21,12 @@ export function Reveal({
       id={id}
       className={className}
       initial={false}
-      whileInView={reduced ? undefined : { y: [8, 0] }}
+      whileInView={reduced ? undefined : { y: [6, 0] }}
       viewport={{ once: true, amount: 0.12 }}
       transition={
         reduced
           ? { duration: 0.16 }
-          : { duration: 0.35, ease: [0.22, 1, 0.36, 1] }
+          : { duration: 0.42, ease: [0.4, 0, 0.2, 1] }
       }
     >
       {children}
@@ -52,12 +52,15 @@ export function PageTransition({ children }: { children: ReactNode }) {
     <motion.div
       className="route-frame"
       key={location.pathname}
-      initial={{ opacity: 0, y: reduced ? 0 : 10 }}
+      initial={{ opacity: 0, y: reduced ? 0 : 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={
         reduced
           ? { duration: 0.12 }
-          : { type: "spring", bounce: 0, duration: 0.35 }
+          : {
+              opacity: { duration: 0.24, ease: "easeInOut" },
+              y: { type: "spring", bounce: 0, visualDuration: 0.32 },
+            }
       }
     >
       {children}

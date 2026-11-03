@@ -99,7 +99,7 @@ export function InteractivePlanPreview() {
               initial={{ opacity: 0, x: reduced ? 0 : 6 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: reduced ? 0 : 0.14 }}
+              transition={{ duration: reduced ? 0 : 0.18, ease: "easeInOut" }}
             >
               <button
                 className="preview-back"
@@ -122,7 +122,7 @@ export function InteractivePlanPreview() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: reduced ? 0 : 0.12 }}
+              transition={{ duration: reduced ? 0 : 0.16, ease: "easeInOut" }}
               ref={(node) => {
                 if (node && returnFocus.current) {
                   node
@@ -209,7 +209,11 @@ export function InteractivePlanPreview() {
         >
           <motion.span
             animate={{ scaleX: state.approvals.length / 4 }}
-            transition={{ duration: reduced ? 0 : 0.2 }}
+            transition={
+              reduced
+                ? { duration: 0 }
+                : { type: "spring", bounce: 0, visualDuration: 0.3 }
+            }
           />
         </div>
       </div>

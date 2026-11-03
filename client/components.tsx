@@ -31,7 +31,7 @@ export function ButtonLink({
     <MotionLink
       whileTap={reduced ? { opacity: 0.8 } : { scale: 0.96 }}
       whileHover={reduced ? { opacity: 0.9 } : { y: -2 }}
-      transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+      transition={{ type: "spring", bounce: 0, visualDuration: 0.24 }}
       className={cn(
         "button",
         secondary ? "button-secondary" : "button-primary",
@@ -76,22 +76,39 @@ export function Header() {
   });
   return (
     <motion.header
+      initial={false}
       className={cn("header", "site-header", view.compact && "is-scrolled")}
       data-hidden={view.hidden && !focused}
       animate={{
-        y: reduced ? 0 : view.hidden && !focused ? -100 : 0,
+        scale: reduced ? 1 : view.hidden && !focused ? 0.96 : 1,
         opacity: view.hidden && !focused ? 0 : 1,
       }}
-      transition={{ duration: reduced ? 0 : 0.22, ease: [0.22, 1, 0.36, 1] }}
+      transition={{
+        scale: reduced
+          ? { duration: 0 }
+          : { type: "spring", bounce: 0, visualDuration: 0.32 },
+        opacity: { duration: reduced ? 0.08 : 0.2, ease: "easeInOut" },
+      }}
       onFocusCapture={() => setFocused(true)}
       onBlurCapture={(event) => {
         if (!event.currentTarget.contains(event.relatedTarget))
           setFocused(false);
       }}
     >
-      <motion.div className="header-inner">
-        <Wordmark />
-        <nav aria-label="Main navigation">
+      <motion.div
+        className="header-inner"
+        layout={reduced ? false : true}
+        transition={{
+          layout: { type: "spring", bounce: 0, visualDuration: 0.4 },
+        }}
+      >
+        <motion.div layout={reduced ? false : "position"}>
+          <Wordmark />
+        </motion.div>
+        <motion.nav
+          layout={reduced ? false : "position"}
+          aria-label="Main navigation"
+        >
           <a href="/#how-it-works">How it works</a>
           <Link to="/demos">
             <span className="nav-explore-prefix">Explore&nbsp;</span>demos
@@ -115,7 +132,7 @@ export function Header() {
               className="github-mark"
             />
           </a>
-        </nav>
+        </motion.nav>
       </motion.div>
     </motion.header>
   );
@@ -129,7 +146,9 @@ export function Footer() {
         ? "Room joining preview"
         : "Fictional demo data";
   return (
-    <footer className="footer">
+    <footer
+      className={cn("footer", pathname === "/start" && "planning-footer")}
+    >
       <Wordmark />
       <Attribution />
       <span>{status}</span>

@@ -187,7 +187,7 @@ function RealityCheckStory() {
             key={selected}
             initial={{ opacity: reduced ? 1 : 0.7 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.15 }}
+            transition={{ duration: reduced ? 0 : 0.22, ease: "easeInOut" }}
           >
             <h3>{check.finding}</h3>
             <p>{check.context}</p>
@@ -351,7 +351,7 @@ function ScenarioStory() {
             key={selected}
             initial={{ opacity: reduced ? 1 : 0.65 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.18 }}
+            transition={{ duration: reduced ? 0 : 0.24, ease: "easeInOut" }}
           >
             <img
               src={`/covers/${featured.id}-2.svg`}
