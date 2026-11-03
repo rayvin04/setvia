@@ -15,6 +15,7 @@ export function constraintPasses(
   if (c.operator === "required")
     return typeof actual !== "string" || actual.trim().length > 0;
   if (c.operator === "eq") return actual === c.expected;
+  if (c.operator === "neq") return actual !== c.expected;
   return (
     typeof actual === "number" &&
     typeof c.expected === "number" &&
@@ -27,6 +28,9 @@ export function violations(room: Room, option: PlanOption): Constraint[] {
   );
 }
 export function calculateReadiness(room: Room, findings: Finding[]): Readiness {
+  // Private and tentative facts never increase the group-wide score. Owner
+  // scope prevents unrelated personal budgets and schedules from appearing to
+  // contradict a single shared value.
   const visible = room.facts.filter(
     (f) => f.visibility === "group" && f.confirmed,
   );
@@ -40,11 +44,26 @@ export function calculateReadiness(room: Room, findings: Finding[]): Readiness {
     const constraints = room.constraints.filter(
       (c) => c.category === policy.category,
     );
-    const evidence = policy.requiredKeys.map((key) =>
-      visible.some((f) => f.key === key && f.value !== null),
+    const evidence = policy.requiredKeys.map((key) => {
+      const facts = visible.filter((f) => f.key === key && f.value !== null);
+      const shared = facts.filter((f) => f.scope === "shared");
+      return (shared.length ? shared : facts).length > 0;
+    });
+    const participantEvidence = policy.requiredPerParticipantKeys.flatMap(
+      (key) =>
+        room.participants.map((participant) =>
+          visible.some(
+            (f) =>
+              f.scope === "participant" &&
+              f.ownerId === participant.id &&
+              f.key === key &&
+              f.value !== null,
+          ),
+        ),
     );
     const checks = [
       ...evidence,
+      ...participantEvidence,
       ...constraints.map((c) => constraintPasses(c, room.proposal.values)),
     ];
     const open = findings.filter(
@@ -53,14 +72,20 @@ export function calculateReadiness(room: Room, findings: Finding[]): Readiness {
     const hardFailure = constraints.some(
       (c) => c.hard && !constraintPasses(c, room.proposal.values),
     );
-    const conflictingFacts = policy.requiredKeys.some(
-      (key) =>
-        new Set(
-          visible
-            .filter((f) => f.key === key)
-            .map((f) => JSON.stringify(f.value)),
-        ).size > 1,
-    );
+    const conflictingFacts = policy.requiredKeys.some((key) => {
+      const facts = visible.filter((f) => f.key === key);
+      const shared = facts.filter((f) => f.scope === "shared");
+      if (new Set(shared.map((f) => JSON.stringify(f.value))).size > 1)
+        return true;
+      const personal = facts.filter((f) => f.scope === "participant");
+      const byOwner = new Map<string, Set<string>>();
+      for (const fact of personal) {
+        const values = byOwner.get(fact.ownerId) ?? new Set<string>();
+        values.add(JSON.stringify(fact.value));
+        byOwner.set(fact.ownerId, values);
+      }
+      return [...byOwner.values()].some((values) => values.size > 1);
+    });
     const critical =
       conflictingFacts ||
       open.some((f) => f.severity === "critical") ||

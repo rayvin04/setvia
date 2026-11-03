@@ -9,6 +9,7 @@ import {
 } from "../server/src/agents/fixtures.js";
 import { AgentEngine } from "../server/src/agents/engine.js";
 import { saveLab, type LabRecord } from "../server/src/agents/lab.js";
+import { runAllScenarioMocks } from "../server/src/agents/scenario-runner.js";
 
 // This executable intentionally has no live mode and never reads .env.
 globalThis.fetch = async () => {
@@ -103,8 +104,8 @@ const expected = [
 ] as const;
 const specificChecks = [
   records[0].cycle.traces.length === 1,
-  records[1].cycle.traces.some((t) =>
-    t.rejectedOptionIds.includes("expensive"),
+  records[1].cycle.traces.some((trace) =>
+    trace.rejectedOptionIds.includes("expensive"),
   ),
   records[2].cycle.questions.length === 1 &&
     records[2].cycle.traces.at(-1)?.role === "Judge",
@@ -116,6 +117,8 @@ records.forEach((record, index) => {
   record.passed =
     record.cycle.outcome === expected[index] && specificChecks[index];
 });
+const realistic = await runAllScenarioMocks();
+records.push(...realistic.map(({ record }) => record));
 const passed = records.filter((record) => record.passed).length;
 const paths = await saveLab(
   records,
@@ -127,8 +130,11 @@ console.log(
     {
       mode: "MOCK",
       scenarios: records.length,
+      realisticScenarios: realistic.length,
       passed,
       failed: records.length - passed,
+      participants: realistic.map(({ record }) => ({ scenario: record.scenarioId, count: record.participantCount })),
+      mockRequests: records.reduce((sum, record) => sum + record.cycle.attempts, 0),
       liveRequests: 0,
       ...paths,
     },
@@ -136,5 +142,4 @@ console.log(
     2,
   ),
 );
-
 if (passed !== records.length) process.exitCode = 1;

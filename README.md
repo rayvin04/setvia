@@ -43,4 +43,6 @@ The deployed application is planned to use Meta models only. Lexend is provided 
 
 ## Bounded agents and private Lab
 
-The transport-independent multi-agent foundation and a mock-only Setvia Lab are available locally. Run `npm run lab` for five synthetic scenarios and open the printed private HTML report. See [the foundation documentation](docs/agent-foundation.md) for scope, privacy, limits, and verification. Room collaboration is not yet connected to the UI; no live model call is made by Lab.
+The transport-independent multi-agent foundation and Setvia Lab are available locally. Run `npm run lab` for the existing mock regressions plus five realistic synthetic scenarios (8, 6, 14, 22, and 58 participants) and open the printed private HTML report. Use `npm run lab:review -- <private-report.json>` for manual reasoning-quality ratings.
+
+`npm run lab:live -- --scenario A,B --confirm-billable` is a separate, gated Muse Spark evaluation using only fixed synthetic scenarios. It requires a billing-check attestation and an exact interactive approval phrase, and caps each selected scenario at 10 HTTP attempts and $0.82 in reserved cost. It is not run automatically. The mock Lab never loads `.env` or calls the network. See [the foundation documentation](docs/agent-foundation.md) for scope, privacy, limits, and verification. Room collaboration is not yet connected to the production UI.

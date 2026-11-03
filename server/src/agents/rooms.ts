@@ -8,12 +8,13 @@ import { z } from "zod";
 import {
   RoomSchema,
   FactSchema,
+  MAX_ROOM_PARTICIPANTS,
   ConstraintSchema,
   PolicySchema,
   OptionSchema,
   type Auth,
-  type Fact,
-  type Policy,
+  type FactInput,
+  type PolicyInput,
   type Room,
   type PlanOption,
   type Constraint,
@@ -55,7 +56,7 @@ export class RoomService {
     readonly store: RoomStore,
     private onChange: (id: string) => void = () => {},
   ) {}
-  async create(eventType: string, policy: Policy, proposal: PlanOption) {
+  async create(eventType: string, policy: PolicyInput, proposal: PlanOption) {
     const invitation = secret();
     const room = RoomSchema.parse({
       schemaVersion: 1,
@@ -96,6 +97,8 @@ export class RoomService {
         )
       )
         throw new StateError("UNAUTHORIZED");
+      if (room.participants.length >= MAX_ROOM_PARTICIPANTS)
+        throw new StateError("PARTICIPANT_LIMIT");
       room.participants.push({
         id: participantId,
         name: z.string().trim().min(1).max(40).parse(name),
@@ -151,7 +154,7 @@ export class RoomService {
       });
     });
   }
-  async confirmFact(roomId: string, auth: Auth, revision: number, fact: Fact) {
+  async confirmFact(roomId: string, auth: Auth, revision: number, fact: FactInput) {
     return this.update(roomId, auth, revision, (room) => {
       const parsed = FactSchema.parse(fact);
       if (parsed.ownerId !== auth.participantId)
@@ -214,7 +217,7 @@ export class RoomService {
     roomId: string,
     auth: Auth,
     revision: number,
-    policy: Policy,
+    policy: PolicyInput,
   ) {
     return this.update(roomId, auth, revision, (room) => {
       room.policy = PolicySchema.parse(policy);
@@ -283,6 +286,12 @@ export class RoomService {
     const latest = room.lastCycle?.baseRevision === room.revision;
     return {
       ...sharedContext(room),
+      roomId: room.id,
+      viewerId: auth.participantId,
+      participantApprovals: room.participants
+        .filter((p) => room.approvals[p.id] === room.proposalVersion)
+        .map((p) => p.id),
+      findings: latest ? (room.lastCycle?.finalEvaluation?.findings ?? []) : [],
       privateFacts: room.facts.filter(
         (f) => f.ownerId === auth.participantId && f.visibility === "private",
       ),

@@ -16,6 +16,9 @@ import {
 import { JsonPersistence, RoomStore } from "./store.js";
 import { RoomService } from "./rooms.js";
 import { renderLab, saveLab } from "./lab.js";
+import { getScenario, SCENARIO_IDS } from "./scenarios.js";
+import { runAllScenarioMocks, runScenarioMock, runScenarioWithGateway } from "./scenario-runner.js";
+import { calculateReadiness, violations } from "./readiness.js";
 import { createMetaGateway } from "./meta-gateway.js";
 import {
   META_API_BASE_URL,
@@ -425,7 +428,25 @@ test("private facts and Listener output never enter shared roles, traces or anot
     room.revision,
     "PRIVATE_CANARY",
   );
+  room = await f.store.read(f.roomId);
+  await f.engine.rooms.confirmFact(f.roomId, f.auth, room.revision, {
+    id: "shared_canary",
+    key: "meetingLocation",
+    value: "GROUP_CONTEXT_CANARY",
+    visibility: "group",
+    scope: "shared",
+    confirmed: true,
+    ownerId: f.auth.participantId,
+  });
   const result = await f.engine.run(f.roomId, f.auth);
+  const listenerInput = f.calls.find((call) => call.role === "Listener")?.input as
+    | { privateInput?: { text?: string }; privateFacts?: unknown[]; facts?: unknown[]; participants?: unknown[] }
+    | undefined;
+  assert.deepEqual(listenerInput?.privateInput, { text: "PRIVATE_CANARY" });
+  assert.equal(listenerInput?.privateFacts?.length, 1);
+  assert.equal("facts" in (listenerInput ?? {}), false);
+  assert.equal("participants" in (listenerInput ?? {}), false);
+  assert.equal(JSON.stringify(listenerInput).includes("GROUP_CONTEXT_CANARY"), false);
   assert.equal(
     JSON.stringify(f.calls.filter((c) => c.role !== "Listener")).includes(
       "PRIVATE_CANARY",
@@ -575,11 +596,11 @@ test("Lab escapes model text and private history is stored only outside the publ
   const saved = await saveLab(records, root, join(root, "public-repo"));
   assert.equal(
     JSON.parse(await readFile(saved.jsonPath, "utf8")).fixtureVersion,
-    "lab-v1",
+    "lab-v2",
   );
   assert.ok(
     (await readFile(saved.htmlPath, "utf8")).includes(
-      "Actual execution records",
+      "Visible structured execution records",
     ),
   );
 });
@@ -716,7 +737,13 @@ test("unresolved findings cannot disappear from later Judge passes without evide
 });
 test("conflicting confirmed shared facts block readiness independently of the model", async () => {
   const f = await fixture([{ role: "Judge", output: judge() }]);
-  const room = await f.store.read(f.roomId);
+  let room = await f.store.read(f.roomId);
+  const original = room.facts.find((fact) => fact.id === "fact_1")!;
+  await f.engine.rooms.confirmFact(f.roomId, f.auth, room.revision, {
+    ...original,
+    scope: "shared",
+  });
+  room = await f.store.read(f.roomId);
   await f.engine.rooms.confirmFact(f.roomId, f.other, room.revision, {
     id: "opposed",
     key: "check_1",
@@ -724,6 +751,7 @@ test("conflicting confirmed shared facts block readiness independently of the mo
     ownerId: f.other.participantId,
     confirmed: true,
     visibility: "group",
+    scope: "shared",
   });
   assert.equal(
     (await f.engine.run(f.roomId, f.auth)).readiness?.status,
@@ -902,5 +930,222 @@ test("revoked shared information is not carried forward through historical findi
   assert.equal(
     JSON.stringify(f.calls.at(-1)?.input).includes("SHARED_THEN_PRIVATE"),
     false,
+  );
+});
+
+test("owner-aware readiness keeps personal budget values separate and ignores private values", async () => {
+  const f = await fixture([{ role: "Judge", output: judge() }]);
+  let room = await f.store.read(f.roomId);
+  const policy = structuredClone(room.policy);
+  policy.find((entry) => entry.category === "Budget Check")!.requiredKeys = [
+    "personalBudget",
+  ];
+  await f.engine.rooms.configurePolicy(f.roomId, f.auth, room.revision, policy);
+  room = await f.store.read(f.roomId);
+  await f.engine.rooms.confirmFact(f.roomId, f.auth, room.revision, {
+    id: "personal_budget_a",
+    key: "personalBudget",
+    value: 500,
+    ownerId: f.auth.participantId,
+    visibility: "group",
+    scope: "participant",
+    confirmed: true,
+  });
+  room = await f.store.read(f.roomId);
+  await f.engine.rooms.confirmFact(f.roomId, f.other, room.revision, {
+    id: "personal_budget_b",
+    key: "personalBudget",
+    value: 900,
+    ownerId: f.other.participantId,
+    visibility: "group",
+    scope: "participant",
+    confirmed: true,
+  });
+  room = await f.store.read(f.roomId);
+  const beforePrivate = calculateReadiness(room, []);
+  assert.equal(
+    beforePrivate.categories.find((entry) => entry.category === "Budget Check")
+      ?.status,
+    "checked",
+  );
+  assert.notEqual(beforePrivate.status, "blocked");
+  await f.engine.rooms.confirmFact(f.roomId, f.auth, room.revision, {
+    id: "private_budget_a",
+    key: "personalBudget",
+    value: 9999,
+    ownerId: f.auth.participantId,
+    visibility: "private",
+    scope: "participant",
+    confirmed: true,
+  });
+  const afterPrivate = calculateReadiness(await f.store.read(f.roomId), []);
+  assert.equal(afterPrivate.percentage, beforePrivate.percentage);
+  assert.equal(
+    (await f.engine.rooms.view(f.roomId, f.other)).privateFacts
+      .some((fact) => fact.id === "private_budget_a"),
+    false,
+  );
+});
+
+test("different owner schedules are not shared contradictions, but incompatible hard constraints block a plan", async () => {
+  const f = await fixture([]);
+  let room = await f.store.read(f.roomId);
+  const policy = structuredClone(room.policy);
+  policy.find((entry) => entry.category === "Schedule Check")!.requiredKeys = [
+    "availabilityWindow",
+  ];
+  await f.engine.rooms.configurePolicy(f.roomId, f.auth, room.revision, policy);
+  room = await f.store.read(f.roomId);
+  await f.engine.rooms.confirmFact(f.roomId, f.auth, room.revision, {
+    id: "availability_a",
+    key: "availabilityWindow",
+    value: "after 15:00 local",
+    ownerId: f.auth.participantId,
+    visibility: "group",
+    scope: "participant",
+    confirmed: true,
+  });
+  room = await f.store.read(f.roomId);
+  await f.engine.rooms.confirmFact(f.roomId, f.other, room.revision, {
+    id: "availability_b",
+    key: "availabilityWindow",
+    value: "before 09:00 local",
+    ownerId: f.other.participantId,
+    visibility: "group",
+    scope: "participant",
+    confirmed: true,
+  });
+  room = await f.store.read(f.roomId);
+  assert.notEqual(calculateReadiness(room, []).status, "blocked");
+  await f.engine.rooms.setConstraints(f.roomId, f.auth, room.revision, [
+    {
+      id: "availability_after_15",
+      ownerId: f.auth.participantId,
+      category: "Schedule Check",
+      key: "startHour",
+      operator: "gte",
+      expected: 15,
+      hard: true,
+    },
+  ]);
+  room = await f.store.read(f.roomId);
+  await f.engine.rooms.setConstraints(f.roomId, f.other, room.revision, [
+    {
+      id: "availability_before_9",
+      ownerId: f.other.participantId,
+      category: "Schedule Check",
+      key: "startHour",
+      operator: "lte",
+      expected: 9,
+      hard: true,
+    },
+  ]);
+  room = await f.store.read(f.roomId);
+  await f.engine.rooms.revise(f.roomId, f.auth, room.revision, {
+    id: "infeasible_time",
+    label: "10:00",
+    values: { startHour: 10, cost: 100 },
+  });
+  room = await f.store.read(f.roomId);
+  assert.deepEqual(
+    violations(room, room.proposal).map((constraint) => constraint.id).sort(),
+    ["availability_after_15", "availability_before_9"],
+  );
+  assert.equal(calculateReadiness(room, []).status, "blocked");
+});
+
+test("different claims about one explicitly shared fact block readiness for verification", async () => {
+  const f = await fixture([]);
+  let room = await f.store.read(f.roomId);
+  const policy = structuredClone(room.policy);
+  policy.find((entry) => entry.category === "People Check")!.requiredKeys = [
+    "venueAccess",
+  ];
+  await f.engine.rooms.configurePolicy(f.roomId, f.auth, room.revision, policy);
+  room = await f.store.read(f.roomId);
+  await f.engine.rooms.confirmFact(f.roomId, f.auth, room.revision, {
+    id: "venue_access_a",
+    key: "venueAccess",
+    value: "assumed accessible",
+    ownerId: f.auth.participantId,
+    visibility: "group",
+    scope: "shared",
+    confirmed: true,
+  });
+  room = await f.store.read(f.roomId);
+  await f.engine.rooms.confirmFact(f.roomId, f.other, room.revision, {
+    id: "venue_access_b",
+    key: "venueAccess",
+    value: "not verified",
+    ownerId: f.other.participantId,
+    visibility: "group",
+    scope: "shared",
+    confirmed: true,
+  });
+  const readiness = calculateReadiness(await f.store.read(f.roomId), []);
+  assert.equal(readiness.status, "blocked");
+  assert.equal(
+    readiness.categories.find((entry) => entry.category === "People Check")
+      ?.status,
+    "blocked",
+  );
+});
+
+test("five deterministic realistic scenario mocks pass their authored assertions", async () => {
+  const largeOne = getScenario("E");
+  const largeTwo = getScenario("E");
+  assert.equal(largeOne.participants.length, 58);
+  assert.equal(largeOne.seed, largeTwo.seed);
+  assert.deepEqual(largeOne.participants, largeTwo.participants);
+  assert.equal(SCENARIO_IDS.length, 5);
+  const results = await runAllScenarioMocks();
+  assert.equal(results.length, 5);
+  for (const { record } of results) {
+    assert.equal(record.mode, "MOCK");
+    assert.equal(record.simulation, true);
+    assert.equal(record.passed, true, `${record.scenario}: ${JSON.stringify(record.assertions)}`);
+    assert.ok(record.assertions?.every((assertion) => assertion.passed));
+  }
+});
+
+test("the live scenario path requires META mode and never auto-scores model quality", async () => {
+  const mock = await runScenarioMock("B");
+  const steps = mock.record.cycle.traces.map((trace) => ({
+    role: trace.role,
+    output: trace.output,
+  }));
+  const fake = scriptedGateway(steps).gateway;
+  const fakeMeta = { ...fake, mode: "META" as const };
+  const limits = {
+    ...MOCK_LIMITS,
+    maxInvocations: 10,
+    maxRequests: 10,
+    maxTokens: 580_000,
+    maxCostMicros: 820_000,
+    callTokens: 58_000,
+    callCostMicros: 82_000,
+    roomMaxRequests: 10,
+    roomMaxTokens: 580_000,
+    roomMaxCostMicros: 820_000,
+  };
+  const live = await runScenarioWithGateway("B", fakeMeta, limits);
+  assert.equal(live.record.mode, "LIVE");
+  assert.equal(live.record.passed, undefined);
+  assert.equal(live.record.cycle.outcome, "WAIT_FOR_PARTICIPANT");
+  assert.ok(live.record.assertions?.every((assertion) => assertion.passed));
+  await assert.rejects(
+    () => runScenarioWithGateway("B", fake, limits),
+    /LIVE_GATEWAY_REQUIRED/,
+  );
+});
+
+test("Judge may stop after a deterministic rejection and return an infeasible plan to a human", async () => {
+  const { record } = await runScenarioMock("C");
+  assert.equal(record.cycle.outcome, "COMPLETED");
+  assert.equal(record.cycle.finalEvaluation?.verdicts.some((verdict) => verdict.accepted), false);
+  assert.equal(record.cycle.readiness?.status, "blocked");
+  assert.deepEqual(
+    record.cycle.traces.filter((trace) => trace.role === "Negotiator").length,
+    2,
   );
 });

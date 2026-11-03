@@ -68,6 +68,15 @@ function validateJudge(
   previous: Finding[],
 ): JudgeEvaluation {
   const judge = RoleSchemas.Judge.parse(raw);
+  const explicitSafeStop =
+    judge.next === "stop" &&
+    judge.canStop &&
+    !judge.anotherPassUseful &&
+    !judge.participantInputRequired &&
+    !judge.readinessAssessment.readyForReview &&
+    judge.findings.some(
+      (finding) => finding.severity === "critical" && finding.status !== "resolved",
+    );
   if (judge.findings.some((f) => f.id.startsWith("hard_")))
     throw new StateError("RESERVED_FINDING_ID");
   for (const old of previous)
@@ -130,9 +139,14 @@ function validateJudge(
         });
         judge.taskFindingIds.push(issueId);
       }
-      judge.next = "negotiate";
-      judge.anotherPassUseful = true;
-      judge.canStop = false;
+      // An invalid option is never accepted. Preserve a deliberate Judge stop
+      // so an infeasible problem can be handed back to people instead of
+      // forcing the Negotiator to invent another candidate until the cap.
+      if (!explicitSafeStop) {
+        judge.next = "negotiate";
+        judge.anotherPassUseful = true;
+        judge.canStop = false;
+      }
     }
   }
   for (const c of violations(room, room.proposal))
@@ -347,8 +361,10 @@ export class AgentEngine {
         inputTokens: null,
         outputTokens: null,
         estimatedCostMicros: null,
+        durationMs: 0,
       };
       cycle.traces.push(trace);
+      const callStartedAt = performance.now();
       try {
         const result = await withAbort(
           this.gateway.call(role, payload, {
@@ -407,6 +423,7 @@ export class AgentEngine {
           }),
           signal,
         );
+        trace.durationMs = Math.round(performance.now() - callStartedAt);
         await assertCurrent();
         if (!trace.attempts) throw new StateError("UNMETERED_CALL");
         const output = RoleSchemas[role].parse(result.output);
@@ -431,6 +448,7 @@ export class AgentEngine {
         trace.status = "accepted";
         return output;
       } catch (error) {
+        trace.durationMs = Math.round(performance.now() - callStartedAt);
         cycle.usageKnown = false;
         throw error;
       }
@@ -474,8 +492,10 @@ export class AgentEngine {
             "Listener",
             "interpret",
             {
-              ...sharedContext(room),
-              privateInput: pendingInput,
+              // The Listener needs only this participant's text and private
+              // facts. Sending the group roster, proposal, and shared facts
+              // here would widen disclosure without helping extraction.
+              privateInput: { text: pendingInput.text },
               privateFacts: room.facts.filter(
                 (f) =>
                   f.visibility === "private" &&
@@ -494,6 +514,7 @@ export class AgentEngine {
             ownerId: pendingInput.actorId,
             confirmed: false,
             visibility: "private" as const,
+            scope: "participant" as const,
           })),
         ].slice(-200);
         handledInputIds.add(pendingInput.id);

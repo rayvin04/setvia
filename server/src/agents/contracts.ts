@@ -28,6 +28,9 @@ export const Roles = [
   "Speaker",
 ] as const;
 export type Role = (typeof Roles)[number];
+// The current application contract supports large groups without making a
+// model call for each participant. Keep this explicit and bounded.
+export const MAX_ROOM_PARTICIPANTS = 100;
 export const OutcomeSchema = z.enum([
   "CONTINUE",
   "WAIT_FOR_PARTICIPANT",
@@ -49,17 +52,21 @@ export const FactSchema = z
     value,
     ownerId: id,
     visibility: z.enum(["group", "private"]),
+    // Participant values are compared only with other values from that owner.
+    // Shared facts represent one room-wide claim and may conflict across owners.
+    scope: z.enum(["participant", "shared"]).default("participant"),
     confirmed: z.boolean(),
   })
   .strict();
 export type Fact = z.infer<typeof FactSchema>;
+export type FactInput = z.input<typeof FactSchema>;
 export const ConstraintSchema = z
   .object({
     id,
     ownerId: id,
     category: CategorySchema,
     key: id,
-    operator: z.enum(["required", "eq", "lte", "gte"]),
+    operator: z.enum(["required", "eq", "neq", "lte", "gte"]),
     expected: value,
     hard: z.boolean(),
   })
@@ -73,6 +80,7 @@ export const PolicySchema = z
         enabled: z.boolean(),
         weight: z.number().positive().max(100),
         requiredKeys: z.array(id).max(30),
+        requiredPerParticipantKeys: z.array(id).max(10).default([]),
       })
       .strict(),
   )
@@ -82,6 +90,7 @@ export const PolicySchema = z
     "All six categories must appear exactly once.",
   );
 export type Policy = z.infer<typeof PolicySchema>;
+export type PolicyInput = z.input<typeof PolicySchema>;
 export const FindingSchema = z
   .object({
     id,
@@ -215,6 +224,7 @@ export const TraceSchema = z
     inputTokens: z.number().int().nonnegative().nullable(),
     outputTokens: z.number().int().nonnegative().nullable(),
     estimatedCostMicros: z.number().int().nonnegative().nullable(),
+    durationMs: z.number().int().nonnegative(),
   })
   .strict();
 export type Trace = z.infer<typeof TraceSchema>;
@@ -267,7 +277,7 @@ export const RoomSchema = z
           })
           .strict(),
       )
-      .max(50),
+      .max(MAX_ROOM_PARTICIPANTS),
     policy: PolicySchema,
     constraints: z.array(ConstraintSchema).max(100),
     facts: z.array(FactSchema).max(200),

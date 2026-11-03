@@ -10,5 +10,11 @@
     "verbatimModuleSyntax": true,
     "types": ["node"]
   },
-  "include": ["src/**/*.ts", "../scripts/test-meta.ts", "../scripts/run-lab.ts"]
+  "include": [
+    "src/**/*.ts",
+    "../scripts/test-meta.ts",
+    "../scripts/run-lab.ts",
+    "../scripts/run-lab-live.ts",
+    "../scripts/review-lab.ts"
+  ]
 }
