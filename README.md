@@ -113,5 +113,5 @@ Real-world prices, routes, weather, accessibility, venue details, and hazards ar
 
 Lexend is provided by `@fontsource-variable/lexend` (OFL-1.1); icons use `lucide-react` (ISC). The GitHub mark includes its license file. See [`docs/ASSETS.md`](docs/ASSETS.md) for asset notes and [`docs/meta-api.md`](docs/meta-api.md) for the extraction API boundary.
 
-The agent contracts, test scope, private prompt boundary, evaluation notes, and persistence limitations are documented in [`docs/agent-foundation.md`](docs/agent-foundation.md).
+The agent contracts, test scope, private prompt boundary, and persistence limitations are documented in [`docs/agent-foundation.md`](docs/agent-foundation.md).
 
