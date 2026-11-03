@@ -61,12 +61,14 @@ GitHub Actions runs `npm ci`, `npm test`, `npm run check:server`, and `npm run b
 
 ## Recorded Muse Spark evaluation
 
-The recorded evaluation covers 11 synthetic runs across five scenario templates. Reconciliation by evaluation run ID gives 39 client-side outbound HTTP attempts and 39 attempt reservations. Of these, 38 received HTTP 200 responses and usage records. One attempt was cancelled/ended in a transport error before an HTTP status or usage record was available.
+The recorded evaluation covers 11 synthetic runs across five scenario templates. Reconciliation by evaluation run ID gives 39 client-side outbound HTTP attempts and 39 attempt reservations. The client initiated each HTTP attempt after its budget reservation. Thirty-eight received HTTP 200 responses and usage records; one attempt was cancelled/ended in a transport error before an HTTP status or usage record was available.
 
 | Measure | Result | Meaning |
 | --- | ---: | --- |
-| Client HTTP attempts and ledger reservations | 39 | Reservations are recorded before attempts begin |
+| Client-side outbound HTTP attempts | 39 | Includes one cancelled/transport-error attempt without a response |
+| Ledger attempt reservations | 39 | Budget is reserved before each attempt |
 | Successful HTTP responses | 38 | All recorded responses returned HTTP 200 |
+| Cancelled/transport-error reservation | 1 (US$0.104) | No HTTP status or usage record; included only in at-risk amount |
 | Automated assertions | 48 passed | No completed human ratings are available |
 | Estimated token usage | US$0.296678 | Sum from the 38 usage records at published Standard rates |
 | At-risk ledger amount | US$0.400678 | US$0.296678 estimated usage plus the US$0.104 reservation for the attempt with unknown usage |

@@ -65,12 +65,14 @@ An event's estimated or confirmed attendee count is separate from the number of 
 
 ### Recorded Muse Spark evaluation
 
-The recorded evaluation covers **11 synthetic runs across five scenario templates**. The client initiated 39 outbound Meta HTTP attempts. The journal reserved budget before each attempt: 38 received HTTP 200 responses, and one cancelled/transport-error attempt has no HTTP status or usage record.
+The recorded evaluation covers **11 synthetic runs across five scenario templates**. The client initiated 39 outbound HTTP attempts targeting Meta, and the journal reserved budget for all 39 before each attempt. Thirty-eight received HTTP 200 responses and usage records; one cancelled/transport-error attempt has no HTTP status or usage record.
 
 | Measure | Recorded result | Accounting |
 | --- | ---: | --- |
-| Client HTTP attempts | 39 | Includes the cancelled/transport-error attempt |
+| Client HTTP attempts | 39 | Started by the client; includes one cancelled/transport-error attempt |
+| Ledger attempt reservations | 39 | Budget was reserved before each client attempt |
 | Successful HTTP responses | 38 | All 38 returned HTTP 200 |
+| Cancelled/transport-error reservation | 1 | No HTTP status or usage record; its US$0.104 reservation is included only in at-risk total |
 | Automated assertions | 48 passed | Machine checks only; no completed human ratings |
 | Estimated token usage | **US$0.296678** | From reported usage for the 38 responses, priced at Meta's published Standard rates |
 | At-risk ledger amount | **US$0.400678** | Estimated usage plus the **US$0.104** reservation for the attempt without usage data |
