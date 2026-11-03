@@ -1,3 +1,29 @@
+#root:has(.home-story) {
+  position: relative;
+  isolation: isolate;
+  background-color: #02070a;
+}
+
+#root:has(.home-story)::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background-image:
+    radial-gradient(ellipse 60rem 42rem at 8% 25%, #0297de38 0%, #0297de16 42%, transparent 78%),
+    radial-gradient(ellipse 56rem 40rem at 92% 43%, #fc734d30 0%, #fc734d12 43%, transparent 78%),
+    radial-gradient(ellipse 58rem 40rem at 90% 61%, #0297de30 0%, #0297de12 43%, transparent 78%),
+    radial-gradient(ellipse 52rem 37rem at 8% 62%, #fc734d27 0%, #fc734d10 45%, transparent 78%),
+    radial-gradient(ellipse 62rem 42rem at 12% 78%, #0297de34 0%, #0297de12 44%, transparent 78%),
+    radial-gradient(ellipse 54rem 38rem at 92% 79%, #fc734d29 0%, #fc734d10 45%, transparent 78%),
+    radial-gradient(ellipse 62rem 38rem at 12% 96%, #0297de30 0%, #0297de10 46%, transparent 80%),
+    radial-gradient(ellipse 60rem 38rem at 94% 98%, #fc734d29 0%, #fc734d10 46%, transparent 80%);
+  background-repeat: no-repeat;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, transparent 92svh, #000 110svh, #000 100%);
+  mask-image: linear-gradient(180deg, transparent 0, transparent 92svh, #000 110svh, #000 100%);
+  content: "";
+}
+
 .home-story {
   --story-night: #02070a;
   --story-surface: #0a1217;
