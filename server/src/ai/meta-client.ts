@@ -81,6 +81,8 @@ export interface MetaClientOptions {
   sleep?: (milliseconds: number) => Promise<void>;
   random?: () => number;
   onUsage?: (metadata: SafeUsageMetadata) => void;
+  // Awaited before every HTTP attempt, including retries. May reject a reserved budget.
+  beforeAttempt?: () => void | Promise<void>;
 }
 
 const MAX_RETRIES = 2;
@@ -315,6 +317,9 @@ export function createMetaClient(
             "The configured Meta test request limit has been reached.",
           );
         }
+        requestOptions.signal?.throwIfAborted();
+        await options.beforeAttempt?.();
+        requestOptions.signal?.throwIfAborted();
         requestCount += 1;
 
         let response: Response;
@@ -398,7 +403,8 @@ export function createMetaClient(
         const incompleteMessage = incompleteResponseMessage(payload);
         if (outputText === null || incompleteMessage !== null) {
           const incompleteResult: MetaResponseResult = {
-            id: typeof responseRecord.id === "string" ? responseRecord.id : null,
+            id:
+              typeof responseRecord.id === "string" ? responseRecord.id : null,
             model: config.model,
             outputText: "",
             usage: usageFromResponse(payload),
@@ -411,7 +417,8 @@ export function createMetaClient(
           }
           throw new MetaApiError(
             "invalid_response",
-            incompleteMessage ?? "Meta returned a response without readable output text.",
+            incompleteMessage ??
+              "Meta returned a response without readable output text.",
             { status: response.status },
           );
         }

@@ -40,3 +40,7 @@ Extracted details are suggestions. Review evidence and uncertainty, resolve conf
 Automated tests and the browser walkthrough use mocked API responses and synthetic inputs. They do not make billable requests. The separately gated live verification from Phase 2B is documented in docs/meta-api.md. Phase 2C has not been live-verified through the UI.
 
 The deployed application is planned to use Meta models only. Lexend is provided by @fontsource-variable/lexend (OFL-1.1); icons use lucide-react (ISC). Respect reduced-motion preferences.
+
+## Bounded agents and private Lab
+
+The transport-independent multi-agent foundation and a mock-only Setvia Lab are available locally. Run `npm run lab` for five synthetic scenarios and open the printed private HTML report. See [the foundation documentation](docs/agent-foundation.md) for scope, privacy, limits, and verification. Room collaboration is not yet connected to the UI; no live model call is made by Lab.
