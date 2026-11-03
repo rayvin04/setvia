@@ -62,3 +62,8 @@ For an offline browser check, set `SETVIA_PRIVATE_ROOT` to that external private
 For authorized live execution, set `SETVIA_LIVE_ENABLED=1`, `SETVIA_ROOM_ORIGINS=http://127.0.0.1:5175`, and `SETVIA_PRIVATE_ROOT`. Set `SETVIA_LIVE_BILLING_CHECKED=1` only after the manual billing check and explicit request authorization. Start with `node --env-file="C:\private\setvia.env" --import tsx server/src/index.ts`, substituting the existing private environment file. The current private prompt version is `agents-v8`. Credentials are loaded into the backend process; a worktree-local `.env` copy is unnecessary.
 
 Live inference uses persistent Stage B and global ledgers. The runtime holds the complete bounded cycle allowance before its first request and returns unused capacity afterward. Restarting preserves consumed reservations. Exhausted caps require fresh developer authorization. Text and image autofill are unavailable while this bounded room runtime is active because the standalone extractor has no shared ledger adapter; enter the initial plan manually. The separate `scripts/verify-room-contracts.ts --execute` performs three gated synthetic live contract checks; it never publishes a planning-room result.
+
+## Synthetic scenario Demo Studio
+
+The local Demo Studio reviews and versions fictional scenarios and uses the authenticated room API for live playback. Developer tools remain local-only. See docs/synthetic-scenario-studio.md.
+
