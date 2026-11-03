@@ -4,6 +4,17 @@
 
 `server/src/agents` contains a transport-independent planning engine. It is tested with synthetic fixtures and a mock gateway. The public Vercel deployment remains a static Vite frontend. The checked-in Express server serves local text and image extraction; it does not mount authenticated room routes or multi-device delivery.
 
+## Public status and source snapshot
+
+This page describes released `main` at commit [`1c6a4894a8acc562830dce89a770a126c2f332bb`](https://github.com/rayvin04/setvia/commit/1c6a4894a8acc562830dce89a770a126c2f332bb).
+
+- The [public site](https://setvia.r4yv.tech) serves a static Vite app. Its `/demos` and `/dashboard` paths use fictional JSON fixtures and local preview interactions; they do not call the agent engine or a live model.
+- Local text and image extraction uses the Express API and Meta Responses API when a server-side key is configured. That API is not deployed with the public site.
+- The committed role engine is domain code with offline mock tests. It is not connected to authenticated room routes or multi-device delivery in this source snapshot.
+- A separate, unpublished Stage B worktree has three targeted live model contract checks recorded as passing. A complete real planning-room cycle has not been verified.
+
+The historical Muse Spark evaluation below covers 11 synthetic runs and must be read separately from the targeted Stage B checks. Neither record is a user study or a deployment claim.
+
 ## Roles and control flow
 
 - **Listener** extracts candidate facts from new input. Candidates are unconfirmed until the owner explicitly confirms or shares them.
@@ -22,14 +33,14 @@ Readiness uses confirmed group-visible facts. Unknown required values score as i
 
 The six checks cover:
 
-| Check | What it evaluates |
-| --- | --- |
-| Schedule | Availability, timing conflicts, realistic durations, deadlines |
-| Budget | Confirmed limits, totals, unclear costs, fit with participant constraints |
-| People | Responses, accessibility, attendance conflicts, responsibilities |
-| Logistics | Transportation, locations, routes, venues, practical coordination |
-| Preparation | Equipment, supplies, materials, preparation responsibilities |
-| Safety | Hazards, precautions, emergency preparation, weather and route risks |
+| Check       | What it evaluates                                                         |
+| ----------- | ------------------------------------------------------------------------- |
+| Schedule    | Availability, timing conflicts, realistic durations, deadlines            |
+| Budget      | Confirmed limits, totals, unclear costs, fit with participant constraints |
+| People      | Responses, accessibility, attendance conflicts, responsibilities          |
+| Logistics   | Transportation, locations, routes, venues, practical coordination         |
+| Preparation | Equipment, supplies, materials, preparation responsibilities              |
+| Safety      | Hazards, precautions, emergency preparation, weather and route risks      |
 
 The model does not verify current prices, route conditions, weather, venue access, or local safety guidance. Those checks need reliable external evidence and human review.
 
@@ -63,19 +74,18 @@ GitHub Actions runs `npm ci`, `npm test`, `npm run check:server`, and `npm run b
 
 The recorded evaluation covers 11 synthetic runs across five scenario templates. Reconciliation by evaluation run ID gives 39 client-side outbound HTTP attempts and 39 attempt reservations. The client initiated each HTTP attempt after its budget reservation. Thirty-eight received HTTP 200 responses and usage records; one attempt was cancelled/ended in a transport error before an HTTP status or usage record was available.
 
-| Measure | Result | Meaning |
-| --- | ---: | --- |
-| Client-side outbound HTTP attempts | 39 | Includes one cancelled/transport-error attempt without a response |
-| Ledger attempt reservations | 39 | Budget is reserved before each attempt |
-| Successful HTTP responses | 38 | All recorded responses returned HTTP 200 |
-| Cancelled/transport-error reservation | 1 (US$0.104) | No HTTP status or usage record; included only in at-risk amount |
-| Automated assertions | 48 passed | No completed human ratings are available |
-| Estimated token usage | US$0.296678 | Sum from the 38 usage records at published Standard rates |
-| At-risk ledger amount | US$0.400678 | US$0.296678 estimated usage plus the US$0.104 reservation for the attempt with unknown usage |
+| Measure                               |       Result | Meaning                                                                                      |
+| ------------------------------------- | -----------: | -------------------------------------------------------------------------------------------- |
+| Client-side outbound HTTP attempts    |           39 | Includes one cancelled/transport-error attempt without a response                            |
+| Ledger attempt reservations           |           39 | Budget is reserved before each attempt                                                       |
+| Successful HTTP responses             |           38 | All recorded responses returned HTTP 200                                                     |
+| Cancelled/transport-error reservation | 1 (US$0.104) | No HTTP status or usage record; included only in at-risk amount                              |
+| Automated assertions                  |    48 passed | No completed human ratings are available                                                     |
+| Estimated token usage                 |  US$0.296678 | Sum from the 38 usage records at published Standard rates                                    |
+| At-risk ledger amount                 |  US$0.400678 | US$0.296678 estimated usage plus the US$0.104 reservation for the attempt with unknown usage |
 
 The estimate uses Meta's published Standard rates of US$1.25 per million input tokens and US$4.25 per million output tokens. The calculation does not apply cached-input discounts, and it is not a provider invoice. The US$0.104 reservation is budget exposure for an attempt with unknown usage; it is not money spent or a promotional-credit deduction. Automated assertions check expected protocol behavior on synthetic inputs. They are not human ratings and do not establish that the agents are fully reliable or that their plans are accurate in real-world use. Individual model outputs, private prompts, Lab histories, and participant data are not included. See [Meta Model API pricing](https://dev.meta.ai/docs/pricing-rate-limits).
 
 ## Remaining work
 
 Authenticated room HTTP handlers, production event delivery, invitation/session recovery, retention and administration, deployment-grade persistence, multi-instance safety, and external sources for Reality Checks are not part of the public deployment. A successful mock test cannot establish model quality or guarantee that a real group can collaborate in live rooms.
-
