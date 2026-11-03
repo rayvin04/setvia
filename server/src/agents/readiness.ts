@@ -27,6 +27,15 @@ export function violations(room: Room, option: PlanOption): Constraint[] {
     (c) => c.hard && !constraintPasses(c, option.values),
   );
 }
+export function explicitViolations(
+  room: Room,
+  option: PlanOption,
+): Constraint[] {
+  return violations(room, option).filter((constraint) => {
+    const actual = option.values[constraint.key];
+    return actual !== undefined && actual !== null;
+  });
+}
 export function calculateReadiness(room: Room, findings: Finding[]): Readiness {
   // Private and tentative facts never increase the group-wide score. Owner
   // scope prevents unrelated personal budgets and schedules from appearing to

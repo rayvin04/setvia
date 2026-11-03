@@ -19,7 +19,7 @@ const MAX_OUTPUT_TOKENS: Record<Role, number> = {
   Listener: 2_048,
   Judge: 8_192,
   Negotiator: 4_096,
-  "Question Strategist": 2_048,
+  "Question Strategist": 4_096,
   Speaker: 1_024,
 };
 const INPUT_TOKEN_ALLOWANCE = 55_000;
@@ -65,7 +65,8 @@ function scenarioLimits(): Limits {
     maxInvocations: MAX_SCENARIO_ATTEMPTS,
     maxRequests: MAX_SCENARIO_ATTEMPTS,
     maxRevisions: 2,
-    timeoutMs: 30_000,
+    // Allow several sequential agents to finish while each HTTP call remains capped at 30 seconds.
+    timeoutMs: 120_000,
     maxTokens: MAX_SCENARIO_ATTEMPTS * CALL_TOKEN_ALLOWANCE,
     maxCostMicros: MAX_SCENARIO_ATTEMPTS * CALL_COST_MICROS,
     callTokens: CALL_TOKEN_ALLOWANCE,

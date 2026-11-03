@@ -14,7 +14,8 @@ import {
 } from "./contracts.js";
 import { RoomStore, StateError } from "./store.js";
 import { RoomService, authorize, sharedContext } from "./rooms.js";
-import { calculateReadiness, violations } from "./readiness.js";
+import { calculateReadiness, explicitViolations, violations } from "./readiness.js";
+import { MetaApiError } from "../ai/errors.js";
 
 export interface Limits {
   maxInvocations: number;
@@ -149,7 +150,7 @@ function validateJudge(
       }
     }
   }
-  for (const c of violations(room, room.proposal))
+  for (const c of explicitViolations(room, room.proposal))
     judge.findings.push({
       id: "hard_plan_" + fingerprint(c.id).slice(0, 20),
       category: c.category,
@@ -206,6 +207,53 @@ function validateQuestions(
       throw new StateError("DISCLOSURE_DENIED");
   }
 }
+
+function traceFailure(error: unknown): { code: string; message: string } {
+  if (error instanceof StateError && /^[A-Z0-9_]{1,64}$/.test(error.code))
+    return {
+      code: error.code,
+      message: `Application validation stopped this handoff (${error.code}).`,
+    };
+  if (error instanceof MetaApiError) {
+    const truncated =
+      error.code === "invalid_response" &&
+      /output-token limit/i.test(error.message);
+    const messages: Record<MetaApiError["code"], string> = {
+      authentication: "Meta authentication failed.",
+      forbidden: "Meta denied access to the requested model.",
+      not_found: "The Meta endpoint or model was not found.",
+      rate_limit: "Meta rate limit was reached.",
+      timeout: "The Meta request timed out.",
+      server: "Meta returned a server error.",
+      request: "Meta rejected the request.",
+      connection: "Could not connect to Meta.",
+      invalid_response: "Meta returned an incomplete or invalid response.",
+      unexpected_model: "Meta returned an unexpected model.",
+      request_budget_exhausted: "The configured Meta request budget was exhausted.",
+    };
+    return {
+      code: truncated ? "META_OUTPUT_TRUNCATED" : `META_${error.code.toUpperCase()}`,
+      message: truncated
+        ? "Meta reached the configured output-token limit before completing the response."
+        : messages[error.code],
+    };
+  }
+  if (error instanceof Error && error.name === "ZodError")
+    return {
+      code: "INVALID_HANDOFF",
+      message: "Structured output did not match the role schema.",
+    };
+  if (error instanceof SyntaxError)
+    return {
+      code: "INVALID_MODEL_JSON",
+      message: "Response text could not be parsed as the required JSON handoff.",
+    };
+  return {
+    code: "AGENT_FAILURE",
+    message: "Agent invocation failed; detailed payload omitted.",
+  };
+}
+
 async function withAbort<T>(
   promise: Promise<T>,
   signal: AbortSignal,
@@ -463,6 +511,9 @@ export class AgentEngine {
         return output;
       } catch (error) {
         trace.durationMs = Math.round(performance.now() - callStartedAt);
+        const failure = traceFailure(error);
+        trace.failureCode = failure.code;
+        trace.failureMessage = failure.message;
         cycle.usageKnown = false;
         throw error;
       }

@@ -20,6 +20,7 @@ import { getScenario, SCENARIO_IDS } from "./scenarios.js";
 import { runAllScenarioMocks, runScenarioMock, runScenarioWithGateway } from "./scenario-runner.js";
 import { calculateReadiness, violations } from "./readiness.js";
 import { createMetaGateway } from "./meta-gateway.js";
+import { MetaApiError } from "../ai/errors.js";
 import {
   META_API_BASE_URL,
   META_SPARK_MODEL,
@@ -498,12 +499,31 @@ test("failure preserves the last independently validated readiness and requires 
   const failed = await f.engine.run(f.roomId, f.auth);
   assert.equal(failed.outcome, "BLOCKED");
   assert.deepEqual(failed.readiness, first.readiness);
+  assert.equal(failed.traces.at(-1)?.failureCode, "AGENT_FAILURE");
+  assert.equal(failed.traces.at(-1)?.failureMessage, "Agent invocation failed; detailed payload omitted.");
   assert.equal(JSON.stringify(failed).includes("SECRET UPSTREAM BODY"), false);
   await f.engine.run(f.roomId, f.auth);
   assert.equal(f.calls.length, 2);
   const retried = await f.engine.run(f.roomId, f.auth, { retryBlocked: true });
   assert.equal(retried.outcome, "COMPLETED");
   assert.equal((await f.store.read(f.roomId)).lifetimeAttempts, 3);
+});
+test("Meta output-token truncation is recorded with a safe, inspectable trace failure", async () => {
+  const f = await fixture([{
+    role: "Judge",
+    error: new MetaApiError(
+      "invalid_response",
+      "Meta response hit its output-token limit before finishing the result. SECRET RESPONSE TEXT",
+    ),
+  }]);
+  const result = await f.engine.run(f.roomId, f.auth);
+  assert.equal(result.outcome, "BLOCKED");
+  assert.equal(result.traces[0]?.failureCode, "META_OUTPUT_TRUNCATED");
+  assert.equal(
+    result.traces[0]?.failureMessage,
+    "Meta reached the configured output-token limit before completing the response.",
+  );
+  assert.equal(JSON.stringify(result).includes("SECRET RESPONSE TEXT"), false);
 });
 test("all six exact category names are preserved and applicability is policy-driven", async () => {
   assert.deepEqual(Categories, [
@@ -883,6 +903,44 @@ test("current hard violations remain explicit validated findings even when the m
     ),
   );
   assert.equal(cycle.readiness?.status, "blocked");
+});
+test("missing proposal values block readiness without being mislabeled as explicit violations", async () => {
+  const f = await fixture([{ role: "Judge", output: judge() }]);
+  let room = await f.store.read(f.roomId);
+  await f.engine.rooms.setConstraints(f.roomId, f.auth, room.revision, [
+    {
+      id: "start_after",
+      ownerId: f.auth.participantId,
+      category: "Schedule Check",
+      key: "startHour",
+      operator: "gte",
+      expected: 15,
+      hard: true,
+    },
+  ]);
+  room = await f.store.read(f.roomId);
+  await f.engine.rooms.setConstraints(f.roomId, f.other, room.revision, [
+    {
+      id: "start_before",
+      ownerId: f.other.participantId,
+      category: "Schedule Check",
+      key: "startHour",
+      operator: "lte",
+      expected: 9,
+      hard: true,
+    },
+  ]);
+  room = await f.store.read(f.roomId);
+  assert.equal(violations(room, room.proposal).length, 2);
+
+  const cycle = await f.engine.run(f.roomId, f.auth);
+  assert.equal(cycle.readiness?.status, "blocked");
+  assert.equal(
+    cycle.finalEvaluation?.findings.some((entry) =>
+      entry.id.startsWith("hard_plan_"),
+    ),
+    false,
+  );
 });
 
 test("structured handoffs include prior findings and explicit proposal critiques", async () => {

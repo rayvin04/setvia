@@ -218,6 +218,8 @@ export const TraceSchema = z
     input: z.unknown(),
     output: z.unknown(),
     status: z.enum(["accepted", "rejected", "failed"]),
+    failureCode: z.string().regex(/^[A-Z0-9_]+$/).max(64).optional(),
+    failureMessage: z.string().max(180).optional(),
     acceptedOptionIds: z.array(id),
     rejectedOptionIds: z.array(id),
     attempts: z.number().int().nonnegative(),
