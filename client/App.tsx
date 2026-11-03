@@ -1,13 +1,14 @@
 import { PageTransition } from "./MotionUI";
 import { lazy, Suspense, useState } from "react";
 import type { FormEvent } from "react";
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { ButtonLink, Header, Footer } from "./components";
 
 import { Demos } from "./Scenarios";
 import { Home } from "./Home";
 const StartPlanning = lazy(() => import("./StartPlanning").then((module) => ({ default: module.StartPlanning })));
+const DemoStudio = lazy(() => import("./DemoStudio"));
 
 function FormPage({ join = false }: { join?: boolean }) {
   const [message, setMessage] = useState("");
@@ -103,24 +104,31 @@ function Missing() {
   );
 }
 export default function App() {
+  const location = useLocation();
+  const localHost = ["127.0.0.1", "localhost", "[::1]"].includes(window.location.hostname);
+  const studioEnabled = import.meta.env.DEV && localHost;
+  const isStudio = studioEnabled && (location.pathname === "/demo-studio" || location.pathname.startsWith("/demo-studio/"));
   return (
     <>
-      <a href="#main" className="skip-link">
-        Skip to content
-      </a>
-      <Header />
-      <main id="main">
+      {!isStudio ? <>
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
+        <Header />
+      </> : null}
+      <main id="main" className={isStudio ? "demo-studio-main" : undefined}>
         <PageTransition>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/start" element={<Suspense fallback={<div className="planning-loading" role="status">Opening planner…</div>}><StartPlanning /></Suspense>} />
             <Route path="/join" element={<FormPage join />} />
+            <Route path="/demo-studio" element={studioEnabled ? <Suspense fallback={<div className="planning-loading" role="status">Opening Demo Studio…</div>}><DemoStudio /></Suspense> : <Missing />} />
             <Route path="/demos" element={<Demos />} />
             <Route path="*" element={<Missing />} />
           </Routes>
         </PageTransition>
       </main>
-      <Footer />
+      {!isStudio ? <Footer /> : null}
     </>
   );
 }

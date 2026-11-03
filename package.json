@@ -9,10 +9,11 @@
     "build": "npm run check:server && tsc -b && vite build --configLoader runner",
     "preview": "vite preview --host 127.0.0.1",
     "check:server": "tsc --noEmit -p server/tsconfig.json",
-    "test": "tsx --test server/src/ai/ai.test.ts server/src/http/app.test.ts client/plan-api.test.ts client/plan-mapping.test.ts client/draft-store.test.ts server/src/agents/agents.test.ts scripts/live-budget-journal.test.ts lab-ui/server.test.ts",
+    "test": "tsx --test server/src/ai/ai.test.ts server/src/http/app.test.ts client/plan-api.test.ts client/plan-mapping.test.ts client/draft-store.test.ts server/src/agents/agents.test.ts scripts/live-budget-journal.test.ts lab-ui/server.test.ts server/src/synthetic/synthetic.test.ts",
     "lab": "tsx scripts/run-lab.ts",
     "lab:live": "node --env-file-if-exists=.env --import tsx scripts/run-lab-live.ts",
     "lab:review": "node --env-file-if-exists=.env --import tsx scripts/review-lab.ts",
+    "demo:studio": "node --env-file-if-exists=.env --import tsx scripts/demo-studio.ts",
     "lab:ui:build": "vite build --config lab-ui/vite.config.ts --configLoader runner",
     "lab:ui": "npm run lab:ui:build && tsx lab-ui/server.ts",
     "test:meta": "node --env-file-if-exists=.env --import tsx scripts/test-meta.ts"
