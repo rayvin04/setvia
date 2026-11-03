@@ -35,7 +35,7 @@ const liveReportRoot = resolve(privateRoot, "lab", "live");
 function parseArgs(args: string[]) {
   let scenarioList = "";
   let confirmBillable = false;
-  let promptVersion = "agents-v1";
+  let promptVersion = "agents-v3";
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     if (arg === "--scenario") {
