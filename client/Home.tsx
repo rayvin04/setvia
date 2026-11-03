@@ -23,8 +23,8 @@ export function Home() {
             Make plans that survive
             <br className="desktop-break" /> <span>the group chat.</span>
           </h1>
-          <h2 className="hero-subheading">Your group's smartest negotiator.</h2>
           <p className="hero-description">
+            <strong>Your group's smartest negotiator.</strong>{" "}
             Setvia analyzes everyone's ideas, finds the blind spots, settles
             conflicting priorities, and turns endless discussions into decisions
             that actually move forward.
