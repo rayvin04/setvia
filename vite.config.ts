@@ -1,9 +1,10 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { dashboardPreviewPlugin } from "./server/src/dashboard/vite-preview.js";
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  plugins: [dashboardPreviewPlugin(), react(), tailwindcss()],
   server: {
     proxy: {
       "/api": {

@@ -112,6 +112,18 @@ export function Demos() {
         <div>
           <h1>Find your starting point.</h1>
           <p>Real-life planning problems. A clearer way through.</p>
+          <Link
+            className="text-link"
+            to={
+              "/dashboard?scenario=" +
+              (["beach", "family", "kickoff"].includes(selected.id)
+                ? selected.id
+                : "safety")
+            }
+          >
+            Explore the planning dashboard{" "}
+            <ArrowRight size={15} aria-hidden="true" />
+          </Link>
         </div>
         <span className="demo-mode">
           <span className="status-dot" />

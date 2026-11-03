@@ -46,3 +46,9 @@ The deployed application is planned to use Meta models only. Lexend is provided 
 The transport-independent multi-agent foundation and Setvia Lab are available locally. Run `npm run lab` for the existing mock regressions plus five realistic synthetic scenarios (8, 6, 14, 22, and 58 participants) and open the printed private HTML report. Use `npm run lab:review -- <private-report.json>` for manual reasoning-quality ratings.
 
 `npm run lab:live -- --scenario A,B --confirm-billable` is a separate, gated Muse Spark evaluation using only fixed synthetic scenarios. It requires a billing-check attestation and an exact interactive approval phrase, and caps each selected scenario at 10 HTTP attempts and $0.82 in reserved cost. It is not run automatically. The mock Lab never loads `.env` or calls the network. See [the foundation documentation](docs/agent-foundation.md) for scope, privacy, limits, and verification. Room collaboration is not yet connected to the production UI.
+
+## Planning dashboard preview
+
+Run `npm run dev` and open `/dashboard` for the Stage A planning dashboard. It uses real typed room projections and deterministic readiness with clearly labeled, server-projected synthetic fixtures. Explore the mountain hike, participant-specific family questions, proposal revisions, 83% safety blocker, and empty or blocked-analysis states. No API key is required for the dashboard preview.
+
+See [the Stage A dashboard documentation](docs/dashboard-stage-a.md) for the data boundary, synthetic interactions, validation and remaining integration work. The expanded mock Lab now includes the five foundation records plus five realistic group-planning scenarios. Production room delivery and Socket.IO are the next milestone.

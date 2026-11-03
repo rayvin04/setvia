@@ -1,13 +1,18 @@
 import { PageTransition } from "./MotionUI";
 import { lazy, Suspense, useState } from "react";
 import type { FormEvent } from "react";
-import { Routes, Route, Link } from "react-router-dom";
+import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { ArrowRight, ArrowLeft } from "lucide-react";
 import { ButtonLink, Header, Footer } from "./components";
 
 import { Demos } from "./Scenarios";
 import { Home } from "./Home";
-const StartPlanning = lazy(() => import("./StartPlanning").then((module) => ({ default: module.StartPlanning })));
+const StartPlanning = lazy(() =>
+  import("./StartPlanning").then((module) => ({
+    default: module.StartPlanning,
+  })),
+);
+const Dashboard = lazy(() => import("./dashboard/Dashboard"));
 
 function FormPage({ join = false }: { join?: boolean }) {
   const [message, setMessage] = useState("");
@@ -103,24 +108,68 @@ function Missing() {
   );
 }
 export default function App() {
+  const { pathname } = useLocation();
+  const planningRoom =
+    pathname === "/dashboard" || pathname.startsWith("/rooms/");
   return (
     <>
       <a href="#main" className="skip-link">
         Skip to content
       </a>
-      <Header />
+      {!planningRoom ? <Header /> : null}
       <main id="main">
         <PageTransition>
           <Routes>
+            <Route
+              path="/dashboard"
+              element={
+                <Suspense
+                  fallback={
+                    <div className="planning-loading" role="status">
+                      Opening dashboard…
+                    </div>
+                  }
+                >
+                  <Dashboard />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/rooms/:roomId"
+              element={
+                <Suspense
+                  fallback={
+                    <div className="planning-loading" role="status">
+                      Opening room…
+                    </div>
+                  }
+                >
+                  <Dashboard />
+                </Suspense>
+              }
+            />
             <Route path="/" element={<Home />} />
-            <Route path="/start" element={<Suspense fallback={<div className="planning-loading" role="status">Opening planner…</div>}><StartPlanning /></Suspense>} />
+            <Route
+              path="/start"
+              element={
+                <Suspense
+                  fallback={
+                    <div className="planning-loading" role="status">
+                      Opening planner…
+                    </div>
+                  }
+                >
+                  <StartPlanning />
+                </Suspense>
+              }
+            />
             <Route path="/join" element={<FormPage join />} />
             <Route path="/demos" element={<Demos />} />
             <Route path="*" element={<Missing />} />
           </Routes>
         </PageTransition>
       </main>
-      <Footer />
+      {!planningRoom ? <Footer /> : null}
     </>
   );
 }
