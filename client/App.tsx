@@ -15,6 +15,7 @@ const StartPlanning = lazy(() =>
 const Dashboard = lazy(() => import("./dashboard/Dashboard"));
 const LiveRoom = lazy(() => import("./dashboard/LiveRoom"));
 const JoinRoomPage = lazy(() => import("./JoinRoomPage").then((module) => ({ default: module.JoinRoomPage })));
+const DemoStudio = lazy(() => import("./DemoStudio"));
 
 function FormPage({ join = false }: { join?: boolean }) {
   const [message, setMessage] = useState("");
@@ -113,13 +114,19 @@ export default function App() {
   const { pathname } = useLocation();
   const planningRoom =
     pathname === "/dashboard" || pathname.startsWith("/rooms/");
+  const localHost = ["127.0.0.1", "localhost", "[::1]"].includes(window.location.hostname);
+  const studioEnabled = import.meta.env.DEV && localHost;
+  const isStudio = studioEnabled && (pathname === "/demo-studio" || pathname.startsWith("/demo-studio/"));
+  const showChrome = !planningRoom && !isStudio;
   return (
     <>
-      <a href="#main" className="skip-link">
-        Skip to content
-      </a>
-      {!planningRoom ? <Header /> : null}
-      <main id="main">
+      {!isStudio ? (
+        <a href="#main" className="skip-link">
+          Skip to content
+        </a>
+      ) : null}
+      {showChrome ? <Header /> : null}
+      <main id="main" className={isStudio ? "demo-studio-main" : undefined}>
         <PageTransition>
           <Routes>
             <Route
@@ -166,12 +173,13 @@ export default function App() {
               }
             />
             <Route path="/join" element={<Suspense fallback={<div className="planning-loading" role="status">Opening invitation…</div>}><JoinRoomPage /></Suspense>} />
+            <Route path="/demo-studio" element={studioEnabled ? <Suspense fallback={<div className="planning-loading" role="status">Opening Demo Studio…</div>}><DemoStudio /></Suspense> : <Missing />} />
             <Route path="/demos" element={<Demos />} />
             <Route path="*" element={<Missing />} />
           </Routes>
         </PageTransition>
       </main>
-      {!planningRoom ? <Footer /> : null}
+      {showChrome ? <Footer /> : null}
     </>
   );
 }

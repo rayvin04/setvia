@@ -7,6 +7,10 @@ export default defineConfig({
   plugins: [dashboardPreviewPlugin(), react(), tailwindcss()],
   server: {
     proxy: {
+      "/api/demo-studio": {
+        target: "http://127.0.0.1:4318",
+        changeOrigin: true,
+      },
       "/api": {
         target: "http://127.0.0.1:3001",
         changeOrigin: false,
