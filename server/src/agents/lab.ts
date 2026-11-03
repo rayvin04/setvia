@@ -18,6 +18,7 @@ export interface LiveAttemptRecord {
   startedAt: string;
   durationMs: number | null;
   reservedCostMicros: number;
+  reservedTokens?: number;
   estimatedCostMicros: number | null;
   inputTokens: number | null;
   cachedInputTokens: number | null;
@@ -81,8 +82,13 @@ export interface LabRecord {
     runId: string;
     attempts: number;
     runAttempts: number;
+    attemptBudget?: number;
+    remainingAttempts?: number;
     estimatedCostMicros: number;
     budgetMicros: number;
+    tokensAtRisk?: number;
+    tokenBudget?: number;
+    remainingTokens?: number;
   };
   eventAttendance?: {
     estimatedAttendeeCount: number;
@@ -303,7 +309,7 @@ export function renderLab(records: LabRecord[]) {
             ? "<p>Legacy fixture counts: " + record.dashboardCounts.responding + " responses · " + record.dashboardCounts.confirmed + " confirmed · " + record.dashboardCounts.unconfirmed + " unconfirmed · " + record.dashboardCounts.noResponse + " not received</p>"
             : "") +
         (record.liveBudgetSnapshot
-          ? "<p><strong>Cumulative estimated spend at risk:</strong> $" + (record.liveBudgetSnapshot.estimatedCostMicros / 1e6).toFixed(4) + " of $" + (record.liveBudgetSnapshot.budgetMicros / 1e6).toFixed(2) + " · " + record.liveBudgetSnapshot.runAttempts + " HTTP attempts in this run, " + record.liveBudgetSnapshot.attempts + " total attempts in the private ledger.</p>"
+          ? "<p><strong>Cumulative estimated spend at risk:</strong> $" + (record.liveBudgetSnapshot.estimatedCostMicros / 1e6).toFixed(4) + " of $" + (record.liveBudgetSnapshot.budgetMicros / 1e6).toFixed(2) + (record.liveBudgetSnapshot.attemptBudget === undefined ? "" : " · " + record.liveBudgetSnapshot.attempts + " of " + record.liveBudgetSnapshot.attemptBudget + " attempts used; " + (record.liveBudgetSnapshot.remainingAttempts ?? 0) + " remain") + (record.liveBudgetSnapshot.tokensAtRisk === undefined ? "" : " · " + record.liveBudgetSnapshot.tokensAtRisk.toLocaleString() + " tokens used or reserved of " + (record.liveBudgetSnapshot.tokenBudget ?? 0).toLocaleString() + "; " + (record.liveBudgetSnapshot.remainingTokens ?? 0).toLocaleString() + " remain") + "</p>"
           : "") +
         httpAttemptSection +
         (timelineRows ? "<div class=scroll><table><caption>Simulation readiness timeline · deterministically calculated</caption><thead><tr><th>Stage</th><th>Readiness</th><th>Event</th></tr></thead><tbody>" + timelineRows + "</tbody></table></div>" : "") +
