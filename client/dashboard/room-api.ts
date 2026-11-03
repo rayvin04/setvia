@@ -6,6 +6,7 @@ import {
 import {
   CreateRoomRequestSchema,
   ParticipantSessionSchema,
+  SubmitRoomMessageResultSchema,
   type CreateRoomRequest,
   type ParticipantSession,
 } from "../../shared/room-api";
@@ -34,19 +35,6 @@ const CreatedSchema = z.object({
 });
 const JoinedSchema = z.object({
   session: ParticipantSessionSchema,
-  snapshot: DashboardSnapshotSchema,
-});
-const ReceiptSchema = z.object({
-  id: z.string(),
-  ownerId: z.string(),
-  visibility: z.enum(["private", "group"]),
-  questionId: z.string().nullable(),
-  proposalVersion: z.number().int().positive(),
-  occurredAt: z.string(),
-});
-const SubmitResultSchema = z.object({
-  receipt: ReceiptSchema,
-  duplicate: z.boolean(),
   snapshot: DashboardSnapshotSchema,
 });
 
@@ -169,7 +157,7 @@ export async function submitRoomMessage(
     }),
     cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal,
   });
-  const result = await readResponse(response, SubmitResultSchema);
+  const result = await readResponse(response, SubmitRoomMessageResultSchema);
   if (result.snapshot.room.viewerId !== session.participantId || result.snapshot.room.roomId !== session.roomId)
     throw new RoomApiError("The planning service returned a room update for a different session.", 502);
   return {

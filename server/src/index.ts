@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { createApp } from "./http/app.js";
 import { createMetaClient, readMetaConfig } from "./ai/meta-client.js";
-import { createLocalRoomRuntime } from "./rooms/runtime.js";
+import { createLocalRoomRuntime, DEFAULT_ROOM_PROMPT_VERSION } from "./rooms/runtime.js";
 
 const port = Number(process.env.PORT ?? "3001");
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
@@ -33,7 +33,7 @@ const runtime = liveEnabled
   ? await createLocalRoomRuntime({
       privateRoot,
       publicRoot: appRoot,
-      promptVersion: process.env.SETVIA_PROMPT_VERSION ?? "agents-v7",
+      promptVersion: process.env.SETVIA_PROMPT_VERSION ?? DEFAULT_ROOM_PROMPT_VERSION,
       syntheticDemo: process.env.SETVIA_SYNTHETIC_DEMO === "1",
     })
   : undefined;

@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { z } from "zod";
 import { createMetaClient, type MetaClientOptions, type SafeUsageMetadata } from "../ai/meta-client.js";
 import {
@@ -13,6 +13,7 @@ import { StateError } from "./store.js";
 export interface MetaHttpEvent {
   phase: "started" | "response" | "transport_error" | "usage";
   requestNumber: number;
+  invocationId?: string;
   requestHash: string;
   role: Role | "Scenario Generator";
   promptVersion: string;
@@ -124,6 +125,7 @@ export function createMetaGateway(options: MetaGatewayOptions): AgentGateway {
       )
         throw new StateError("INPUT_LIMIT");
       const requestHash = createHash("sha256").update(serialized).digest("hex");
+      const invocationId = randomUUID();
       const client = createMetaClient({
         ...options.client,
         maxRetries: 0,
@@ -139,6 +141,7 @@ export function createMetaGateway(options: MetaGatewayOptions): AgentGateway {
               role,
               promptVersion,
               requestHash,
+              invocationId,
             })
           : undefined,
         onUsage: options.onHttpEvent
@@ -148,6 +151,7 @@ export function createMetaGateway(options: MetaGatewayOptions): AgentGateway {
               role,
               promptVersion,
               requestHash,
+              invocationId,
               usage,
               durationMs: usage.durationMs,
             })

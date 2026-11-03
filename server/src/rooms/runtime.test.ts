@@ -9,11 +9,13 @@ import { createMetaGateway } from "../agents/meta-gateway.js";
 import { META_API_BASE_URL, META_SPARK_MODEL } from "../ai/meta-client.js";
 import { MemoryPersistence, RoomStore } from "../agents/store.js";
 import { CreateRoomRequestSchema } from "../../../shared/room-api.js";
-import { IntegrationRunBudget, RoomRuntime } from "./runtime.js";
+import { IntegrationRunBudget, RoomRuntime, LIVE_CAP, LIVE_CYCLE_CAP } from "./runtime.js";
 import { finding, judge, scriptedGateway } from "../agents/fixtures.js";
 import { SubmitRoomMessageSchema } from "../../../shared/room-api.js";
 import type { Response as ExpressResponse } from "express";
 import { DashboardSnapshotSchema, type DashboardSnapshot } from "../../../shared/dashboard.js";
+import { SubmitRoomMessageResultSchema } from "../../../shared/room-api.js";
+import { createApp } from "../http/app.js";
 
 async function withLedger(run: (path: string) => Promise<void>) {
   const directory = await mkdtemp(resolve(process.cwd(), `.setvia-room-budget-${randomUUID()}-`));
@@ -61,6 +63,33 @@ test("concurrent reservations cannot exceed the persistent run cap", async () =>
     assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
     assert.equal(budget.snapshot().attempts, 1);
     await budget.close();
+  });
+});
+
+test("expanded cumulative authorization preserves prior reservations and keeps each cycle bounded", async () => {
+  await withLedger(async (path) => {
+    const allowance = { tokens: 64_000, costMicros: 104_000 };
+    const original = await IntegrationRunBudget.open(path, { attempts: 10, tokens: 640_000, costMicros: 2_000_000 });
+    for (let i = 0; i < 10; i++) await original.reserve(allowance);
+    await original.close();
+    const priorContents = await readFile(path, "utf8");
+    const expanded = await IntegrationRunBudget.open(path);
+    assert.equal(await readFile(path, "utf8"), priorContents);
+    assert.equal(expanded.snapshot().attempts, 10);
+    assert.equal(expanded.snapshot().remainingAttempts, 21);
+    assert.equal(expanded.snapshot().remainingTokens, 1_344_000);
+    assert.equal(LIVE_CAP.costMicros, 3_224_000);
+    assert.equal(LIVE_CYCLE_CAP.attempts, 10);
+    await expanded.reserve(allowance);
+    const first = await expanded.holdCycle(LIVE_CYCLE_CAP.attempts, allowance);
+    await first.reserve(allowance);
+    await first.release();
+    const second = await expanded.holdCycle(LIVE_CYCLE_CAP.attempts, allowance);
+    await second.reserve(allowance);
+    await second.release();
+    assert.equal(expanded.snapshot().attempts, 13);
+    assert.ok((await readFile(path, "utf8")).startsWith(priorContents));
+    await expanded.close();
   });
 });
 
@@ -141,6 +170,56 @@ test("creating and joining an idle room authenticates sessions without spending 
     assert.equal(runtime.budget.attempts, 0);
   } finally {
     await runtime.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("HTTP message receipts match the browser contract and idempotent retries do not queue another inference", async () => {
+  const directory = await mkdtemp(resolve(process.cwd(), `.setvia-room-http-${randomUUID()}-`));
+  const budget = await IntegrationRunBudget.open(join(directory, "integration-budget.ndjson"));
+  const scripted = scriptedGateway([
+    { role: "Listener", output: { candidates: [] } },
+    { role: "Judge", output: judge() },
+  ]);
+  const engine = new AgentEngine(new RoomStore(new MemoryPersistence()), scripted.gateway);
+  const runtime = new RoomRuntime({ engine, budget, privateRoot: directory, publicRoot: join(directory, "public"),
+    syntheticDemo: false, persistenceLock: async () => {}, journal: { release: async () => {} } as never });
+  const server = createApp({ rooms: runtime, client: {
+    baseUrl: META_API_BASE_URL, model: META_SPARK_MODEL, getRequestCount: () => 0,
+    createResponse: async () => { throw new Error("No live extraction in room HTTP tests"); },
+  } }).listen(0, "127.0.0.1");
+  await new Promise<void>((done) => server.once("listening", done));
+  const address = server.address();
+  assert.ok(address && typeof address !== "string");
+  const base = `http://127.0.0.1:${address.port}/api/rooms`;
+  try {
+    const created = await fetch(base, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+      creatorName: "Alex", eventType: "Meeting", proposal: { id: "meeting", label: "Synthetic meeting", values: { time: "09:00" } },
+    }) }).then((response) => response.json()) as Awaited<ReturnType<RoomRuntime["create"]>>;
+    const joined = await runtime.join(created.roomId, created.invitation, "Sam");
+    const headers = { "Content-Type": "application/json", Authorization: "Bearer " + created.session.token,
+      "X-Setvia-Participant": created.session.participantId };
+    const body = JSON.stringify({ messageId: "http_receipt_regression", expectedRevision: joined.snapshot.room.revision,
+      proposalVersion: joined.snapshot.room.proposalVersion, visibility: "group", text: "A shared meeting thought", questionId: null, replyOption: null });
+    const send = () => fetch(`${base}/${created.roomId}/messages`, { method: "POST", headers, body });
+    const initial = await send();
+    assert.equal(initial.status, 201);
+    const receipt = SubmitRoomMessageResultSchema.parse(await initial.json());
+    assert.equal(receipt.duplicate, false);
+    assert.equal(receipt.receipt.id, "http_receipt_regression");
+    assert.equal("text" in receipt.receipt, false, "receipt serialization is explicitly whitelisted");
+    const retried = await send();
+    assert.equal(retried.status, 201);
+    const duplicate = SubmitRoomMessageResultSchema.parse(await retried.json());
+    assert.equal(duplicate.duplicate, true);
+    assert.deepEqual(duplicate.receipt, receipt.receipt);
+    for (let i = 0; i < 50 && !(await engine.store.read(created.roomId)).lastCycle?.finalEvaluation; i++)
+      await new Promise((done) => setTimeout(done, 25));
+    assert.equal(scripted.calls.length, 2);
+    assert.equal((await engine.store.read(created.roomId)).responses.length, 1);
+  } finally {
+    await runtime.close();
+    await new Promise<void>((done) => server.close(() => done()));
     await rm(directory, { recursive: true, force: true });
   }
 });

@@ -3,6 +3,7 @@ import { test } from "node:test";
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
+import { randomUUID } from "node:crypto";
 import { LIVE_ATTEMPT_RESERVATION_MICROS, LIVE_ATTEMPT_RESERVATION_TOKENS, LIVE_COST_BUDGET_MICROS, LIVE_MAX_HTTP_ATTEMPTS, LIVE_TOKEN_BUDGET, LiveBudgetJournal } from "./live-budget-journal.js";
 import type { MetaHttpEvent } from "../server/src/agents/meta-gateway.js";
 
@@ -68,24 +69,80 @@ test("live request journal persists reservations, HTTP status, usage, and privat
   assert.ok(root.length > 0);
 });
 
-test("cumulative request, token, and cost reservations stop at the approved evaluation ceiling", async (t) => {
+test("unknown usage still stops at the cumulative token ceiling after attempt authorization expands", async (t) => {
   const { privateRoot, publicRoot } = await tempRoots(t);
   const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A"]);
   try {
-    for (let index = 0; index < LIVE_MAX_HTTP_ATTEMPTS; index++)
+    const maximumUnknownAttempts = Math.floor(LIVE_TOKEN_BUDGET / LIVE_ATTEMPT_RESERVATION_TOKENS);
+    for (let index = 0; index < maximumUnknownAttempts; index++)
       await journal.handle(event("started", index + 1), "A");
     const before = await journal.snapshot();
-    assert.equal(before.attempts, LIVE_MAX_HTTP_ATTEMPTS);
+    assert.equal(before.attempts, maximumUnknownAttempts);
     assert.equal(before.tokensAtRisk, LIVE_TOKEN_BUDGET);
     assert.equal(before.remainingTokens, 0);
-    assert.equal(before.remainingAttempts, 0);
-    await assert.rejects(journal.handle(event("started", LIVE_MAX_HTTP_ATTEMPTS + 1), "A"), /LIVE_HTTP_ATTEMPT_LIMIT/);
-    assert.equal((await journal.snapshot()).attempts, LIVE_MAX_HTTP_ATTEMPTS);
+    assert.equal(before.remainingAttempts, LIVE_MAX_HTTP_ATTEMPTS - maximumUnknownAttempts);
+    await assert.rejects(journal.handle(event("started", maximumUnknownAttempts + 1), "A"), /LIVE_CUMULATIVE_TOKEN_LIMIT/);
+    assert.equal((await journal.snapshot()).attempts, maximumUnknownAttempts);
     assert.ok(before.estimatedCostMicros <= LIVE_COST_BUDGET_MICROS);
-    assert.equal(before.estimatedCostMicros, LIVE_MAX_HTTP_ATTEMPTS * LIVE_ATTEMPT_RESERVATION_MICROS);
+    assert.equal(before.estimatedCostMicros, maximumUnknownAttempts * LIVE_ATTEMPT_RESERVATION_MICROS);
   } finally {
     await journal.release();
   }
+});
+
+test("the expanded HTTP attempt ceiling remains enforced with observed usage", async (t) => {
+  const { privateRoot, publicRoot } = await tempRoots(t);
+  const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A"]);
+  try {
+    for (let requestNumber = 1; requestNumber < LIVE_MAX_HTTP_ATTEMPTS; requestNumber++) {
+      await journal.handle(event("started", requestNumber), "A");
+      await journal.handle({ ...event("usage", requestNumber), usage: {
+        model: "muse-spark-1.3", responseId: "synthetic", inputTokens: 1, outputTokens: 1,
+        totalTokens: 2, cachedInputTokens: 0, reasoningTokens: 0, durationMs: 1,
+      } }, "A");
+    }
+    const contenders = await Promise.allSettled([70, 71, 72, 73].map((number) => journal.handle(event("started", number), "A")));
+    assert.equal(contenders.filter((result) => result.status === "fulfilled").length, 1);
+    assert.equal((await journal.snapshot()).attempts, 70);
+    await assert.rejects(journal.handle(event("started", 71), "A"), /LIVE_HTTP_ATTEMPT_LIMIT/);
+  } finally { await journal.release(); }
+});
+
+test("concurrent journal writes retain every call and correlate repeated provider request numbers by invocation", async (t) => {
+  const { privateRoot, publicRoot } = await tempRoots(t);
+  const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A"]);
+  const ids = Array.from({ length: 16 }, () => randomUUID());
+  try {
+    await Promise.all(ids.map((invocationId) => journal.handle({ ...event("started"), invocationId }, "A")));
+    await Promise.all([...ids].reverse().map((invocationId) => {
+      const tokens = ids.indexOf(invocationId) + 1;
+      return journal.handle({ ...event("usage"), invocationId, usage: {
+        model: "muse-spark-1.3", responseId: `synthetic-${tokens}`, inputTokens: tokens, outputTokens: tokens,
+        totalTokens: tokens * 2, cachedInputTokens: 0, reasoningTokens: 0, durationMs: 1,
+      } }, "A");
+    }));
+    const attempts = await journal.attemptsFor("A");
+    assert.equal(attempts.length, ids.length);
+    for (const [index, id] of ids.entries()) {
+      const attempt = attempts.find((item) => item.invocationId === id);
+      assert.equal(attempt?.status, "usage_recorded");
+      assert.equal(attempt.inputTokens, index + 1);
+      assert.equal(attempt.responseId, `synthetic-${index + 1}`);
+    }
+    await assert.rejects(journal.handle({ ...event("started"), invocationId: ids[0] }, "A"), /LIVE_EVENT_ID_REUSED/);
+    assert.equal((await journal.snapshot()).attempts, ids.length);
+  } finally { await journal.release(); }
+  await assert.rejects(journal.handle({ ...event("started"), invocationId: randomUUID() }, "A"), /LIVE_JOURNAL_CLOSED/);
+});
+
+test("legacy callers fail closed instead of overlapping a reused provider request number", async (t) => {
+  const { privateRoot, publicRoot } = await tempRoots(t);
+  const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A"]);
+  try {
+    await journal.handle(event("started"), "A");
+    await assert.rejects(journal.handle(event("started"), "A"), /LIVE_EVENT_ID_REQUIRED/);
+    assert.equal((await journal.snapshot()).attempts, 1);
+  } finally { await journal.release(); }
 });
 
 test("token usage above a call reservation is recorded and permanently stops further live requests", async (t) => {

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { OptionSchema } from "../server/src/agents/contracts.js";
+import { DashboardSnapshotSchema } from "./dashboard.js";
 
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/);
 
@@ -53,6 +54,21 @@ export const SubmitRoomMessageSchema = z
     replyOption: z.string().min(1).max(160).nullable(),
   })
   .strict();
+
+// Shared by the browser decoder and HTTP runtime so a recorded submission
+// cannot be reported as a failure because response fields drift apart.
+export const SubmitRoomMessageResultSchema = z.object({
+  receipt: z.object({
+    id,
+    ownerId: id,
+    visibility: z.enum(["private", "group"]),
+    questionId: id.nullable(),
+    proposalVersion: z.number().int().positive(),
+    occurredAt: z.iso.datetime(),
+  }),
+  duplicate: z.boolean(),
+  snapshot: DashboardSnapshotSchema,
+}).strict();
 
 export const ShareCandidateRequestSchema = z
   .object({

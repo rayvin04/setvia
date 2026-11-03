@@ -20,7 +20,7 @@ import { renderLab, saveLab } from "./lab.js";
 import { getScenario, SCENARIO_IDS } from "./scenarios.js";
 import { runAllScenarioMocks, runScenarioMock, runScenarioWithGateway } from "./scenario-runner.js";
 import { calculateReadiness, violations } from "./readiness.js";
-import { createMetaGateway } from "./meta-gateway.js";
+import { createMetaGateway, type MetaHttpEvent } from "./meta-gateway.js";
 import { MetaApiError } from "../ai/errors.js";
 import {
   META_API_BASE_URL,
@@ -1153,6 +1153,32 @@ test("Meta adapter reuses the existing pinned client, disables retries, and mete
   });
   await assert.rejects(client.createResponse({ input: "synthetic" }), /BUDGET/);
   assert.equal(sends, 2);
+});
+
+test("separate Meta clients emit distinct invocation identities even for identical concurrent requests", async () => {
+  const events: MetaHttpEvent[] = [];
+  const gateway = createMetaGateway({
+    prompts: Object.fromEntries(Object.keys(RoleSchemas).map((role) => [role, "Synthetic instruction."])) as Record<keyof typeof RoleSchemas, string>,
+    maxRequestBytes: 30_000, maxOutputTokens: 3_000, inputTokenAllowance: 40_000,
+    callTokenAllowance: 43_000, callCostMicros: 100_000,
+    inputPriceMicrosPerMillion: 1_250_000, outputPriceMicrosPerMillion: 4_250_000,
+    onHttpEvent: (event) => { events.push(event); },
+    client: { config: { apiKey: "synthetic-key", baseUrl: META_API_BASE_URL, model: META_SPARK_MODEL },
+      fetchImpl: async () => Response.json({ model: META_SPARK_MODEL, output_text: JSON.stringify(judge()),
+        usage: { input_tokens: 1, output_tokens: 1, total_tokens: 2 } }),
+    },
+  });
+  const context = { signal: new AbortController().signal, reserveAttempt: async () => {} };
+  await Promise.all([gateway.call("Judge", {}, context), gateway.call("Judge", {}, context)]);
+  const started = events.filter((event) => event.phase === "started");
+  assert.equal(started.length, 2);
+  assert.equal(started[0]!.requestNumber, started[1]!.requestNumber);
+  assert.equal(started[0]!.requestHash, started[1]!.requestHash);
+  assert.equal(new Set(started.map((event) => event.invocationId)).size, 2);
+  for (const start of started) {
+    assert.ok(start.invocationId);
+    assert.deepEqual(events.filter((event) => event.invocationId === start.invocationId).map((event) => event.phase), ["started", "response", "usage"]);
+  }
 });
 
 test("simultaneous private submissions are queued without overwriting either participant", async () => {

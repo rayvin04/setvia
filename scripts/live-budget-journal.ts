@@ -8,7 +8,7 @@ import type { LiveAttemptRecord } from "../server/src/agents/lab.js";
 
 export const LIVE_COST_BUDGET_MICROS = 10_000_000;
 export const LIVE_ATTEMPT_RESERVATION_MICROS = 104_000;
-export const LIVE_MAX_HTTP_ATTEMPTS = 50;
+export const LIVE_MAX_HTTP_ATTEMPTS = 70;
 export const LIVE_ATTEMPT_RESERVATION_TOKENS = 64_000;
 export const LIVE_TOKEN_BUDGET = 3_200_000;
 const LEDGER_NAME = "live-budget-ledger-v1.json";
@@ -22,6 +22,7 @@ const AttemptSchema = z.object({
   promptVersion: z.string().regex(/^agents-v[0-9]+$/),
   role: z.enum([...Roles, "Scenario Generator"]),
   requestHash: z.string().regex(/^[a-f0-9]{64}$/),
+  invocationId: z.string().uuid().optional(),
   status: z.enum(["reserved", "response_received", "transport_error", "usage_recorded"]),
   httpStatus: z.number().int().min(100).max(599).nullable(),
   startedAt: z.string().datetime(),
@@ -90,8 +91,9 @@ function processExists(pid: number) {
 }
 
 export class LiveBudgetJournal {
-  private readonly runAttempts = new Map<number, string>();
+  private readonly runAttempts = new Map<string, string>();
   private released = false;
+  private tail: Promise<void> = Promise.resolve();
 
   private constructor(
     private readonly directory: string,
@@ -160,10 +162,20 @@ export class LiveBudgetJournal {
 
   async handle(event: MetaHttpEvent, scenarioId: string) {
     if (!this.scenarioIds.includes(scenarioId)) throw new Error("LIVE_SCENARIO_NOT_RESERVED");
+    if (event.invocationId !== undefined && !z.string().uuid().safeParse(event.invocationId).success)
+      throw new Error("LIVE_EVENT_ID_INVALID");
+    const eventKey = `${event.invocationId ?? "legacy"}:${event.requestNumber}`;
     let reservationExceeded = false;
     let costReservationExceeded = false;
     await this.mutate((ledger) => {
       if (event.phase === "started") {
+        const priorId = this.runAttempts.get(eventKey);
+        const prior = ledger.attempts.find((attempt) => attempt.id === priorId);
+        if (event.invocationId && priorId)
+          throw new Error("LIVE_EVENT_ID_REUSED; no additional request was sent.");
+        if (!event.invocationId && prior && ["reserved", "response_received"].includes(prior.status) &&
+          (prior.httpStatus === null || prior.httpStatus < 400))
+          throw new Error("LIVE_EVENT_ID_REQUIRED; overlapping calls need distinct identities.");
         if (ledger.attempts.some(tokenReservationExceeded))
           throw new Error("LIVE_TOKEN_RESERVATION_BREACH; no additional request was sent.");
         if (ledger.attempts.some((attempt) => (attempt.estimatedCostMicros ?? 0) > attempt.reservedCostMicros))
@@ -187,6 +199,7 @@ export class LiveBudgetJournal {
           promptVersion: event.promptVersion,
           role: event.role,
           requestHash: event.requestHash,
+          ...(event.invocationId ? { invocationId: event.invocationId } : {}),
           status: "reserved",
           httpStatus: null,
           startedAt: new Date().toISOString(),
@@ -202,11 +215,11 @@ export class LiveBudgetJournal {
           responseId: null,
         };
         ledger.attempts.push(attempt);
-        this.runAttempts.set(event.requestNumber, attempt.id);
+        this.runAttempts.set(eventKey, attempt.id);
         return ledger;
       }
 
-      const attemptId = this.runAttempts.get(event.requestNumber);
+      const attemptId = this.runAttempts.get(eventKey);
       const attempt = ledger.attempts.find((candidate) => candidate.id === attemptId);
       if (!attempt) throw new Error("LIVE_ATTEMPT_JOURNAL_MISSING; stopping before another request.");
       if (event.phase === "response") {
@@ -254,14 +267,14 @@ export class LiveBudgetJournal {
   }
 
   async attemptsFor(scenarioId: string): Promise<LiveAttemptRecord[]> {
-    const ledger = await readLedger(this.ledgerPath);
+    const ledger = await this.enqueue(() => readLedger(this.ledgerPath));
     return ledger.attempts
       .filter((attempt) => attempt.runId === this.runId && attempt.scenarioId === scenarioId)
       .map((attempt) => ({ ...attempt }));
   }
 
   async snapshot() {
-    const ledger = await readLedger(this.ledgerPath);
+    const ledger = await this.enqueue(() => readLedger(this.ledgerPath));
     const attempts = ledger.attempts;
     const tokenExposure = attempts.reduce((sum, attempt) => sum + tokensAtRisk(attempt), 0);
     return {
@@ -284,6 +297,7 @@ export class LiveBudgetJournal {
   async release() {
     if (this.released) return;
     this.released = true;
+    await this.tail;
     try {
       const lock = JSON.parse(await readFile(this.lockPath, "utf8")) as { runId?: unknown };
       if (lock.runId === this.runId) await rm(this.lockPath, { force: true });
@@ -292,7 +306,18 @@ export class LiveBudgetJournal {
     }
   }
 
-  private async mutate(update: (ledger: Ledger) => Ledger) {
+  private enqueue<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.released) return Promise.reject(new Error("LIVE_JOURNAL_CLOSED"));
+    const result = this.tail.then(operation);
+    this.tail = result.then(() => {}, () => {});
+    return result;
+  }
+
+  private mutate(update: (ledger: Ledger) => Ledger) {
+    return this.enqueue(() => this.appendMutation(update));
+  }
+
+  private async appendMutation(update: (ledger: Ledger) => Ledger) {
     const ledger = await readLedger(this.ledgerPath);
     const next = update(ledger);
     LedgerSchema.parse(next);

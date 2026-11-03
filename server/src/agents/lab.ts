@@ -13,6 +13,7 @@ export interface LiveAttemptRecord {
   promptVersion: string;
   role: Role | "Scenario Generator";
   requestHash: string;
+  invocationId?: string;
   status: "reserved" | "response_received" | "transport_error" | "usage_recorded";
   httpStatus: number | null;
   startedAt: string;

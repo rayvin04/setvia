@@ -308,7 +308,7 @@ export default function LiveRoom() {
       </header>
 
       {inviteLink ? <div className="live-invite-field"><label htmlFor="live-invitation-url">Share invitation</label><input id="live-invitation-url" readOnly value={inviteLink} onFocus={(event) => event.currentTarget.select()} /><span>The invitation token stays in the link fragment; it is exchanged for a tab-only participant session.</span></div> : null}
-      {budget ? <p className="live-budget-note">Live test budget · {budget.attempts}/10 HTTP attempts used · ${(budget.reservedCostMicros / 1_000_000).toFixed(2)} reserved</p> : null}
+      {budget ? <p className="live-budget-note">Live test budget · {budget.attempts}/{budget.attempts + budget.remainingAttempts} HTTP attempts used · ${(budget.reservedCostMicros / 1_000_000).toFixed(2)} reserved</p> : null}
       {error ? <div className="live-error" role="alert"><CircleAlert size={16} aria-hidden="true" /><span>{error}</span></div> : null}
 
       {snapshot ? (

@@ -14,14 +14,28 @@ import { JsonPersistence, RoomStore, StateError } from "../agents/store.js";
 import { digest } from "../agents/rooms.js";
 import { saveLab, type LabRecord } from "../agents/lab.js";
 import { DashboardSnapshotSchema } from "../../../shared/dashboard.js";
-import { SubmitRoomMessageSchema } from "../../../shared/room-api.js";
+import { SubmitRoomMessageSchema, SubmitRoomMessageResultSchema } from "../../../shared/room-api.js";
 import { projectDashboardSnapshot } from "../dashboard/projection.js";
 import type { CreateRoomRequest } from "../../../shared/room-api.js";
 
-const LIVE_CAP = {
+export const DEFAULT_ROOM_PROMPT_VERSION = "agents-v8";
+
+// Cumulative authorization: original 10 plus 21 browser-workflow requests.
+// Existing reservations remain in the same append-only ledger.
+export const LIVE_CAP = {
+  attempts: 31,
+  costMicros: 3_224_000,
+  tokens: 1_984_000,
+};
+export const LIVE_CYCLE_CAP = {
   attempts: 10,
-  costMicros: 2_000_000,
   tokens: 640_000,
+  costMicros: 1_040_000,
+};
+const LIVE_ROOM_CAP = {
+  attempts: 21,
+  tokens: 1_344_000,
+  costMicros: 2_184_000,
 };
 const INPUT_PRICE_MICROS_PER_MILLION = 1_250_000;
 const OUTPUT_PRICE_MICROS_PER_MILLION = 4_250_000;
@@ -30,7 +44,7 @@ const MAX_OUTPUT_TOKENS: Record<Role, number> = {
   Judge: 8_192,
   Negotiator: 4_096,
   "Question Strategist": 4_096,
-  Speaker: 1_024,
+  Speaker: 2_048,
 };
 const INPUT_TOKEN_ALLOWANCE = 55_000;
 const CALL_TOKEN_ALLOWANCE = LIVE_ATTEMPT_RESERVATION_TOKENS;
@@ -390,7 +404,11 @@ export class RoomRuntime {
       if (input.visibility === "group") this.scheduleGroup(roomId, auth);
       else this.schedulePrivate(roomId, auth.participantId);
     }
-    return { receipt: result.receipt, snapshot: await this.snapshot(roomId, auth) };
+    return SubmitRoomMessageResultSchema.parse({
+      receipt: result.receipt,
+      duplicate: result.duplicate,
+      snapshot: await this.snapshot(roomId, auth),
+    });
   }
 
   async shareCandidate(roomId: string, auth: Auth, expectedRevision: number, candidateId: string) {
@@ -477,7 +495,7 @@ export class RoomRuntime {
       mode: this.options.engine.gateway.mode === "META" ? "LIVE" : "MOCK",
       simulation: true,
       model: "muse-spark-1.3",
-      promptVersion: this.options.engine.gateway.promptVersion ?? "agents-v5",
+      promptVersion: this.options.engine.gateway.promptVersion ?? "agents-v1",
       liveRunId: this.options.journal.runId,
       liveHttpAttempts: journal,
       liveBudgetSnapshot: await this.options.journal.snapshot(),
@@ -533,7 +551,7 @@ export class RoomRuntime {
         mode: this.options.engine.gateway.mode === "META" ? "LIVE" : "MOCK",
         simulation: true,
         model: "muse-spark-1.3",
-        promptVersion: this.options.engine.gateway.promptVersion ?? "agents-v5",
+        promptVersion: this.options.engine.gateway.promptVersion ?? "agents-v1",
         liveRunId: this.options.journal.runId,
         liveHttpAttempts: await this.options.journal.attemptsFor("F"),
         liveBudgetSnapshot: await this.options.journal.snapshot(),
@@ -609,7 +627,7 @@ export async function createLocalRoomRuntime(options: {
     journal = await LiveBudgetJournal.open(privateRoot, options.publicRoot, ["F"]);
     const runBudget = await IntegrationRunBudget.open(resolve(privateRoot, "room-state", "integration-budget.ndjson"));
     budget = runBudget;
-    const promptVersion = options.promptVersion ?? "agents-v7";
+    const promptVersion = options.promptVersion ?? DEFAULT_ROOM_PROMPT_VERSION;
     const base = await createRoomMetaGateway(privateRoot, promptVersion, (event) => journal!.handle(event, "F"));
     const gateway: AgentGateway = {
       mode: base.mode,
@@ -645,16 +663,16 @@ export async function createLocalRoomRuntime(options: {
     }
     const limits: Limits = {
       maxInvocations: 16,
-      maxRequests: LIVE_CAP.attempts,
+      maxRequests: LIVE_CYCLE_CAP.attempts,
       maxRevisions: 2,
       timeoutMs: 120_000,
-      maxTokens: LIVE_CAP.tokens,
-      maxCostMicros: LIVE_CAP.costMicros,
+      maxTokens: LIVE_CYCLE_CAP.tokens,
+      maxCostMicros: LIVE_CYCLE_CAP.costMicros,
       callTokens: CALL_TOKEN_ALLOWANCE,
       callCostMicros: CALL_COST_MICROS,
-      roomMaxRequests: LIVE_CAP.attempts,
-      roomMaxTokens: LIVE_CAP.tokens,
-      roomMaxCostMicros: LIVE_CAP.costMicros,
+      roomMaxRequests: LIVE_ROOM_CAP.attempts,
+      roomMaxTokens: LIVE_ROOM_CAP.tokens,
+      roomMaxCostMicros: LIVE_ROOM_CAP.costMicros,
     };
     let engine!: AgentEngine;
     let hub: RoomEventHub | undefined;

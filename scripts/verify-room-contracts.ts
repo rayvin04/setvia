@@ -6,7 +6,7 @@ import { validateJudge, validateSpeaker } from "../server/src/agents/engine.js";
 import { JsonPersistence, StateError } from "../server/src/agents/store.js";
 import { digest, sharedContext } from "../server/src/agents/rooms.js";
 import { saveLab } from "../server/src/agents/lab.js";
-import { createRoomMetaGateway, IntegrationRunBudget } from "../server/src/rooms/runtime.js";
+import { createRoomMetaGateway, IntegrationRunBudget, DEFAULT_ROOM_PROMPT_VERSION } from "../server/src/rooms/runtime.js";
 import { LiveBudgetJournal, LIVE_MAX_HTTP_ATTEMPTS, LIVE_ATTEMPT_RESERVATION_TOKENS, LIVE_ATTEMPT_RESERVATION_MICROS } from "./live-budget-journal.js";
 
 if (!process.argv.includes("--execute") || process.env.SETVIA_LIVE_BILLING_CHECKED !== "1")
@@ -27,7 +27,7 @@ try {
   budget = await IntegrationRunBudget.open(resolve(privateRoot, "room-state", "integration-budget.ndjson"));
   if ((await journal.snapshot()).attempts + 3 > LIVE_MAX_HTTP_ATTEMPTS) throw new StateError("LIVE_HTTP_ATTEMPT_LIMIT");
   hold = await budget.holdCycle(3, { tokens: LIVE_ATTEMPT_RESERVATION_TOKENS, costMicros: LIVE_ATTEMPT_RESERVATION_MICROS });
-  const gateway = await createRoomMetaGateway(privateRoot, process.env.SETVIA_PROMPT_VERSION ?? "agents-v7", (event) => journal!.handle(event, "F"));
+  const gateway = await createRoomMetaGateway(privateRoot, process.env.SETVIA_PROMPT_VERSION ?? DEFAULT_ROOM_PROMPT_VERSION, (event) => journal!.handle(event, "F"));
   const cycle: Cycle = { id: randomUUID(), baseRevision: room.revision, outcome: "CONTINUE", reason: "CONTRACT_CHECKS_ONLY",
     finalEvaluation: null, readiness: null, traces: [], attempts: 0, reservedTokens: 0, reservedCostMicros: 0,
     usageKnown: true, questions: [], mascot: null, messages: [] };
