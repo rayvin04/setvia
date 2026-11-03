@@ -63,6 +63,20 @@ An event's estimated or confirmed attendee count is separate from the number of 
 - The agent contracts, orchestration, deterministic readiness, room service, private projection, persistence adapter, and mock tests are real code. No authenticated room API or live multi-device collaboration is deployed.
 - Scenario fixtures use fictional inputs. Their passing tests establish deterministic code behavior, not real-world accuracy or model reasoning quality.
 
+### Recorded Muse Spark evaluation
+
+The recorded evaluation covers **11 synthetic runs across five scenario templates**. The client initiated 39 outbound Meta HTTP attempts. The journal reserved budget before each attempt: 38 received HTTP 200 responses, and one cancelled/transport-error attempt has no HTTP status or usage record.
+
+| Measure | Recorded result | Accounting |
+| --- | ---: | --- |
+| Client HTTP attempts | 39 | Includes the cancelled/transport-error attempt |
+| Successful HTTP responses | 38 | All 38 returned HTTP 200 |
+| Automated assertions | 48 passed | Machine checks only; no completed human ratings |
+| Estimated token usage | **US$0.296678** | From reported usage for the 38 responses, priced at Meta's published Standard rates |
+| At-risk ledger amount | **US$0.400678** | Estimated usage plus the **US$0.104** reservation for the attempt without usage data |
+
+The estimate uses Meta's published Standard rates of **US$1.25 per million input tokens** and **US$4.25 per million output tokens**. It ignores cached-input discounts and is not a provider invoice. The extra US$0.104 is a budget reservation for unknown usage, not money spent and not a promotional-credit deduction. Automated assertions check expected protocol behavior on synthetic inputs; they do not show that the agents are fully reliable or establish real-world planning quality. See [Meta Model API pricing](https://dev.meta.ai/docs/pricing-rate-limits) and the detailed [evaluation accounting](docs/agent-foundation.md#recorded-muse-spark-evaluation).
+
 ## Local development
 
 Requires Node.js 24 LTS.
@@ -113,5 +127,5 @@ Real-world prices, routes, weather, accessibility, venue details, and hazards ar
 
 Lexend is provided by `@fontsource-variable/lexend` (OFL-1.1); icons use `lucide-react` (ISC). The GitHub mark includes its license file. See [`docs/ASSETS.md`](docs/ASSETS.md) for asset notes and [`docs/meta-api.md`](docs/meta-api.md) for the extraction API boundary.
 
-The agent contracts, test scope, private prompt boundary, and persistence limitations are documented in [`docs/agent-foundation.md`](docs/agent-foundation.md).
+The agent contracts, test scope, private prompt boundary, evaluation accounting, and persistence limitations are documented in [`docs/agent-foundation.md`](docs/agent-foundation.md).
 

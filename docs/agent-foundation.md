@@ -59,6 +59,20 @@ This is a single-process storage adapter, not a production deployment design. Mu
 
 GitHub Actions runs `npm ci`, `npm test`, `npm run check:server`, and `npm run build` on pushes and pull requests. It does not receive `MODEL_API_KEY` and does not execute `npm run test:meta`.
 
+## Recorded Muse Spark evaluation
+
+The recorded evaluation covers 11 synthetic runs across five scenario templates. Reconciliation by evaluation run ID gives 39 client-side outbound HTTP attempts and 39 attempt reservations. Of these, 38 received HTTP 200 responses and usage records. One attempt was cancelled/ended in a transport error before an HTTP status or usage record was available.
+
+| Measure | Result | Meaning |
+| --- | ---: | --- |
+| Client HTTP attempts and ledger reservations | 39 | Reservations are recorded before attempts begin |
+| Successful HTTP responses | 38 | All recorded responses returned HTTP 200 |
+| Automated assertions | 48 passed | No completed human ratings are available |
+| Estimated token usage | US$0.296678 | Sum from the 38 usage records at published Standard rates |
+| At-risk ledger amount | US$0.400678 | US$0.296678 estimated usage plus the US$0.104 reservation for the attempt with unknown usage |
+
+The estimate uses Meta's published Standard rates of US$1.25 per million input tokens and US$4.25 per million output tokens. The calculation does not apply cached-input discounts, and it is not a provider invoice. The US$0.104 reservation is budget exposure for an attempt with unknown usage; it is not money spent or a promotional-credit deduction. Automated assertions check expected protocol behavior on synthetic inputs. They are not human ratings and do not establish that the agents are fully reliable or that their plans are accurate in real-world use. Individual model outputs, private prompts, Lab histories, and participant data are not included. See [Meta Model API pricing](https://dev.meta.ai/docs/pricing-rate-limits).
+
 ## Remaining work
 
 Authenticated room HTTP handlers, production event delivery, invitation/session recovery, retention and administration, deployment-grade persistence, multi-instance safety, and external sources for Reality Checks are not part of the public deployment. A successful mock test cannot establish model quality or guarantee that a real group can collaborate in live rooms.
