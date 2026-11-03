@@ -151,24 +151,6 @@ All code links below point to the released base commit named near the top of thi
 | CI                                      | [`.github/workflows/ci.yml`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/.github/workflows/ci.yml)                                                                                                                                                                                                                                                                                                                         |
 | Architecture and demo docs              | [`docs/architecture.md`](docs/architecture.md) · [`docs/judge-guide.md`](docs/judge-guide.md) · [`docs/agent-foundation.md`](docs/agent-foundation.md)                                                                                                                                                                                                                                                                                                          |
 
-## Local Meta-enabled development
-
-Requires Node.js 24 LTS and a Meta Model API key. Use synthetic inputs for evaluation. Text and uploaded images submitted to the local extraction API are sent to Meta for processing.
-
-```powershell
-npm ci
-Copy-Item .env.example .env
-# Add MODEL_API_KEY to .env using a private editor or secret manager.
-npm run dev:server
-```
-
-In another terminal:
-
-```powershell
-npm run dev
-```
-
-Open `http://127.0.0.1:5173/start`. The local server runs at `127.0.0.1:3001`. The committed agent engine is not exposed by these HTTP routes; its gateway requires role prompts supplied by a server adapter, and those prompts are not included in this public repository. Full setup and evaluation boundaries are in the [judge guide](docs/judge-guide.md).
 
 ## Copyright
 
