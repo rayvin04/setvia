@@ -7,17 +7,58 @@
   --story-cream: #f6f6f2;
   --story-muted: #a4afb8;
   --story-line: #253640;
+  --story-blue-field: #0297de28;
+  --story-blue-field-soft: #0297de14;
+  --story-orange-field: #fc734d20;
+  --story-orange-field-soft: #fc734d0e;
+  --story-field-seam: #93c9df17;
   width: 100%;
   color: var(--story-cream);
   overflow-x: clip;
 }
 
 .home-story-section {
+  position: relative;
+  isolation: isolate;
+  background-repeat: no-repeat;
   width: 100%;
   max-width: 1392px;
   margin: 0 auto;
   padding: clamp(82px, 9vw, 132px) clamp(22px, 4.8vw, 72px);
   scroll-margin-top: 112px;
+}
+
+.story-conversation {
+  background-image:
+    radial-gradient(ellipse 72% 82% at 4% 8%, var(--story-blue-field) 0%, transparent 72%),
+    radial-gradient(ellipse 46% 64% at 94% 78%, var(--story-orange-field-soft) 0%, transparent 76%);
+}
+
+.story-conversation::after {
+  position: absolute;
+  z-index: -1;
+  top: clamp(196px, 22vw, 270px);
+  right: -4vw;
+  left: -4vw;
+  height: clamp(330px, 42vw, 520px);
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1600 560' fill='none'%3E%3Cpath d='M-80 390C170 180 390 220 620 330S1040 460 1210 280S1500 170 1680 260' stroke='%230297DE' stroke-opacity='.26' stroke-width='1.3'/%3E%3Cpath d='M-70 430C200 230 410 275 640 370S1030 500 1230 320S1500 215 1680 285' stroke='%23FC734D' stroke-opacity='.2' stroke-width='1.1'/%3E%3Cpath d='M-100 350C150 155 385 190 605 290S980 360 1170 205S1460 145 1710 210' stroke='%230297DE' stroke-opacity='.13' stroke-width='1.2'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  opacity: 0.48;
+  pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 15%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 15%, #000 82%, transparent 100%);
+  content: "";
+}
+
+.home-story-section:not(.story-conversation)::before {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  right: clamp(20px, 4.8vw, 72px);
+  left: clamp(20px, 4.8vw, 72px);
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--story-field-seam) 24%, #fc734d13 74%, transparent);
+  pointer-events: none;
+  content: "";
 }
 
 .story-heading {
@@ -433,7 +474,9 @@
 }
 
 .story-reality {
-  border-top: 1px solid #ffffff13;
+  background-image:
+    radial-gradient(ellipse 62% 82% at 82% 47%, var(--story-orange-field) 0%, transparent 74%),
+    radial-gradient(ellipse 34% 56% at 10% 86%, var(--story-blue-field-soft) 0%, transparent 72%);
 }
 
 .story-reality-layout {
@@ -637,6 +680,9 @@
 }
 
 .story-version {
+  background-image:
+    radial-gradient(ellipse 62% 86% at 78% 50%, var(--story-blue-field) 0%, transparent 74%),
+    radial-gradient(ellipse 33% 64% at 10% 55%, var(--story-orange-field-soft) 0%, transparent 76%);
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
   align-items: center;
@@ -809,7 +855,9 @@
 }
 
 .story-scenarios {
-  border-top: 1px solid #ffffff13;
+  background-image:
+    radial-gradient(ellipse 66% 76% at 18% 72%, var(--story-orange-field-soft) 0%, transparent 74%),
+    radial-gradient(ellipse 44% 68% at 90% 16%, var(--story-blue-field-soft) 0%, transparent 72%);
 }
 
 .story-scenario-wall {
@@ -988,6 +1036,9 @@
 }
 
 .story-closing {
+  background-image:
+    radial-gradient(ellipse 58% 86% at 92% 30%, var(--story-orange-field-soft) 0%, transparent 74%),
+    radial-gradient(ellipse 48% 84% at 8% 74%, var(--story-blue-field-soft) 0%, transparent 74%);
   padding-top: 52px;
   padding-bottom: clamp(72px, 9vw, 126px);
 }
@@ -1003,6 +1054,7 @@
   border: 1px solid #29424e;
   border-radius: 28px;
   background:
+    radial-gradient(ellipse at 92% 34%, #fc734d12 0%, transparent 40%),
     radial-gradient(ellipse at 0% 100%, #0297de1b 0%, transparent 46%),
     linear-gradient(120deg, #0d1c24 0%, #091116 70%);
 }
@@ -1113,6 +1165,18 @@
 }
 
 @media (max-width: 760px) {
+  .home-story {
+    --story-blue-field: #0297de20;
+    --story-blue-field-soft: #0297de10;
+    --story-orange-field: #fc734d19;
+    --story-orange-field-soft: #fc734d0b;
+  }
+
+  .story-conversation::after {
+    top: 190px;
+    height: 360px;
+    opacity: 0.3;
+  }
   .home-story-section {
     padding: 78px 24px;
     scroll-margin-top: 96px;
