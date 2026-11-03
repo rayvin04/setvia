@@ -38,6 +38,14 @@ export function authorize(room: Room, auth: Auth) {
 export function sharedContext(room: Room) {
   return {
     eventType: room.eventType,
+    attendance: {
+      estimatedAttendeeCount: room.estimatedAttendeeCount ?? null,
+      confirmedAttendeeCount: room.confirmedAttendeeCount ?? null,
+      roomParticipantCount: room.participants.length,
+      // The current product rule is unanimous approval by joined planners.
+      // Event attendees who have not joined are never added to this list.
+      requiredApproverIds: room.participants.map((participant) => participant.id),
+    },
     revision: room.revision,
     proposalVersion: room.proposalVersion,
     participants: room.participants.map((p) => ({
@@ -56,13 +64,29 @@ export class RoomService {
     readonly store: RoomStore,
     private onChange: (id: string) => void = () => {},
   ) {}
-  async create(eventType: string, policy: PolicyInput, proposal: PlanOption) {
+  async create(
+    eventType: string,
+    policy: PolicyInput,
+    proposal: PlanOption,
+    attendance: {
+      estimatedAttendeeCount: number | null;
+      confirmedAttendeeCount: number | null;
+    } = { estimatedAttendeeCount: null, confirmedAttendeeCount: null },
+  ) {
+    if (
+      attendance.estimatedAttendeeCount != null &&
+      attendance.confirmedAttendeeCount != null &&
+      attendance.confirmedAttendeeCount > attendance.estimatedAttendeeCount
+    )
+      throw new StateError("INVALID_ATTENDEE_COUNTS");
     const invitation = secret();
     const room = RoomSchema.parse({
       schemaVersion: 1,
       id: randomUUID(),
       revision: 0,
       eventType,
+      estimatedAttendeeCount: attendance.estimatedAttendeeCount,
+      confirmedAttendeeCount: attendance.confirmedAttendeeCount,
       invitationHash: digest(invitation),
       participants: [],
       policy: PolicySchema.parse(policy),

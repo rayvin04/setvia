@@ -208,7 +208,7 @@ export const TraceSchema = z
       "final",
     ]),
     requestedBy: z.enum(["orchestrator", ...Roles]),
-    promptVersion: z.literal("agents-v1"),
+    promptVersion: z.string().regex(/^agents-v[0-9]+$/),
     promptHash: z
       .string()
       .regex(/^[a-f0-9]{64}$/)
@@ -222,7 +222,10 @@ export const TraceSchema = z
     rejectedOptionIds: z.array(id),
     attempts: z.number().int().nonnegative(),
     inputTokens: z.number().int().nonnegative().nullable(),
+    cachedInputTokens: z.number().int().nonnegative().nullable(),
     outputTokens: z.number().int().nonnegative().nullable(),
+    reasoningTokens: z.number().int().nonnegative().nullable(),
+    totalTokens: z.number().int().nonnegative().nullable(),
     estimatedCostMicros: z.number().int().nonnegative().nullable(),
     durationMs: z.number().int().nonnegative(),
   })
@@ -265,6 +268,10 @@ export const RoomSchema = z
     id,
     revision: z.number().int().nonnegative(),
     eventType: z.string().min(1).max(80),
+    // Event attendance counts are separate from active room membership. They
+    // are optional so existing schemaVersion 1 snapshots remain compatible.
+    estimatedAttendeeCount: z.number().int().nonnegative().nullable().optional(),
+    confirmedAttendeeCount: z.number().int().nonnegative().nullable().optional(),
     invitationHash: z.string().regex(/^[a-f0-9]{64}$/),
     participants: z
       .array(
@@ -301,7 +308,20 @@ export const RoomSchema = z
     lifetimeReservedTokens: z.number().int().nonnegative(),
     lifetimeReservedCostMicros: z.number().int().nonnegative(),
   })
-  .strict();
+  .strict()
+  .superRefine((room, context) => {
+    if (
+      room.estimatedAttendeeCount != null &&
+      room.confirmedAttendeeCount != null &&
+      room.confirmedAttendeeCount > room.estimatedAttendeeCount
+    ) {
+      context.addIssue({
+        code: "custom",
+        path: ["confirmedAttendeeCount"],
+        message: "Confirmed attendees cannot exceed the event estimate.",
+      });
+    }
+  });
 export type Room = z.infer<typeof RoomSchema>;
 export interface Auth {
   participantId: string;
@@ -320,11 +340,15 @@ export interface AgentResult {
   usage: {
     inputTokens: number;
     outputTokens: number;
+    totalTokens?: number | null;
+    cachedInputTokens?: number | null;
+    reasoningTokens?: number | null;
     estimatedCostMicros: number;
   } | null;
 }
 export interface AgentGateway {
   mode: "MOCK" | "META";
+  promptVersion?: string;
   promptHashes?: Partial<Record<Role, string>>;
   call(role: Role, input: unknown, context: CallContext): Promise<AgentResult>;
 }

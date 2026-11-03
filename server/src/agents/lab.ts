@@ -5,6 +5,28 @@ import { JsonPersistence, StateError } from "./store.js";
 import { CycleSchema, type Cycle, type Readiness } from "./contracts.js";
 import type { GroundTruth, RubricDimension, ScenarioId } from "./scenarios.js";
 
+export interface LiveAttemptRecord {
+  id: string;
+  runId: string;
+  scenarioId: string;
+  model: "muse-spark-1.3";
+  promptVersion: string;
+  role: "Listener" | "Judge" | "Negotiator" | "Question Strategist" | "Speaker";
+  requestHash: string;
+  status: "reserved" | "response_received" | "transport_error" | "usage_recorded";
+  httpStatus: number | null;
+  startedAt: string;
+  durationMs: number | null;
+  reservedCostMicros: number;
+  estimatedCostMicros: number | null;
+  inputTokens: number | null;
+  cachedInputTokens: number | null;
+  outputTokens: number | null;
+  reasoningTokens: number | null;
+  totalTokens: number | null;
+  responseId: string | null;
+}
+
 export interface ScenarioInputStatementRecord {
   statementId: string;
   text: string;
@@ -17,6 +39,7 @@ export interface ScenarioInputRecord {
   participantLabel: string;
   role: string;
   responseStatus: "confirmed" | "unconfirmed" | "no_response";
+  roomResponseStatus?: "responded" | "no_response";
   timeZone?: string;
   statements: ScenarioInputStatementRecord[];
 }
@@ -50,6 +73,25 @@ export interface LabRecord {
   scenarioId?: ScenarioId;
   simulation?: true;
   participantCount?: number;
+  model?: string | null;
+  promptVersion?: string;
+  liveRunId?: string;
+  liveHttpAttempts?: LiveAttemptRecord[];
+  liveBudgetSnapshot?: {
+    runId: string;
+    attempts: number;
+    runAttempts: number;
+    estimatedCostMicros: number;
+    budgetMicros: number;
+  };
+  eventAttendance?: {
+    estimatedAttendeeCount: number;
+    confirmedAttendeeCount: number | null;
+    roomParticipantCount: number;
+    requiredApproverIds: string[];
+    respondedRoomParticipants: number;
+    nonrespondingRoomParticipants: number;
+  };
   fixtureSeed?: number | null;
   inputStatements?: ScenarioInputRecord[];
   groundTruth?: GroundTruth;
@@ -205,6 +247,15 @@ export function renderLab(records: LabRecord[]) {
       const actualCost = c.traces.every((trace) => trace.estimatedCostMicros !== null)
         ? "$" + (c.traces.reduce((sum, trace) => sum + trace.estimatedCostMicros!, 0) / 1e6).toFixed(6)
         : "unknown";
+      const httpAttemptRows = (record.liveHttpAttempts ?? []).map((attempt) =>
+        "<tr><td>" + escapeHtml(attempt.role) + "</td><td>" + escapeHtml(attempt.status) + "</td><td>" +
+        escapeHtml(attempt.httpStatus ?? "—") + "</td><td>" + escapeHtml(attempt.inputTokens ?? "—") + " / " +
+        escapeHtml(attempt.outputTokens ?? "—") + "</td><td>$" + ((attempt.estimatedCostMicros ?? attempt.reservedCostMicros) / 1e6).toFixed(4) +
+        "</td><td><code>" + escapeHtml(attempt.requestHash.slice(0, 12)) + "</code></td></tr>",
+      ).join("");
+      const httpAttemptSection = record.mode === "LIVE" && record.liveHttpAttempts
+        ? "<h3>HTTP attempt journal</h3><p>Request hashes correlate attempts without storing credentials, prompts, or raw API requests. Cost includes reported usage when available; otherwise the full reservation remains counted.</p><div class=scroll><table><caption>Per-attempt Meta request details</caption><thead><tr><th>Role</th><th>Journal status</th><th>HTTP</th><th>Input / output tokens</th><th>Cost counted</th><th>Request hash</th></tr></thead><tbody>" +
+          (httpAttemptRows || "<tr><td colspan=6>No HTTP attempt was sent.</td></tr>") + "</tbody></table></div>" : "";
       return (
         "<article><p class=kicker>" + (record.mode === "MOCK" ? "MOCK · Synthetic simulation" : "LIVE · Muse Spark") +
         (record.simulation ? " · Simulation" : "") + "</p><h2>" +
@@ -246,7 +297,15 @@ export function renderLab(records: LabRecord[]) {
         "</tbody></table></div>" +
         (assertionRows ? "<div class=scroll><table><caption>" + (record.mode === "MOCK" ? "Automatic fixture assertions · not model-quality scores" : "Deterministic safety and bound checks · not a reasoning-quality score") + "</caption><thead><tr><th>Result</th><th>Check</th><th>Evidence</th></tr></thead><tbody>" + assertionRows + "</tbody></table></div>" : "") +
         (record.expectedOutcome ? "<p><strong>Expected outcome:</strong> " + escapeHtml(record.expectedOutcome) + (record.passed === undefined ? " · manual review required" : record.passed ? " · scripted assertions passed" : " · scripted assertions failed") + "</p>" : "") +
-        (record.dashboardCounts ? "<p>Responses: " + record.dashboardCounts.responding + " received · " + record.dashboardCounts.confirmed + " confirmed · " + record.dashboardCounts.unconfirmed + " unconfirmed · " + record.dashboardCounts.noResponse + " not received</p>" : "") +
+        (record.eventAttendance
+          ? "<p>Event attendance: " + (record.eventAttendance.confirmedAttendeeCount ?? "unknown") + " confirmed of " + record.eventAttendance.estimatedAttendeeCount + " estimated · Setvia room: " + record.eventAttendance.roomParticipantCount + " planners · required approvals: " + record.eventAttendance.requiredApproverIds.length + " · room responses: " + record.eventAttendance.respondedRoomParticipants + " received, " + record.eventAttendance.nonrespondingRoomParticipants + " not received</p>"
+          : record.dashboardCounts
+            ? "<p>Legacy fixture counts: " + record.dashboardCounts.responding + " responses · " + record.dashboardCounts.confirmed + " confirmed · " + record.dashboardCounts.unconfirmed + " unconfirmed · " + record.dashboardCounts.noResponse + " not received</p>"
+            : "") +
+        (record.liveBudgetSnapshot
+          ? "<p><strong>Cumulative estimated spend at risk:</strong> $" + (record.liveBudgetSnapshot.estimatedCostMicros / 1e6).toFixed(4) + " of $" + (record.liveBudgetSnapshot.budgetMicros / 1e6).toFixed(2) + " · " + record.liveBudgetSnapshot.runAttempts + " HTTP attempts in this run, " + record.liveBudgetSnapshot.attempts + " total attempts in the private ledger.</p>"
+          : "") +
+        httpAttemptSection +
         (timelineRows ? "<div class=scroll><table><caption>Simulation readiness timeline · deterministically calculated</caption><thead><tr><th>Stage</th><th>Readiness</th><th>Event</th></tr></thead><tbody>" + timelineRows + "</tbody></table></div>" : "") +
         (inputDetails ? "<h3>Authored synthetic inputs and consent</h3>" + inputDetails : "") +
         groundTruth + rubricSection + expectedActual +

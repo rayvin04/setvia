@@ -1,6 +1,6 @@
 import { Categories, type Category, type Constraint, type Fact, type PlanOption, type Policy } from "./contracts.js";
 
-export type ScenarioId = "A" | "B" | "C" | "D" | "E";
+export type ScenarioId = "A" | "B" | "C" | "D" | "E" | "E_STRESS";
 export type StatementAudience = "group" | "listener_only";
 export interface StatementFact {
   key: string;
@@ -22,6 +22,7 @@ export interface ScenarioParticipant {
   role: string;
   timeZone?: string;
   responseStatus: "confirmed" | "unconfirmed" | "no_response";
+  roomResponseStatus: "responded" | "no_response";
   publicTargetingConsent: boolean;
   statements: ScenarioStatement[];
 }
@@ -68,6 +69,10 @@ export interface ScenarioFixture {
   eventType: string;
   synthetic: true;
   seed: number | null;
+  estimatedAttendeeCount: number;
+  confirmedAttendeeCount: number | null;
+  roomParticipantCount: number;
+  requiredApproverIds: string[];
   participants: ScenarioParticipant[];
   policy: Policy;
   constraints: ConstraintBlueprint[];
@@ -105,12 +110,13 @@ const participant = (
   name: string,
   role: string,
   statements: ScenarioStatement[],
-  options: Partial<Pick<ScenarioParticipant, "timeZone" | "responseStatus" | "publicTargetingConsent">> = {},
+  options: Partial<Pick<ScenarioParticipant, "timeZone" | "responseStatus" | "roomResponseStatus" | "publicTargetingConsent">> = {},
 ): ScenarioParticipant => ({
   id,
   name,
   role,
   responseStatus: options.responseStatus ?? "confirmed",
+  roomResponseStatus: options.roomResponseStatus ?? (statements.length ? "responded" : "no_response"),
   publicTargetingConsent: options.publicTargetingConsent ?? false,
   statements,
   ...(options.timeZone ? { timeZone: options.timeZone } : {}),
@@ -150,22 +156,24 @@ const beach: ScenarioFixture = {
   eventType: "weekend beach outing",
   synthetic: true,
   seed: null,
+  estimatedAttendeeCount: 8,
+  confirmedAttendeeCount: 6,
+  roomParticipantCount: 6,
+  requiredApproverIds: ["joy", "alex", "sam", "ken", "bea", "chris"],
   participants: [
-    participant("joy", "Joy", "friend", [statement("joy_budget", "My budget is around ₱500, including food and transportation.", [{ key: "joyBudget", value: "around ₱500 including food and transportation" }])]),
+    participant("joy", "Joy", "friend", [statement("beach_attendance", "We expect eight people for the outing; six have confirmed so far. Those counts include friends who are not using the Setvia planning room.", [{ key: "estimatedAttendeeCount", value: 8, scope: "shared" }, { key: "confirmedAttendeeCount", value: 6, scope: "shared" }]), statement("joy_budget", "My budget is around ₱500, including food and transportation.", [{ key: "joyBudget", value: "around ₱500 including food and transportation" }])]),
     participant("alex", "Alex", "driver", [statement("alex_capacity", "I can drive, but only four passengers can come with me.", [{ key: "alexPassengerCapacity", value: 4 }])]),
     participant("sam", "Sam", "student", [statement("sam_schedule", "Saturday is impossible for me because of classes.", [{ key: "samUnavailableDay", value: "Saturday" }])]),
-    participant("mia", "Mia", "friend", [statement("mia_preference", "I want somewhere with a nice beach, but I don't want a very long drive.", [{ key: "miaDrivePreference", value: "short drive preferred; no maximum stated" }])]),
     participant("ken", "Ken", "friend", [statement("ken_return", "Sunday works for me, but I need to be home by 6 PM.", [{ key: "kenReturnByMinutes", value: 1080 }])]),
     participant("bea", "Bea", "friend", [statement("bea_budget", "I can spend more if it means we get a better place.", [{ key: "beaBudgetFlexibility", value: "flexible preference; no amount stated" }])]),
     participant("chris", "Chris", "friend without transport", [statement("chris_ride", "I don't have transportation, so I need to ride with someone.", [{ key: "chrisNeedsRide", value: true }])]),
-    participant("pat", "Pat", "food helper", [statement("pat_food", "I can help with food, but we haven't agreed on how much to bring.", [{ key: "patFoodHelp", value: true }])]),
   ],
   policy: policy({
     "Schedule Check": ["samUnavailableDay", "destination", "travelDuration"],
     "Budget Check": ["joyBudget", "expenseTreatment"],
     "People Check": ["attendanceConfirmation", "responsibilityAssignment"],
     "Logistics Check": ["alexPassengerCapacity", "destination", "sharedRidePlan"],
-    "Preparation Check": ["patFoodHelp", "foodQuantity"],
+    "Preparation Check": ["foodQuantity"],
     "Safety Check": ["weatherCheck", "waterSafetyPlan"],
   }, { "People Check": ["attendanceStatus"] }),
   constraints: [
@@ -176,16 +184,16 @@ const beach: ScenarioFixture = {
   ],
   proposal: { id: "beach_draft", label: "Sunday outing draft; destination and shared details open", values: { tripDay: "Sunday", alexPassengers: 4, kenReturnByMinutes: 1080, transportForChris: true, destination: null, travelDuration: null, totalCost: null } },
   groundTruth: truth({
-    confirmedFacts: ["Joy stated an approximate ₱500 personal budget including transport and food.", "Alex can drive with at most four passengers.", "Sam cannot attend Saturday.", "Ken can do Sunday but must be home by 6 PM.", "Chris needs a ride.", "Pat can help with food; the quantity is undecided."],
-    tentativeFacts: ["Joy's approximate budget is not a verified exact hard cap.", "Mia prefers a short drive but gave no numeric maximum.", "Bea is more flexible about spending but stated no amount."],
+    confirmedFacts: ["Eight event attendees are estimated and six have confirmed attendance; only six planners are present in the Setvia room.", "Joy stated an approximate ₱500 personal budget including transport and food.", "Alex can drive with at most four passengers.", "Sam cannot attend Saturday.", "Ken can do Sunday but must be home by 6 PM.", "Chris needs a ride."],
+    tentativeFacts: ["Joy's approximate budget is not a verified exact hard cap.", "Bea is more flexible about spending but stated no amount."],
     hardConstraints: ["Do not schedule Saturday for Sam.", "Do not place more than four passengers in Alex's car.", "Ken must be home by 6 PM.", "The plan must include a ride for Chris, with an actual seat assignment still to confirm."],
-    softPreferences: ["Keep Joy's total personal spend near ₱500.", "Prefer a pleasant beach with a shorter drive for Mia.", "Bea may choose a higher-cost alternative if everyone can see the trade-off."],
+    softPreferences: ["Keep Joy's total personal spend near ₱500 while treating Bea's separate flexibility as her own preference.", "Bea may choose a higher-cost alternative if everyone can see the trade-off."],
     knownContradictions: ["A Saturday proposal conflicts with Sam's confirmed availability.", "A five-passenger assignment to Alex conflicts with Alex's stated vehicle capacity."],
     expectedFindings: [
-      { id: "beach_budget_range", category: "Budget Check", severity: "warning", criterion: "Reconcile different spending preferences and distinguish per-person from shared expenses.", evidenceStatementIds: ["joy_budget", "bea_budget"] },
+      { id: "beach_budget_range", category: "Budget Check", severity: "warning", criterion: "Keep personal budgets owner-specific; do not call the different personal values a contradiction. Show per-person and shared cost scope once a supported estimate exists.", evidenceStatementIds: ["joy_budget", "bea_budget"] },
       { id: "beach_destination_unknown", category: "Logistics Check", severity: "warning", criterion: "Destination and travel duration are unknown; no venue, price, or route estimate is supported.", evidenceStatementIds: [] },
       { id: "beach_ride_capacity", category: "Logistics Check", severity: "warning", criterion: "Eight people exceed Alex's four-passenger capacity; a second transport arrangement is unconfirmed.", evidenceStatementIds: ["alex_capacity", "chris_ride"] },
-      { id: "beach_food_amount", category: "Preparation Check", severity: "warning", criterion: "Food quantity and who contributes what remain undecided.", evidenceStatementIds: ["pat_food"] },
+      { id: "beach_food_amount", category: "Preparation Check", severity: "warning", criterion: "Food quantity and supply ownership are unspecified; request a count before planning shared food.", evidenceStatementIds: [] },
     ],
     blindSpots: ["No destination or travel duration.", "No named second driver or confirmed seat plan.", "Shared versus individual expenses are not defined.", "No agreed food quantity or contribution amount."],
     expectedQuestionTopics: ["Destination and acceptable drive duration", "Second vehicle or seat allocation", "Which costs are shared versus individual and how food quantities are set"],
@@ -201,11 +209,14 @@ const hiking: ScenarioFixture = {
   eventType: "mountain hiking trip",
   synthetic: true,
   seed: null,
+  estimatedAttendeeCount: 6,
+  confirmedAttendeeCount: 5,
+  roomParticipantCount: 5,
+  requiredApproverIds: ["rhea", "noah", "luz", "kai", "mina"],
   participants: [
-    participant("rhea", "Rhea", "experienced hiker", [statement("hike_experienced", "I have hiked before and can help the group compare route information.", [{ key: "experienceNotes", value: "experienced hiker; not a route authority" }])]),
+    participant("rhea", "Rhea", "experienced hiker", [statement("hike_attendance", "Six attendees are expected; five have confirmed so far. The planning room has only the active coordinators.", [{ key: "estimatedAttendeeCount", value: 6, scope: "shared" }, { key: "confirmedAttendeeCount", value: 5, scope: "shared" }]), statement("hike_experienced", "I have hiked before and can help the group compare route information.", [{ key: "experienceNotes", value: "experienced hiker; not a route authority" }])]),
     participant("noah", "Noah", "beginner", [statement("hike_beginner_1", "It's my first mountain hike.", [{ key: "beginnerCount", value: 1 }])]),
     participant("luz", "Luz", "beginner", [statement("hike_beginner_2", "This would also be my first hike.", [{ key: "beginnerCount", value: 1 }])]),
-    participant("omar", "Omar", "participant with return constraint", [statement("hike_return", "I need to be home before evening.", [{ key: "returnBeforeEvening", value: true }])]),
     participant("kai", "Kai", "transport volunteer", [statement("hike_transport", "I can help with transportation, but we have not picked a route or pickup point.", [{ key: "transportVolunteer", value: true }])]),
     participant("mina", "Mina", "supplies volunteer", [statement("hike_unknowns", "We haven't checked the weather yet. I'm not sure whether the route needs a guide. Nobody has confirmed navigation equipment or emergency communication, and we haven't decided who brings first-aid supplies.", [
       { key: "weatherChecked", value: false },
@@ -226,7 +237,7 @@ const hiking: ScenarioFixture = {
   constraints: [],
   proposal: { id: "hike_draft", label: "Route and conditions not selected", values: { route: null, eventDate: null, returnTime: null } },
   groundTruth: truth({
-    confirmedFacts: ["There are six friends, including two beginners and one experienced hiker.", "One participant needs to be home before evening.", "One participant can help with transport, but route and pickup are undecided."],
+    confirmedFacts: ["Six event attendees are estimated, five are confirmed, and five active planners are in the Setvia room.", "The planning group includes two beginners and one experienced hiker whose input is not authoritative trail guidance.", "One participant can help with transport, but route and pickup are undecided."],
     tentativeFacts: ["No route, weather report, guide requirement, equipment list, or assigned first-aid owner is confirmed."],
     hardConstraints: ["Respect the early-return participant's deadline once the route and timing are known."],
     softPreferences: ["Use the experienced participant's input as perspective, not as a substitute for authoritative trail information."],
@@ -251,13 +262,17 @@ const kickoff: ScenarioFixture = {
   eventType: "professional project kickoff",
   synthetic: true,
   seed: null,
+  estimatedAttendeeCount: 14,
+  confirmedAttendeeCount: null,
+  roomParticipantCount: 6,
+  requiredApproverIds: ["priya", "mateo", "ava", "eli", "sana", "colleague_6"],
   participants: [
-    participant("priya", "Priya Rao", "project manager; required", [statement("kickoff_pm", "I'm only available after 3 PM Manila time and can attend for only 30 minutes.", [{ key: "pmTimezone", value: "Asia/Manila" }, { key: "pmAvailability", value: "after 15:00 local" }, { key: "pmDurationLimit", value: 30 }])], { timeZone: "Asia/Manila" }),
+    participant("priya", "Priya Rao", "project manager; required", [statement("kickoff_attendance", "Fourteen people are expected at the kickoff; the confirmed-attendee count has not been finalized. Only the six project planners are in this Setvia room.", [{ key: "estimatedAttendeeCount", value: 14, scope: "shared" }]), statement("kickoff_pm", "I'm only available after 3 PM Manila time and can attend for only 30 minutes.", [{ key: "pmTimezone", value: "Asia/Manila" }, { key: "pmAvailability", value: "after 15:00 local" }, { key: "pmDurationLimit", value: 30 }])], { timeZone: "Asia/Manila" }),
     participant("mateo", "Mateo Cruz", "technical lead; required", [statement("kickoff_tech", "I can attend before 4 PM Manila time; I have another meeting from 4 to 5 PM.", [{ key: "techTimezone", value: "Asia/Manila" }, { key: "techAvailability", value: "before 16:00 local" }])], { timeZone: "Asia/Manila" }),
     participant("ava", "Ava Reed", "external client; required", [statement("kickoff_client", "Our team is in New York. We can join only between 8 and 9 AM Eastern on Wednesday, November 4.", [{ key: "clientTimezone", value: "America/New_York" }, { key: "clientAvailability", value: "08:00–09:00 local on 2026-11-04" }])], { timeZone: "America/New_York" }),
     participant("eli", "Eli Park", "design lead", [statement("kickoff_online", "I can only attend online.", [{ key: "meetingFormat", value: "online" }])]),
     participant("sana", "Sana Wu", "scope owner", [statement("kickoff_scope", "We need at least 45 minutes to finalize project scope before Friday.", [{ key: "minimumScopeDuration", value: 45 }, { key: "scopeDeadline", value: "before Friday, 2026-11-06" }])]),
-    ...Array.from({ length: 9 }, (_, index) => {
+    ...Array.from({ length: 1 }, (_, index) => {
       const number = index + 6;
       const id = `colleague_${number}`;
       const statements = [
@@ -312,7 +327,7 @@ const kickoff: ScenarioFixture = {
 
 function familyScenario(): ScenarioFixture {
   const people: ScenarioParticipant[] = [
-    participant("mara", "Mara", "organizer", [statement("family_date", "Sunday works best for our household; please share the date before we book travel.", [{ key: "preferredDate", value: "Sunday preferred" }])]),
+    participant("mara", "Mara", "organizer", [statement("family_attendance", "Twenty-two relatives are invited; twenty have confirmed event attendance and two have not replied. Those two are not members of this Setvia room.", [{ key: "estimatedAttendeeCount", value: 22, scope: "shared" }, { key: "confirmedAttendeeCount", value: 20, scope: "shared" }]), statement("family_date", "Sunday works best for our household; please share the date before we book travel.", [{ key: "preferredDate", value: "Sunday preferred" }])]),
     participant("lola_ines", "Lola Ines", "older relative", [statement("family_seating", "I will need a nearby seat and restroom, and I prefer the weekend.", [{ key: "olderRelativeNeeds", value: "nearby seating and restroom" }, { key: "travelWindow", value: "weekend" }])]),
     participant("pablo", "Pablo", "parent", [statement("family_children", "We are bringing two young children; the venue needs a safe place for them to sit and rest.", [{ key: "childrenNeeds", value: "space suitable for young children" }])]),
     participant("ren", "Ren", "relative with accessibility need", [statement("family_access", "I need wheelchair-accessible facilities and a step-free route.", [{ key: "accessibilityNeed", value: "step-free route and wheelchair-accessible facilities" }])]),
@@ -341,7 +356,15 @@ function familyScenario(): ScenarioFixture {
     eventType: "family reunion",
     synthetic: true,
     seed: null,
-    participants: people,
+    estimatedAttendeeCount: 22,
+    confirmedAttendeeCount: 20,
+    roomParticipantCount: 7,
+    requiredApproverIds: ["mara", "lola_ines", "ren", "tess", "niko", "suri", "noel"],
+    // The two event invitees who have not replied never joined Setvia, so they
+    // are intentionally absent from room participants and approval IDs.
+    participants: people.filter((person) =>
+      ["mara", "lola_ines", "ren", "tess", "niko", "suri", "noel"].includes(person.id),
+    ),
     policy: policy({
       "Schedule Check": ["confirmedDate", "travelWindow"],
       "Budget Check": ["sharedCostPlan", "publicBudgetConcern"],
@@ -353,7 +376,7 @@ function familyScenario(): ScenarioFixture {
     constraints: [],
     proposal: { id: "family_draft", label: "Venue and contribution amount to confirm", values: { venue: null, contribution: 1500, date: null } },
     groundTruth: truth({
-      confirmedFacts: ["Twenty-two relatives are invited; the organizer has not received a response from two.", "Ren has explicitly shared a step-free route and accessible-facility requirement.", "Several relatives need weekend travel, public transport, child-friendly space, or nearby rest areas."],
+      confirmedFacts: ["Twenty-two relatives are invited; twenty have confirmed event attendance and two have not replied. The two nonresponders are not Setvia room participants.", "Seven planners are in the Setvia room, and only their IDs count toward room approvals.", "Ren has explicitly shared a step-free route and accessible-facility requirement.", "Several relatives need weekend travel, public transport, child-friendly space, or nearby rest areas."],
       tentativeFacts: ["Venue, transportation, final date, attendance, food, and contribution amounts remain unresolved."],
       hardConstraints: ["Do not describe a venue as accessible until the relevant details are confirmed.", "Do not disclose listener-only response text or its reason."],
       softPreferences: ["Weekend dates, public transport access, child-friendly facilities, and itemized costs."],
@@ -390,7 +413,7 @@ function mulberry32(seed: number) {
 function seededIndex(random: () => number, length: number) {
   return Math.floor(random() * length);
 }
-function largeGroupScenario(): ScenarioFixture {
+function largeGroupStressScenario(): ScenarioFixture {
   const seed = 0x5e7a_2026;
   const random = mulberry32(seed);
   const people: ScenarioParticipant[] = [
@@ -427,11 +450,15 @@ function largeGroupScenario(): ScenarioFixture {
     people.push(participant(id, `Student ${String(number).padStart(2, "0")}`, "volunteer", [], { responseStatus: "no_response" }));
   }
   return {
-    id: "E",
-    title: "University Volunteer Event",
+    id: "E_STRESS",
+    title: "University Volunteer Event — 58 active planner stress test",
     eventType: "university volunteer event",
     synthetic: true,
     seed,
+    estimatedAttendeeCount: 58,
+    confirmedAttendeeCount: 47,
+    roomParticipantCount: 58,
+    requiredApproverIds: people.map((person) => person.id),
     participants: people,
     policy: policy({
       "Schedule Check": ["eventTime", "shiftLeads"],
@@ -464,8 +491,94 @@ function largeGroupScenario(): ScenarioFixture {
   };
 }
 
+function volunteerScenario(): ScenarioFixture {
+  const seed = 0x5e7a_2026;
+  const participants: ScenarioParticipant[] = [
+    participant("student_01", "Student 01", "event organizer", [
+      statement("volunteer_attendance", "We estimate 58 event attendees and have 47 attendance confirmations. Only the seven committee planners are members of this Setvia room; one planner has not answered the current planning check.", [
+        { key: "estimatedAttendeeCount", value: 58, scope: "shared" },
+        { key: "confirmedAttendeeCount", value: 47, scope: "shared" },
+        { key: "roomPlannerPendingResponseCount", value: 1, scope: "shared" },
+      ]),
+      statement("volunteer_01", "I can handle registration, but nobody has agreed to lead safety coverage.", [{ key: "registrationOwner", value: true }, { key: "safetyLeadAssigned", value: false }]),
+    ]),
+    participant("student_02", "Student 02", "transport volunteer", [
+      statement("volunteer_02", "I can transport eight boxes, but I cannot provide a passenger vehicle. I am only available in the morning.", [{ key: "supplyTransport", value: "eight boxes" }, { key: "passengerVehicleAvailable", value: false }, { key: "shiftPreference", value: "morning only" }]),
+    ]),
+    participant("student_03", "Student 03", "accessibility participant", [
+      statement("volunteer_03", "I use a wheelchair and need a step-free route and accessible washroom. Please confirm the venue before we announce it.", [{ key: "accessibilityNeed", value: "step-free route and accessible washroom" }]),
+    ]),
+    participant("student_04", "Student 04", "venue liaison", [
+      statement("volunteer_04", "I was told the main hall lift works, so I believe it is accessible.", [{ key: "venueAccessStatus", value: "assumed accessible", scope: "shared" }], "group", false),
+    ]),
+    participant("student_05", "Student 05", "venue and budget volunteer", [
+      statement("volunteer_05", "I have not verified the lift or route; please do not announce the hall as accessible yet. I believe the budget is ₱80 per person, excluding lunch, and I can only take an afternoon shift.", [
+        { key: "venueAccessStatus", value: "not verified", scope: "shared" },
+        { key: "costModel", value: "₱80 per person excluding lunch", scope: "shared" },
+        { key: "shiftPreference", value: "afternoon only" },
+      ]),
+    ]),
+    participant("student_06", "Student 06", "budget and supplies volunteer", [
+      statement("volunteer_06", "I heard the budget was ₱100 per person including lunch; that may be a different assumption. I can bring a first-aid kit, but I am not trained to own the event safety plan.", [
+        { key: "costModel", value: "₱100 per person including lunch", scope: "shared" },
+        { key: "firstAidKitOffer", value: true },
+        { key: "safetyLeadAssigned", value: false },
+      ]),
+    ]),
+    participant("student_07", "Student 07", "committee planner awaiting a response", [], { responseStatus: "no_response" }),
+  ];
+  return {
+    id: "E",
+    title: "University Volunteer Event",
+    eventType: "university volunteer event",
+    synthetic: true,
+    seed,
+    estimatedAttendeeCount: 58,
+    confirmedAttendeeCount: 47,
+    roomParticipantCount: 7,
+    requiredApproverIds: participants.map((person) => person.id),
+    participants,
+    policy: policy({
+      "Schedule Check": ["eventTime", "shiftLeads"],
+      "Budget Check": ["costModel", "contributionScope"],
+      "People Check": ["venueAccessStatus", "attendanceStatus", "teamLeads"],
+      "Logistics Check": ["ridePlan", "accessibleVenue"],
+      "Preparation Check": ["supplyOwner", "firstAidOwner"],
+      "Safety Check": ["safetyLead", "emergencyPlan"],
+    }, { "People Check": ["attendanceStatus"] }),
+    constraints: [],
+    proposal: {
+      id: "volunteer_draft",
+      label: "Saturday event draft; shifts, venue, and leads unconfirmed",
+      values: { eventDay: "Saturday", eventTime: null, venueAccessStatus: null },
+    },
+    groundTruth: truth({
+      confirmedFacts: [
+        "The event estimate is 58 attendees and 47 have confirmed attendance.",
+        "Seven actual committee planners are in the room; six have responded to the planning check and one has not.",
+        "The accessibility need, transport limit, two shift windows, and two different budget-scope claims are explicitly represented by committee inputs.",
+      ],
+      tentativeFacts: ["The hall accessibility claim is an unverified belief; the route, budget definition, schedule, and leadership remain unresolved."],
+      hardConstraints: ["Do not announce the hall as accessible before verifying its route, lift, and washroom.", "Do not infer a response, attendance, shift assignment, transport capacity, or safety lead from a nonresponse or offer."],
+      softPreferences: ["Keep personal availability and responsibilities tied to their owners; treat the event estimate separately from room membership."],
+      knownContradictions: ["The main hall is described as accessible by an unverified assumption and as not yet verified.", "The ₱80 excluding-lunch and ₱100 including-lunch statements may represent different budget scopes."],
+      expectedFindings: [
+        { id: "volunteer_cost_conflict", category: "Budget Check", severity: "warning", criterion: "Show the ₱80 excluding-lunch and ₱100 including-lunch claims as incompatible assumptions, not as one confirmed budget.", evidenceStatementIds: ["volunteer_05", "volunteer_06"] },
+        { id: "volunteer_access_conflict", category: "People Check", severity: "critical", criterion: "Treat accessibility as unresolved because an unverified access belief conflicts with an explicit warning; do not label the venue accessible.", evidenceStatementIds: ["volunteer_03", "volunteer_04", "volunteer_05"] },
+        { id: "volunteer_shift_conflict", category: "Schedule Check", severity: "warning", criterion: "Morning-only and afternoon-only availability cannot both be assigned to one shift.", evidenceStatementIds: ["volunteer_02", "volunteer_05"] },
+        { id: "volunteer_lead_gaps", category: "People Check", severity: "warning", criterion: "Safety ownership remains unassigned; bringing a first-aid kit is not safety-plan ownership, and one actual room planner has not responded.", evidenceStatementIds: ["volunteer_01", "volunteer_06"] },
+      ],
+      blindSpots: ["No confirmed accessible venue route or washroom.", "No final event schedule, passenger transport, or shift leads.", "Budget scope and lunch inclusion are unresolved.", "Safety ownership, emergency arrangements, and supply handoff are unclear.", "One actual room planner has not answered; event invitees who are not room members are not counted as room nonresponders."],
+      expectedQuestionTopics: ["Confirm venue access with the venue and the participant who needs it", "Ask the nonresponding room planner for the needed planning input without naming absent event invitees", "Confirm the budget definition and whether lunch is included", "Assign a safety lead and shift leads"],
+      invalidCompromises: ["Assuming the main hall is accessible.", "Treating the one room nonresponse as a missing response from all 58 attendees.", "Treating an event attendee who never joined Setvia as a room member or required approver.", "Combining the ₱80 and ₱100 budgets as if they have the same scope.", "Assigning safety ownership to someone who only offered to bring a kit."],
+      acceptableNegotiationDirections: ["Keep venue access unresolved pending direct verification.", "Offer separate morning and afternoon teams only after checking leads and event timing.", "Ask for one confirmed budget definition and a named safety lead."],
+      stoppingConditions: ["Keep readiness blocked while the critical accessibility claim is unresolved.", "Ask targeted questions only of actual room members; do not silently truncate or create one call per event attendee."],
+    }),
+  };
+}
+
 export function getScenario(id: ScenarioId): ScenarioFixture {
-  const selected = id === "A" ? beach : id === "B" ? hiking : id === "C" ? kickoff : id === "D" ? familyScenario() : largeGroupScenario();
+  const selected = id === "A" ? beach : id === "B" ? hiking : id === "C" ? kickoff : id === "D" ? familyScenario() : id === "E" ? volunteerScenario() : largeGroupStressScenario();
   return structuredClone(selected);
 }
 export const SCENARIO_IDS: readonly ScenarioId[] = ["A", "B", "C", "D", "E"];
@@ -477,8 +590,21 @@ export function validateScenarioFixture(scenario: ScenarioFixture) {
   const statements = scenario.participants.flatMap((p) => p.statements);
   if (new Set(statements.map((s) => s.id)).size !== statements.length)
     throw new Error("DUPLICATE_SCENARIO_STATEMENT");
-  if (scenario.id === "E" && (scenario.participants.length !== 58 || statements.length !== 52 || scenario.seed !== 0x5e7a_2026))
-    throw new Error("LARGE_GROUP_FIXTURE_INCOMPLETE");
+  const participantIds = new Set(scenario.participants.map((person) => person.id));
+  if (scenario.roomParticipantCount !== scenario.participants.length)
+    throw new Error("ROOM_PARTICIPANT_COUNT_MISMATCH");
+  if (scenario.estimatedAttendeeCount < 0 || (scenario.confirmedAttendeeCount !== null && scenario.confirmedAttendeeCount > scenario.estimatedAttendeeCount))
+    throw new Error("EVENT_ATTENDANCE_COUNT_INVALID");
+  if (new Set(scenario.requiredApproverIds).size !== scenario.requiredApproverIds.length || scenario.requiredApproverIds.some((id) => !participantIds.has(id)))
+    throw new Error("REQUIRED_APPROVER_NOT_IN_ROOM");
+  if (scenario.requiredApproverIds.length !== scenario.roomParticipantCount)
+    throw new Error("UNANIMOUS_APPROVER_SET_INCOMPLETE");
+  if (scenario.participants.some((person) => (person.roomResponseStatus === "responded") !== (person.statements.length > 0)))
+    throw new Error("ROOM_RESPONSE_STATUS_MISMATCH");
+  if (scenario.id === "E" && (scenario.estimatedAttendeeCount !== 58 || scenario.roomParticipantCount !== 7 || scenario.confirmedAttendeeCount !== 47 || scenario.participants.filter((person) => person.responseStatus === "no_response").length !== 1))
+    throw new Error("VOLUNTEER_ATTENDANCE_FIXTURE_INCOMPLETE");
+  if (scenario.id === "E_STRESS" && (scenario.participants.length !== 58 || statements.length !== 52 || scenario.seed !== 0x5e7a_2026))
+    throw new Error("LARGE_GROUP_STRESS_FIXTURE_INCOMPLETE");
   if (scenario.policy.length !== 6 || new Set(scenario.policy.map((entry) => entry.category)).size !== 6)
     throw new Error("SCENARIO_CATEGORY_POLICY_INVALID");
   if (scenario.constraints.some((constraint) => !scenario.participants.some((p) => p.id === constraint.owner)))

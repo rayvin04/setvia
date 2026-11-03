@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import {
   fixture,
   judge,
@@ -10,12 +10,15 @@ import {
 import { AgentEngine } from "../server/src/agents/engine.js";
 import { saveLab, type LabRecord } from "../server/src/agents/lab.js";
 import { runAllScenarioMocks } from "../server/src/agents/scenario-runner.js";
+import { fileURLToPath } from "node:url";
 
 // This executable intentionally has no live mode and never reads .env.
 globalThis.fetch = async () => {
   throw new Error("Live network is disabled in Setvia Lab.");
 };
 const records: LabRecord[] = [];
+const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const privateRoot = resolve(process.env.SETVIA_PRIVATE_ROOT ?? resolve(appRoot, "..", "setvia-local"));
 const complete = await fixture([{ role: "Judge", output: judge() }], "meeting");
 records.push({
   scenario: "Project kickoff — unnecessary agents skipped",
@@ -122,8 +125,8 @@ records.push(...realistic.map(({ record }) => record));
 const passed = records.filter((record) => record.passed).length;
 const paths = await saveLab(
   records,
-  resolve(process.cwd(), "../setvia-local/lab"),
-  process.cwd(),
+  resolve(privateRoot, "lab"),
+  appRoot,
 );
 console.log(
   JSON.stringify(

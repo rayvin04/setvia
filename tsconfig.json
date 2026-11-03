@@ -11,5 +11,5 @@
     "allowImportingTsExtensions": true,
     "verbatimModuleSyntax": true
   },
-  "include": ["client", "vite.config.ts"]
+  "include": ["client", "vite.config.ts", "lab-ui/src", "lab-ui/vite.config.ts"]
 }

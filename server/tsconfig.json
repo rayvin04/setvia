@@ -15,6 +15,9 @@
     "../scripts/test-meta.ts",
     "../scripts/run-lab.ts",
     "../scripts/run-lab-live.ts",
-    "../scripts/review-lab.ts"
+    "../scripts/review-lab.ts",
+    "../scripts/live-budget-journal.ts",
+    "../scripts/live-budget-journal.test.ts",
+    "../lab-ui/server.ts"
   ]
 }

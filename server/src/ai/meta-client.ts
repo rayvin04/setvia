@@ -41,6 +41,7 @@ export interface MetaUsage {
   output_tokens?: number;
   total_tokens?: number;
   input_tokens_details?: { cached_tokens?: number };
+  output_tokens_details?: { reasoning_tokens?: number };
 }
 
 export interface SafeUsageMetadata {
@@ -50,6 +51,7 @@ export interface SafeUsageMetadata {
   outputTokens: number | null;
   totalTokens: number | null;
   cachedInputTokens: number | null;
+  reasoningTokens: number | null;
   durationMs: number;
 }
 
@@ -59,6 +61,14 @@ export interface MetaResponseResult {
   outputText: string;
   usage: MetaUsage | null;
   durationMs: number;
+}
+
+export interface MetaHttpAttemptEvent {
+  phase: "started" | "response" | "transport_error" | "usage";
+  requestNumber: number;
+  status?: number;
+  durationMs?: number;
+  usage?: SafeUsageMetadata;
 }
 
 export interface MetaApiClient {
@@ -80,9 +90,11 @@ export interface MetaClientOptions {
   maxTotalRequests?: number;
   sleep?: (milliseconds: number) => Promise<void>;
   random?: () => number;
-  onUsage?: (metadata: SafeUsageMetadata) => void;
+  onUsage?: (metadata: SafeUsageMetadata, requestNumber: number) => unknown | Promise<unknown>;
   // Awaited before every HTTP attempt, including retries. May reject a reserved budget.
   beforeAttempt?: () => void | Promise<void>;
+  // Awaited immediately before fetch and after its transport result for durable attempt journals.
+  onHttpEvent?: (event: MetaHttpAttemptEvent) => void | Promise<void>;
 }
 
 const MAX_RETRIES = 2;
@@ -190,6 +202,9 @@ function usageFromResponse(value: unknown): MetaUsage | null {
   const details = isRecord(usage.input_tokens_details)
     ? usage.input_tokens_details
     : undefined;
+  const outputDetails = isRecord(usage.output_tokens_details)
+    ? usage.output_tokens_details
+    : undefined;
 
   return {
     input_tokens: numberOrNull(usage.input_tokens) ?? undefined,
@@ -197,6 +212,9 @@ function usageFromResponse(value: unknown): MetaUsage | null {
     total_tokens: numberOrNull(usage.total_tokens) ?? undefined,
     input_tokens_details: details
       ? { cached_tokens: numberOrNull(details.cached_tokens) ?? undefined }
+      : undefined,
+    output_tokens_details: outputDetails
+      ? { reasoning_tokens: numberOrNull(outputDetails.reasoning_tokens) ?? undefined }
       : undefined,
   };
 }
@@ -276,6 +294,8 @@ function asSafeUsage(result: MetaResponseResult): SafeUsageMetadata {
     totalTokens: result.usage?.total_tokens ?? null,
     cachedInputTokens:
       result.usage?.input_tokens_details?.cached_tokens ?? null,
+    reasoningTokens:
+      result.usage?.output_tokens_details?.reasoning_tokens ?? null,
     durationMs: result.durationMs,
   };
 }
@@ -321,6 +341,11 @@ export function createMetaClient(
         await options.beforeAttempt?.();
         requestOptions.signal?.throwIfAborted();
         requestCount += 1;
+        const attemptStartedAt = performance.now();
+        await options.onHttpEvent?.({
+          phase: "started",
+          requestNumber: requestCount,
+        });
 
         let response: Response;
         let attemptSignal: AbortSignal | undefined;
@@ -340,6 +365,11 @@ export function createMetaClient(
             signal,
           });
         } catch {
+          await options.onHttpEvent?.({
+            phase: "transport_error",
+            requestNumber: requestCount,
+            durationMs: Math.round(performance.now() - attemptStartedAt),
+          });
           if (requestOptions.signal?.aborted) {
             throw new MetaApiError(
               "timeout",
@@ -364,6 +394,13 @@ export function createMetaClient(
             { retryable: true },
           );
         }
+
+        await options.onHttpEvent?.({
+          phase: "response",
+          requestNumber: requestCount,
+          status: response.status,
+          durationMs: Math.round(performance.now() - attemptStartedAt),
+        });
 
         if (!response.ok) {
           const apiError = safeApiError(response.status);
@@ -410,11 +447,7 @@ export function createMetaClient(
             usage: usageFromResponse(payload),
             durationMs: Math.round(performance.now() - startedAt),
           };
-          try {
-            options.onUsage?.(asSafeUsage(incompleteResult));
-          } catch {
-            // Observability callbacks must not hide an incomplete response.
-          }
+          await options.onUsage?.(asSafeUsage(incompleteResult), requestCount);
           throw new MetaApiError(
             "invalid_response",
             incompleteMessage ??
@@ -434,11 +467,7 @@ export function createMetaClient(
           durationMs: Math.round(performance.now() - startedAt),
         };
 
-        try {
-          options.onUsage?.(asSafeUsage(result));
-        } catch {
-          // Observability callbacks must not turn a successful model response into failure.
-        }
+        await options.onUsage?.(asSafeUsage(result), requestCount);
         return result;
       }
     },

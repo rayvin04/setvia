@@ -293,6 +293,10 @@ export async function prepareScenario(
     scenario.eventType,
     scenario.policy,
     scenario.proposal,
+    {
+      estimatedAttendeeCount: scenario.estimatedAttendeeCount,
+      confirmedAttendeeCount: scenario.confirmedAttendeeCount,
+    },
   );
   for (const person of scenario.participants) {
     const joined = await rooms.join(created.roomId, created.invitation, person.name);
@@ -397,6 +401,7 @@ export async function prepareScenario(
     ? {
         mode: options.gateway.mode,
         promptHashes: options.gateway.promptHashes,
+        promptVersion: options.gateway.promptVersion,
         async call(role, input, context) {
           scripted.calls.push({ role, input: structuredClone(input) });
           return options.gateway!.call(role, input, context);
@@ -432,13 +437,14 @@ export async function prepareScenario(
 function safeInputRecords(scenario: ScenarioFixture): ScenarioInputRecord[] {
   return scenario.participants.flatMap((person) => {
     if (!person.statements.length) {
-      return [{ participantId: person.id, participantLabel: person.name, role: person.role, responseStatus: person.responseStatus, statements: [] }];
+      return [{ participantId: person.id, participantLabel: person.name, role: person.role, responseStatus: person.responseStatus, roomResponseStatus: person.roomResponseStatus, statements: [] }];
     }
     return [{
       participantId: person.id,
       participantLabel: person.name,
       role: person.role,
       responseStatus: person.responseStatus,
+      roomResponseStatus: person.roomResponseStatus,
       ...(person.timeZone ? { timeZone: person.timeZone } : {}),
       statements: person.statements.map((entry) => ({
         statementId: entry.id,
@@ -460,7 +466,7 @@ function expectedRolePath(scenario: ScenarioFixture) {
 }
 
 function expectedOutcome(scenario: ScenarioFixture): Cycle["outcome"] {
-  if (scenario.id === "A" || scenario.id === "B" || scenario.id === "D" || scenario.id === "E") return "WAIT_FOR_PARTICIPANT";
+  if (scenario.id === "A" || scenario.id === "B" || scenario.id === "D" || scenario.id === "E" || scenario.id === "E_STRESS") return "WAIT_FOR_PARTICIPANT";
   return "COMPLETED";
 }
 
@@ -542,11 +548,18 @@ async function assertionsFor(
       { id: "no_indirect_private_summary", label: "No shared Judge finding or question is derived from private-only details", passed: !!cycle.finalEvaluation && cycle.finalEvaluation.findings.every((item) => !/private|reason|₱1,500|weekend only/i.test(item.message + " " + item.recommendedAction)) && cycle.questions.every((q) => !/private response|different arrangement|₱1,500|weekend only/i.test(q.text)), detail: "Shared material is based on group-authorized facts only." },
     );
   }
-  if (scenario.id === "E") {
+  if (scenario.id === "E" || scenario.id === "E_STRESS") {
+    const stress = scenario.id === "E_STRESS";
+    const expectedRoomCount = stress ? 58 : 7;
     const judgeCalls = prepared.calls.filter((call) => call.role === "Judge");
     const fullGroupContext = judgeCalls.length > 0 && judgeCalls.every((call) => {
-      const context = call.input as { participants?: unknown[]; facts?: Fact[] };
-      return context.participants?.length === 58 && prepared.sharedFactIds.every((id) => context.facts?.some((fact) => fact.id === id));
+      const context = call.input as { participants?: unknown[]; facts?: Fact[]; attendance?: { estimatedAttendeeCount?: number | null; confirmedAttendeeCount?: number | null; roomParticipantCount?: number; requiredApproverIds?: unknown[] } };
+      return context.participants?.length === expectedRoomCount &&
+        context.attendance?.estimatedAttendeeCount === 58 &&
+        context.attendance?.confirmedAttendeeCount === 47 &&
+        context.attendance?.roomParticipantCount === expectedRoomCount &&
+        context.attendance.requiredApproverIds?.length === expectedRoomCount &&
+        prepared.sharedFactIds.every((id) => context.facts?.some((fact) => fact.id === id));
     });
     const roomFacts = (await prepared.store.read(prepared.roomId)).facts;
     const ownersAttributed = prepared.sharedFactIds.every((id) => {
@@ -554,20 +567,30 @@ async function assertionsFor(
       const stableOwner = prepared.factOwnerById.get(id);
       return !!fact && !!stableOwner && fact.ownerId === prepared.authByParticipant.get(stableOwner)?.participantId;
     });
-    const distinctPeople = new Set(scenario.participants.map((person) => person.id)).size === 58;
-    const noPerParticipantCalls = cycle.traces.filter((trace) => trace.role === "Listener").length === 0 && cycle.attempts <= 6;
+    const distinctPeople = new Set(scenario.participants.map((person) => person.id)).size === expectedRoomCount;
+    const noPerParticipantCalls = cycle.traces.filter((trace) => trace.role === "Listener").length === 0 && cycle.attempts <= 10;
     const questionsUnique = new Set(cycle.questions.map((q) => `${q.findingId}:${q.targetId}:${q.kind}`)).size === cycle.questions.length;
     const access = cycle.finalEvaluation?.findings.find((item) => item.id === "volunteer_access_conflict");
     const accessEvidence = new Set(access?.evidenceIds ?? []);
     const expectedAccessIds = evidenceList(prepared, ["volunteer_03", "volunteer_04", "volunteer_05"]);
-    assertions.push(
-      { id: "58_distinct_participants", label: "All 58 fictional participants remain present and distinct", passed: distinctPeople && scenario.participants.length === 58, detail: `${scenario.participants.length} participants; 52 authored responses; 6 nonresponses; fixed seed ${scenario.seed}` },
-      { id: "no_context_truncation", label: "Every participant and authorized group fact reaches each Judge context", passed: fullGroupContext, detail: `${prepared.sharedFactIds.length} shared facts in the room and Judge handoffs; no slice or per-person Listener request.` },
-      { id: "minority_accessibility_evidence", label: "Accessibility is treated as unresolved using the affected participant and disputed venue claims", passed: !!access && expectedAccessIds.every((id) => accessEvidence.has(id)) && cycle.readiness?.status === "blocked", detail: `${access?.evidenceIds.length ?? 0} evidence references; status ${cycle.readiness?.status}` },
-      { id: "large_group_call_efficiency", label: "Large-group analysis does not make one model call per participant", passed: noPerParticipantCalls && cycle.attempts < scenario.participants.length, detail: `${cycle.attempts} attempts for ${scenario.participants.length} participants` },
-      { id: "questions_deduplicated", label: "Generated follow-up questions are distinct", passed: questionsUnique && cycle.questions.length === 4, detail: `${cycle.questions.length} questions; ${new Set(cycle.questions.map((q) => `${q.findingId}:${q.targetId}:${q.kind}`)).size} unique issue/recipient/type keys` },
-      { id: "individual_attribution_retained", label: "Every participant response retains its owner and consent metadata", passed: ownersAttributed && prepared.sharedFactIds.length === roomFacts.length, detail: `${prepared.sharedFactIds.length} scoped facts; every owner ID maps to its authenticated synthetic participant.` },
-    );
+    if (stress) {
+      assertions.push(
+        { id: "58_distinct_active_planners", label: "The separate stress fixture has 58 distinct active planners", passed: distinctPeople && scenario.participants.length === 58, detail: `${scenario.participants.length} active room members; 52 authored responses; six actual room nonresponses; fixed seed ${scenario.seed}` },
+        { id: "stress_context_not_truncated", label: "All 58 active planners and authorized facts reach every Judge context", passed: fullGroupContext, detail: `${prepared.sharedFactIds.length} authorized facts in each Judge handoff; no slicing or per-person Listener call.` },
+        { id: "stress_accessibility_evidence", label: "Accessibility remains unresolved using the affected participant and disputed venue claims", passed: !!access && expectedAccessIds.every((id) => accessEvidence.has(id)) && cycle.readiness?.status === "blocked", detail: `${access?.evidenceIds.length ?? 0} evidence references; status ${cycle.readiness?.status}` },
+        { id: "stress_call_efficiency", label: "Stress analysis does not make one model call per planner", passed: noPerParticipantCalls && cycle.attempts < scenario.participants.length, detail: `${cycle.attempts} attempts for ${scenario.participants.length} active planners` },
+        { id: "stress_questions_deduplicated", label: "Generated follow-up questions are distinct", passed: questionsUnique && cycle.questions.length === 4, detail: `${cycle.questions.length} questions; ${new Set(cycle.questions.map((q) => `${q.findingId}:${q.targetId}:${q.kind}`)).size} unique issue/recipient/type keys` },
+        { id: "stress_attribution_retained", label: "All response facts retain their owner and consent metadata", passed: ownersAttributed && prepared.sharedFactIds.length === roomFacts.length, detail: `${prepared.sharedFactIds.length} scoped facts map to their authenticated synthetic planner.` },
+      );
+    } else {
+      const roomNonresponseCount = scenario.participants.filter((person) => person.roomResponseStatus === "no_response").length;
+      assertions.push(
+        { id: "attendees_separate_from_planners", label: "58 expected event attendees remain distinct from seven room planners and approvers", passed: scenario.estimatedAttendeeCount === 58 && scenario.confirmedAttendeeCount === 47 && scenario.roomParticipantCount === 7 && scenario.requiredApproverIds.length === 7 && roomNonresponseCount === 1 && fullGroupContext, detail: `58 estimated attendees, 47 confirmed attendees, seven room planners, seven required approvers, and ${roomNonresponseCount} actual room nonresponse.` },
+        { id: "planner_context_complete", label: "Every actual room planner and authorized fact reaches Judge", passed: fullGroupContext, detail: `${prepared.sharedFactIds.length} authorized facts in each Judge handoff.` },
+        { id: "committee_accessibility_evidence", label: "Accessibility remains unresolved using the affected participant and disputed venue claims", passed: !!access && expectedAccessIds.every((id) => accessEvidence.has(id)) && cycle.readiness?.status === "blocked", detail: `${access?.evidenceIds.length ?? 0} evidence references; status ${cycle.readiness?.status}` },
+        { id: "committee_call_efficiency", label: "The seven-planner analysis does not make one model call per planner", passed: noPerParticipantCalls && cycle.attempts < scenario.participants.length, detail: `${cycle.attempts} attempts for ${scenario.participants.length} actual room planners.` },
+      );
+    }
   }
   return assertions;
 }
@@ -663,6 +686,16 @@ async function runScenario(
     mode,
     simulation: true,
     participantCount: scenario.participants.length,
+    model: mode === "LIVE" ? "muse-spark-1.3" : null,
+    promptVersion: cycle.traces[0]?.promptVersion ?? options.gateway?.promptVersion ?? "agents-v1",
+    eventAttendance: {
+      estimatedAttendeeCount: scenario.estimatedAttendeeCount,
+      confirmedAttendeeCount: scenario.confirmedAttendeeCount,
+      roomParticipantCount: scenario.roomParticipantCount,
+      requiredApproverIds: [...scenario.requiredApproverIds],
+      respondedRoomParticipants: scenario.participants.filter((person) => person.roomResponseStatus === "responded").length,
+      nonrespondingRoomParticipants: scenario.participants.filter((person) => person.roomResponseStatus === "no_response").length,
+    },
     fixtureSeed: scenario.seed,
     inputStatements,
     groundTruth: scenario.groundTruth,
@@ -672,10 +705,10 @@ async function runScenario(
     timeline,
     durationMs,
     dashboardCounts: {
-      responding: scenario.participants.filter((person) => person.statements.length > 0).length,
+      responding: scenario.participants.filter((person) => person.roomResponseStatus === "responded").length,
       confirmed: scenario.participants.filter((person) => person.responseStatus === "confirmed").length,
       unconfirmed: scenario.participants.filter((person) => person.responseStatus === "unconfirmed").length,
-      noResponse: scenario.participants.filter((person) => person.responseStatus === "no_response").length,
+      noResponse: scenario.participants.filter((person) => person.roomResponseStatus === "no_response").length,
     },
     cycle,
   };
@@ -765,15 +798,39 @@ async function liveAssertionsFor(
     );
   }
   if (prepared.scenario.id === "E") {
+    const roomNonresponses = prepared.scenario.participants.filter((person) => person.roomResponseStatus === "no_response").length;
+    const judgeTraces = cycle.traces.filter((trace) => trace.role === "Judge");
+    const countsSeparated = judgeTraces.length > 0 && judgeTraces.every((trace) => {
+      const input = trace.input as { participants?: unknown[]; attendance?: { estimatedAttendeeCount?: number | null; confirmedAttendeeCount?: number | null; roomParticipantCount?: number; requiredApproverIds?: unknown[] } } | null;
+      return input?.participants?.length === 7 && input.attendance?.estimatedAttendeeCount === 58 &&
+        input.attendance.confirmedAttendeeCount === 47 && input.attendance.roomParticipantCount === 7 &&
+        input.attendance.requiredApproverIds?.length === 7;
+    });
+    assertions.push(
+      {
+        id: "event_attendance_not_room_membership",
+        label: "58 event attendees and 47 confirmations remain separate from seven actual room planners",
+        passed: countsSeparated && prepared.scenario.requiredApproverIds.length === 7,
+        detail: `${prepared.scenario.estimatedAttendeeCount} estimated event attendees · ${prepared.scenario.confirmedAttendeeCount} confirmed · ${prepared.scenario.roomParticipantCount} room planners.`,
+      },
+      {
+        id: "room_nonresponse_count",
+        label: "Only an actual nonresponding room planner is counted as a room nonresponse",
+        passed: roomNonresponses === 1 && prepared.scenario.participants.length === 7,
+        detail: `${roomNonresponses} nonresponse among the seven active room planners.`,
+      },
+    );
+  }
+  if (prepared.scenario.id === "E_STRESS") {
     const judgeTraces = cycle.traces.filter((trace) => trace.role === "Judge");
     const completeContext = judgeTraces.length > 0 && judgeTraces.every((trace) => {
-      const input = trace.input as { participants?: unknown[]; facts?: Fact[] } | null;
-      return input?.participants?.length === 58 &&
+      const input = trace.input as { participants?: unknown[]; facts?: Fact[]; attendance?: { roomParticipantCount?: number; requiredApproverIds?: unknown[] } } | null;
+      return input?.participants?.length === 58 && input.attendance?.roomParticipantCount === 58 && input.attendance.requiredApproverIds?.length === 58 &&
         prepared.sharedFactIds.every((id) => input?.facts?.some((fact) => fact.id === id));
     });
     assertions.push({
-      id: "large_group_context_complete",
-      label: "Every Judge handoff retains all 58 participants and authorized group facts",
+      id: "stress_context_complete",
+      label: "The separate 58-planner stress fixture retains all members and authorized facts",
       passed: completeContext,
       detail: `${judgeTraces.length} Judge inputs checked against ${prepared.sharedFactIds.length} authorized facts; this is a context-presence check, not a quality score.`,
     });
@@ -784,6 +841,7 @@ async function liveAssertionsFor(
 export async function runAllScenarioMocks() {
   const results: Awaited<ReturnType<typeof runScenarioMock>>[] = [];
   for (const id of SCENARIO_IDS) results.push(await runScenarioMock(id));
+  results.push(await runScenarioMock("E_STRESS"));
   return results;
 }
 

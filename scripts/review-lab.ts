@@ -8,7 +8,8 @@ import { saveLab, type LabRecord } from "../server/src/agents/lab.js";
 import { RUBRIC_DIMENSIONS, SCENARIO_IDS } from "../server/src/agents/scenarios.js";
 
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const privateLabRoot = resolve(appRoot, "..", "setvia-local", "lab");
+const privateRoot = resolve(process.env.SETVIA_PRIVATE_ROOT ?? resolve(appRoot, "..", "setvia-local"));
+const privateLabRoot = resolve(privateRoot, "lab");
 
 function isInside(parent: string, candidate: string) {
   const rel = relative(parent, candidate);
@@ -36,7 +37,7 @@ async function loadRecords(fileArg: string): Promise<LabRecord[]> {
   );
   if (records.length < 1 || records.some((record) =>
     record.mode !== "MOCK" && record.mode !== "LIVE" ||
-    !record.scenarioId || !SCENARIO_IDS.includes(record.scenarioId) ||
+    !record.scenarioId || (!SCENARIO_IDS.includes(record.scenarioId) && record.scenarioId !== "E_STRESS") ||
     !record.rubric || !record.groundTruth || !record.simulation
   )) throw new Error("This review tool accepts only the five authored synthetic scenario records.");
   for (const record of records) {

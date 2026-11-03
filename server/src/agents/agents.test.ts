@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve, sep } from "node:path";
-import { Categories, RoleSchemas, type Question } from "./contracts.js";
+import { Categories, RoleSchemas, RoomSchema, type Question } from "./contracts.js";
 import { AgentEngine, MOCK_LIMITS } from "./engine.js";
 import {
   fixture,
@@ -14,7 +14,7 @@ import {
   scriptedGateway,
 } from "./fixtures.js";
 import { JsonPersistence, RoomStore } from "./store.js";
-import { RoomService } from "./rooms.js";
+import { RoomService, sharedContext } from "./rooms.js";
 import { renderLab, saveLab } from "./lab.js";
 import { getScenario, SCENARIO_IDS } from "./scenarios.js";
 import { runAllScenarioMocks, runScenarioMock, runScenarioWithGateway } from "./scenario-runner.js";
@@ -1091,21 +1091,59 @@ test("different claims about one explicitly shared fact block readiness for veri
   );
 });
 
-test("five deterministic realistic scenario mocks pass their authored assertions", async () => {
+test("five core scenario mocks and the separate planner stress test pass their authored assertions", async () => {
   const largeOne = getScenario("E");
   const largeTwo = getScenario("E");
-  assert.equal(largeOne.participants.length, 58);
+  assert.equal(largeOne.participants.length, 7);
+  assert.equal(largeOne.estimatedAttendeeCount, 58);
+  assert.equal(largeOne.confirmedAttendeeCount, 47);
+  assert.equal(largeOne.requiredApproverIds.length, 7);
+  assert.equal(largeOne.participants.filter((person) => person.roomResponseStatus === "no_response").length, 1);
   assert.equal(largeOne.seed, largeTwo.seed);
   assert.deepEqual(largeOne.participants, largeTwo.participants);
+  assert.equal(getScenario("E_STRESS").participants.length, 58);
   assert.equal(SCENARIO_IDS.length, 5);
   const results = await runAllScenarioMocks();
-  assert.equal(results.length, 5);
+  assert.equal(results.length, 6);
   for (const { record } of results) {
     assert.equal(record.mode, "MOCK");
     assert.equal(record.simulation, true);
     assert.equal(record.passed, true, `${record.scenario}: ${JSON.stringify(record.assertions)}`);
     assert.ok(record.assertions?.every((assertion) => assertion.passed));
   }
+});
+
+test("event attendance stays separate from active room membership and old room snapshots remain readable", async () => {
+  const f = await fixture([{ role: "Judge", output: judge() }]);
+  const legacy = await f.store.read(f.roomId);
+  delete legacy.estimatedAttendeeCount;
+  delete legacy.confirmedAttendeeCount;
+  assert.doesNotThrow(() => RoomSchema.parse(legacy));
+
+  const created = await f.engine.rooms.create(
+    "volunteer event",
+    legacy.policy,
+    legacy.proposal,
+    { estimatedAttendeeCount: 58, confirmedAttendeeCount: 47 },
+  );
+  const participant = await f.engine.rooms.join(created.roomId, created.invitation, "Planner");
+  const room = await f.store.read(created.roomId);
+  const context = sharedContext(room);
+  assert.equal(context.attendance.estimatedAttendeeCount, 58);
+  assert.equal(context.attendance.confirmedAttendeeCount, 47);
+  assert.equal(context.attendance.roomParticipantCount, 1);
+  assert.equal(context.attendance.requiredApproverIds.length, 1);
+  assert.equal(context.attendance.requiredApproverIds[0], participant.participantId);
+
+  await assert.rejects(
+    f.engine.rooms.create(
+      "invalid event",
+      legacy.policy,
+      legacy.proposal,
+      { estimatedAttendeeCount: 2, confirmedAttendeeCount: 3 },
+    ),
+    /INVALID_ATTENDEE_COUNTS/,
+  );
 });
 
 test("the live scenario path requires META mode and never auto-scores model quality", async () => {

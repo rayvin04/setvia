@@ -346,7 +346,7 @@ export class AgentEngine {
         role,
         phase,
         requestedBy,
-        promptVersion: "agents-v1",
+        promptVersion: this.gateway.promptVersion ?? "agents-v1",
         promptHash: this.gateway.promptHashes?.[role] ?? null,
         mode: this.gateway.mode,
         schemaVersion: "agents-v1",
@@ -359,7 +359,10 @@ export class AgentEngine {
         rejectedOptionIds: [],
         attempts: 0,
         inputTokens: null,
+        cachedInputTokens: null,
         outputTokens: null,
+        reasoningTokens: null,
+        totalTokens: null,
         estimatedCostMicros: null,
         durationMs: 0,
       };
@@ -428,11 +431,22 @@ export class AgentEngine {
         if (!trace.attempts) throw new StateError("UNMETERED_CALL");
         const output = RoleSchemas[role].parse(result.output);
         if (result.usage) {
-          for (const n of Object.values(result.usage))
+          const reportedNumbers = Object.values(result.usage).filter(
+            (value): value is number => typeof value === "number",
+          );
+          for (const n of reportedNumbers)
             if (!Number.isSafeInteger(n) || n < 0)
               throw new StateError("INVALID_USAGE");
           trace.inputTokens = result.usage.inputTokens;
+          trace.cachedInputTokens = result.usage.cachedInputTokens ?? null;
           trace.outputTokens = result.usage.outputTokens;
+          trace.reasoningTokens = result.usage.reasoningTokens ?? null;
+          trace.totalTokens = result.usage.totalTokens ?? result.usage.inputTokens + result.usage.outputTokens;
+          if (
+            (trace.cachedInputTokens !== null && trace.cachedInputTokens > trace.inputTokens) ||
+            (trace.reasoningTokens !== null && trace.reasoningTokens > trace.outputTokens)
+          )
+            throw new StateError("INVALID_USAGE");
           trace.estimatedCostMicros = result.usage.estimatedCostMicros;
           if (
             result.usage.inputTokens + result.usage.outputTokens >
