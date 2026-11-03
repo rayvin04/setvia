@@ -186,7 +186,7 @@ export function Demos() {
             <div className="quote-pair">
               {detail.quotes.map((q, i) => (
                 <blockquote key={q}>
-                  <Avatar index={i} />
+                  <Avatar index={i + index * 2} />
                   <div>
                     <cite>{selected.people[i]}</cite>
                     <p>{q}</p>
