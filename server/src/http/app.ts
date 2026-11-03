@@ -17,6 +17,17 @@ import {
   type SupportedImageType,
 } from "../ai/extract-image.js";
 import type { MetaApiClient } from "../ai/meta-client.js";
+import { StateError } from "../agents/store.js";
+import {
+  ApproveProposalRequestSchema,
+  CreateRoomRequestSchema,
+  JoinRoomRequestSchema,
+  LeaveRoomRequestSchema,
+  ReviseProposalRequestSchema,
+  ShareCandidateRequestSchema,
+  SubmitRoomMessageSchema,
+} from "../../../shared/room-api.js";
+import { roomAuthFromHeaders, roomErrorStatus, type RoomRuntime } from "../rooms/runtime.js";
 
 const TextRequestSchema = z
   .object({
@@ -37,6 +48,8 @@ interface RateWindow {
 
 export interface AppOptions {
   client: MetaApiClient;
+  rooms?: RoomRuntime | null;
+  roomOrigins?: string[];
   rateLimit?: {
     limit?: number;
     windowMs?: number;
@@ -112,6 +125,12 @@ function safeFailure(error: unknown): { status: number; message: string } {
       message: "Meta extraction is not configured on this server.",
     };
   }
+  if (error instanceof StateError) {
+    return {
+      status: roomErrorStatus(error.code),
+      message: roomErrorMessage(error.code),
+    };
+  }
   if (error instanceof MetaApiError) {
     switch (error.code) {
       case "authentication":
@@ -145,6 +164,31 @@ function safeFailure(error: unknown): { status: number; message: string } {
   return { status: 500, message: "Something went wrong. Your draft is still in this browser." };
 }
 
+function roomErrorMessage(code: string) {
+  const messages: Record<string, string> = {
+    UNAUTHORIZED: "This room invitation or participant session is invalid.",
+    UNAUTHORIZED_ANSWER: "This question is not available to your participant session.",
+    PRIVATE_ANSWER_REQUIRED: "This question must be answered privately.",
+    STALE_STATE: "The room changed. Review the latest plan and try again.",
+    STALE_PROPOSAL: "That proposal version has changed. Review the latest version.",
+    REVIEW_NOT_READY: "The current plan is not ready for human approval yet.",
+    ROOM_NOT_FOUND: "This planning room could not be found.",
+    CANDIDATE_NOT_FOUND: "That private suggestion is no longer available.",
+    INPUT_QUEUE_LIMIT: "Setvia is still processing earlier responses. Try again shortly.",
+    RESPONSE_LIMIT: "This room has reached its response limit.",
+    INTEGRATION_RUN_BUDGET_LIMIT: "The remaining live-analysis allowance cannot cover this operation. Developer approval is required for more requests.",
+    LIVE_HTTP_ATTEMPT_LIMIT: "The remaining request allowance cannot cover a complete analysis. Developer approval is required for more requests.",
+    ROOM_BUDGET_LIMIT: "This room has reached its live-analysis budget.",
+    PRIVATE_REQUEST_BUDGET_LIMIT: "The private analysis budget has been reached.",
+  };
+  return messages[code] ?? "This room action could not be completed.";
+}
+
+function sendRoomFailure(response: Response, error: unknown) {
+  const failure = safeFailure(error);
+  response.status(failure.status).json({ error: failure.message });
+}
+
 export function createApp(options: AppOptions) {
   const app = express();
   const limit = options.rateLimit?.limit ?? 10;
@@ -161,6 +205,144 @@ export function createApp(options: AppOptions) {
 
   app.get("/api/health", (_request, response) => {
     response.json({ status: "ok" });
+  });
+
+  const allowedRoomOrigins = new Set(
+    options.roomOrigins ?? [
+      "http://127.0.0.1:5173",
+      "http://localhost:5173",
+      "http://127.0.0.1:4176",
+    ],
+  );
+  app.use("/api/rooms", (request, response, next) => {
+    const origin = request.header("origin");
+    if (origin && !allowedRoomOrigins.has(origin)) {
+      response.status(403).json({ error: "This browser origin cannot access local planning rooms." });
+      return;
+    }
+    if (origin) {
+      response.setHeader("Access-Control-Allow-Origin", origin);
+      response.setHeader("Vary", "Origin");
+      response.setHeader("Access-Control-Allow-Headers", "Authorization, Content-Type, X-Setvia-Participant, Last-Event-ID");
+      response.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+    }
+    if (request.method === "OPTIONS") {
+      response.status(204).end();
+      return;
+    }
+    next();
+  });
+  app.get("/api/rooms/health", (_request, response) => {
+    response.json({
+      enabled: Boolean(options.rooms),
+      mode: options.rooms?.inferenceMode === "MOCK" ? "offline-mock" : options.rooms?.demoMode ? "synthetic-live-demo" : options.rooms ? "local-live" : "unavailable",
+      ...(options.rooms ? { budget: options.rooms.budget } : {}),
+    });
+  });
+  app.use("/api/rooms", createRateLimiter(40, 60_000, now));
+  app.use("/api/rooms", express.json({ limit: "24kb", strict: true }));
+
+  app.post("/api/rooms", async (request, response) => {
+    if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
+    const parsed = CreateRoomRequestSchema.safeParse(request.body);
+    if (!parsed.success) return response.status(400).json({ error: "Add a valid event name and starting plan." });
+    try {
+      response.status(201).json(await options.rooms.create(parsed.data, parsed.data.creatorName));
+    } catch (error) { sendRoomFailure(response, error); }
+  });
+
+  app.post("/api/rooms/:roomId/join", async (request, response) => {
+    if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
+    const roomId = request.params.roomId;
+    const parsed = JoinRoomRequestSchema.safeParse(request.body);
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(roomId ?? "") || !parsed.success)
+      return response.status(400).json({ error: "Check the room link and participant name." });
+    try { response.status(201).json(await options.rooms.join(roomId!, parsed.data.invitation, parsed.data.name)); }
+    catch (error) { sendRoomFailure(response, error); }
+  });
+
+  app.get("/api/rooms/:roomId/events", async (request, response) => {
+    if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
+    const roomId = request.params.roomId;
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(roomId ?? "")) return response.status(400).json({ error: "Invalid room link." });
+    try {
+      const auth = roomAuthFromHeaders(request.headers as Record<string, unknown>);
+      await options.rooms.rooms.view(roomId!, auth);
+      await options.rooms.events.subscribe(roomId!, auth, response);
+    } catch (error) {
+      if (!response.headersSent) sendRoomFailure(response, error);
+      else response.end();
+    }
+  });
+
+  app.get("/api/rooms/:roomId", async (request, response) => {
+    if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
+    const roomId = request.params.roomId;
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(roomId ?? "")) return response.status(400).json({ error: "Invalid room link." });
+    try {
+      const auth = roomAuthFromHeaders(request.headers as Record<string, unknown>);
+      response.json(await options.rooms.snapshot(roomId!, auth));
+    } catch (error) { sendRoomFailure(response, error); }
+  });
+
+  app.post("/api/rooms/:roomId/messages", async (request, response) => {
+    if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
+    const roomId = request.params.roomId;
+    const parsed = SubmitRoomMessageSchema.safeParse(request.body);
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(roomId ?? "") || !parsed.success)
+      return response.status(400).json({ error: "That response does not match the current room question." });
+    try {
+      const auth = roomAuthFromHeaders(request.headers as Record<string, unknown>);
+      response.status(201).json(await options.rooms.submit(roomId!, auth, parsed.data));
+    } catch (error) { sendRoomFailure(response, error); }
+  });
+
+  app.post("/api/rooms/:roomId/candidates/:candidateId/share", async (request, response) => {
+    if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
+    const { roomId, candidateId } = request.params;
+    const parsed = ShareCandidateRequestSchema.safeParse({ ...request.body, candidateId });
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(roomId ?? "") || !parsed.success)
+      return response.status(400).json({ error: "That suggestion is no longer available." });
+    try {
+      const auth = roomAuthFromHeaders(request.headers as Record<string, unknown>);
+      response.json(await options.rooms.shareCandidate(roomId!, auth, parsed.data.expectedRevision, parsed.data.candidateId));
+    } catch (error) { sendRoomFailure(response, error); }
+  });
+
+  app.post("/api/rooms/:roomId/proposal", async (request, response) => {
+    if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
+    const roomId = request.params.roomId;
+    const parsed = ReviseProposalRequestSchema.safeParse(request.body);
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(roomId ?? "") || !parsed.success)
+      return response.status(400).json({ error: "Check the proposal details and try again." });
+    try {
+      const auth = roomAuthFromHeaders(request.headers as Record<string, unknown>);
+      response.json(await options.rooms.revise(roomId!, auth, parsed.data.expectedRevision, parsed.data.proposal));
+    } catch (error) { sendRoomFailure(response, error); }
+  });
+
+  app.post("/api/rooms/:roomId/approve", async (request, response) => {
+    if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
+    const roomId = request.params.roomId;
+    const parsed = ApproveProposalRequestSchema.safeParse(request.body);
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(roomId ?? "") || !parsed.success)
+      return response.status(400).json({ error: "Review the current proposal version and try again." });
+    try {
+      const auth = roomAuthFromHeaders(request.headers as Record<string, unknown>);
+      response.json(await options.rooms.approve(roomId!, auth, parsed.data.version));
+    } catch (error) { sendRoomFailure(response, error); }
+  });
+
+  app.post("/api/rooms/:roomId/leave", async (request, response) => {
+    if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
+    const roomId = request.params.roomId;
+    const parsed = LeaveRoomRequestSchema.safeParse(request.body);
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(roomId ?? "") || !parsed.success)
+      return response.status(400).json({ error: "Refresh the room before leaving." });
+    try {
+      const auth = roomAuthFromHeaders(request.headers as Record<string, unknown>);
+      response.json(await options.rooms.leave(roomId!, auth, parsed.data.expectedRevision));
+    } catch (error) { sendRoomFailure(response, error); }
   });
 
   app.use("/api/ai", createRateLimiter(limit, windowMs, now));

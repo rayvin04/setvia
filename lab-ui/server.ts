@@ -14,7 +14,7 @@ const privateRoot = resolve(process.env.SETVIA_PRIVATE_ROOT ?? resolve(appRoot, 
 const privateLabRoot = resolve(privateRoot, "lab");
 const distRoot = resolve(uiRoot, "dist");
 const MAX_REPORT_BYTES = 12 * 1024 * 1024;
-const ScenarioSchema = z.enum(["A", "B", "C", "D", "E", "E_STRESS"]);
+const ScenarioSchema = z.enum(["A", "B", "C", "D", "E", "E_STRESS", "F"]);
 const ReviewSchema = z.object({
   version: z.literal("setvia-lab-review-v1"),
   reportId: z.string().regex(/^[a-f0-9]{24}$/),
@@ -248,7 +248,7 @@ export function createLabUiApp() {
       return res.status(400).json({ error: "Every review dimension requires a rating from 1 to 5." });
     const runs = await readReports();
     const run = runs.find((candidate) => candidate.id === parsed.data.reportId);
-    if (!run || !run.records.some((record) => record.scenarioId === parsed.data.scenarioId))
+    if (!run || parsed.data.scenarioId === "F" || !run.records.some((record) => record.scenarioId === parsed.data.scenarioId))
       return res.status(404).json({ error: "Scenario report not found." });
     const review: Review = {
       version: "setvia-lab-review-v1",

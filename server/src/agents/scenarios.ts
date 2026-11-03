@@ -1,4 +1,4 @@
-import { Categories, type Category, type Constraint, type Fact, type PlanOption, type Policy } from "./contracts.js";
+import { Categories, type Category, type ConstraintInput, type Fact, type PlanOption, type Policy } from "./contracts.js";
 
 export type ScenarioId = "A" | "B" | "C" | "D" | "E" | "E_STRESS";
 export type StatementAudience = "group" | "listener_only";
@@ -26,7 +26,7 @@ export interface ScenarioParticipant {
   publicTargetingConsent: boolean;
   statements: ScenarioStatement[];
 }
-export interface ConstraintBlueprint extends Omit<Constraint, "ownerId"> {
+export interface ConstraintBlueprint extends Omit<ConstraintInput, "ownerId"> {
   owner: string;
 }
 export interface ExpectedFinding {

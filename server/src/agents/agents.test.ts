@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
+import { z } from "zod";
 import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve, sep } from "node:path";
@@ -14,7 +15,7 @@ import {
   scriptedGateway,
 } from "./fixtures.js";
 import { JsonPersistence, RoomStore } from "./store.js";
-import { RoomService, sharedContext } from "./rooms.js";
+import { RoomService, groupResponseEvidenceId, sharedContext } from "./rooms.js";
 import { renderLab, saveLab } from "./lab.js";
 import { getScenario, SCENARIO_IDS } from "./scenarios.js";
 import { runAllScenarioMocks, runScenarioMock, runScenarioWithGateway } from "./scenario-runner.js";
@@ -51,6 +52,17 @@ test("unnecessary agents are skipped and completed analysis stops without anothe
     ["Judge"],
   );
 });
+test("live cycle admission failure stops before any model request", async () => {
+  const f = await fixture([]);
+  f.engine.gateway.openCycle = async (maxRequests) => {
+    assert.equal(maxRequests, f.engine.limits.maxRequests);
+    throw new Error("No complete cycle allowance remains");
+  };
+  const result = await f.engine.run(f.roomId, f.auth);
+  assert.equal(result.outcome, "BLOCKED");
+  assert.equal(result.attempts, 0);
+  assert.equal(f.calls.length, 0);
+});
 async function questionFixture() {
   const f = await fixture([]);
   const question: Question = {
@@ -72,7 +84,7 @@ async function questionFixture() {
     { role: "Question Strategist", output: { questions: [question] } },
     {
       role: "Speaker",
-      output: { questionIds: [question.id], findingIds: [], mascot: "curious" },
+      output: { replies: [{ questionId: question.id, findingId: null, text: "What private budget range can we plan around?" }], mascot: "curious" },
     },
     {
       role: "Judge",
@@ -82,7 +94,6 @@ async function questionFixture() {
       role: "Listener",
       output: { candidates: [{ key: "private_budget", value: 200 }] },
     },
-    { role: "Judge", output: judge() },
   ]);
   const engine = new AgentEngine(f.store, scripted.gateway);
   return { ...f, ...scripted, engine, question };
@@ -113,7 +124,7 @@ test("targeted questions wait without polling and are hidden from other particip
     /UNAUTHORIZED_ANSWER/,
   );
 });
-test("a participant answer resumes on the new revision and does not approve the plan", async () => {
+test("a private answer is analyzed only for its owner and does not trigger shared readiness", async () => {
   const f = await questionFixture();
   const first = await f.engine.run(f.roomId, f.auth);
   await f.engine.rooms.submit(
@@ -123,10 +134,14 @@ test("a participant answer resumes on the new revision and does not approve the 
     "SYNTHETIC_PRIVATE_BUDGET",
     f.question.id,
   );
+  const publicRevision = (await f.store.read(f.roomId)).revision;
+  const [privateResult] = await f.engine.processPrivate(f.roomId, f.auth.participantId);
+  assert.equal(privateResult?.cycle.outcome, "COMPLETED");
   const second = await f.engine.run(f.roomId, f.auth);
-  assert.equal(second.outcome, "COMPLETED");
-  assert.equal(second.baseRevision, first.baseRevision + 1);
-  assert.equal(f.calls.length, 6);
+  assert.equal(second.id, first.id);
+  assert.equal(second.baseRevision, publicRevision);
+  assert.equal((await f.store.read(f.roomId)).revision, publicRevision);
+  assert.equal(f.calls.length, 5);
   assert.equal((await f.engine.rooms.view(f.roomId, f.auth)).approvalCount, 0);
   assert.equal(
     (await f.engine.rooms.view(f.roomId, f.other)).candidates.length,
@@ -157,6 +172,9 @@ test("AI completion and 100 percent readiness cannot bypass human approval; revi
     label: "Changed",
     values: { cost: 160 },
   });
+  const revised = await f.store.read(f.roomId);
+  assert.equal(revised.proposalVersion, room.proposalVersion + 1);
+  assert.deepEqual(revised.approvals, {});
   assert.equal((await f.engine.rooms.view(f.roomId, f.auth)).approved, false);
   await assert.rejects(
     f.engine.rooms.approve(f.roomId, f.auth, room.proposalVersion),
@@ -170,6 +188,123 @@ test("AI completion and 100 percent readiness cannot bypass human approval; revi
     ),
     /UNAUTHORIZED/,
   );
+});
+test("joining preserves same-version approvals and responses while requiring the new planner", async () => {
+  const f = await fixture([
+    { role: "Listener", output: { candidates: [] } },
+    { role: "Judge", output: judge() },
+    { role: "Judge", output: judge() },
+  ]);
+  let room = await f.store.read(f.roomId);
+  await f.engine.rooms.submit(f.roomId, f.auth, {
+    messageId: "response_before_join",
+    expectedRevision: room.revision,
+    proposalVersion: room.proposalVersion,
+    text: "This group response remains valid for the unchanged proposal.",
+    visibility: "group",
+    questionId: null,
+    replyOption: null,
+  });
+  const first = await f.engine.run(f.roomId, f.auth);
+  assert.equal(first.outcome, "COMPLETED");
+  room = await f.store.read(f.roomId);
+  const proposalVersion = room.proposalVersion;
+  const priorRevision = room.revision;
+  await f.engine.rooms.approve(f.roomId, f.auth, proposalVersion);
+  await f.engine.rooms.approve(f.roomId, f.other, proposalVersion);
+  room = await f.store.read(f.roomId);
+  const revisionBeforeJoin = room.revision;
+
+  const joined = await f.engine.rooms.join(f.roomId, f.invitation, "Jordan");
+  const newAuth = { participantId: joined.participantId, token: joined.token };
+  room = await f.store.read(f.roomId);
+  assert.equal(room.proposalVersion, proposalVersion);
+  assert.equal(room.revision, revisionBeforeJoin + 1);
+  assert.equal(room.activeCycleId, null);
+  assert.equal(room.approvals[f.auth.participantId], proposalVersion);
+  assert.equal(room.approvals[f.other.participantId], proposalVersion);
+  assert.equal(room.approvals[joined.participantId], undefined);
+  assert.equal(room.responses.find((response) => response.id === "response_before_join")?.proposalVersion, proposalVersion);
+  assert.equal(room.responses.some((response) => response.id === "response_before_join"), true);
+  await assert.rejects(
+    f.engine.rooms.revise(f.roomId, f.auth, priorRevision, room.proposal),
+    /STALE_STATE/,
+  );
+
+  const newPlannerBeforeReview = await f.engine.rooms.view(f.roomId, newAuth);
+  assert.equal(newPlannerBeforeReview.participants.length, 3);
+  assert.equal(newPlannerBeforeReview.attendance.requiredApproverIds.length, 3);
+  assert.equal(newPlannerBeforeReview.approvalCount, 2);
+  assert.equal(newPlannerBeforeReview.approved, false);
+  assert.equal(newPlannerBeforeReview.responses.some((response) => response.id === "response_before_join"), true);
+
+  const second = await f.engine.run(f.roomId, f.auth);
+  assert.equal(second.outcome, "COMPLETED");
+  await f.engine.rooms.approve(f.roomId, newAuth, proposalVersion);
+  const afterNewApproval = await f.engine.rooms.view(f.roomId, newAuth);
+  assert.equal(afterNewApproval.approvalCount, 3);
+  assert.equal(afterNewApproval.approved, true);
+  assert.equal((await f.store.read(f.roomId)).proposalVersion, proposalVersion);
+});
+test("leaving removes only the departing vote and private data while preserving shared responses", async () => {
+  const f = await fixture([
+    { role: "Listener", output: { candidates: [] } },
+    { role: "Judge", output: judge() },
+    { role: "Judge", output: judge() },
+  ]);
+  let room = await f.store.read(f.roomId);
+  await f.engine.rooms.submit(f.roomId, f.other, {
+    messageId: "departing_group_response",
+    expectedRevision: room.revision,
+    proposalVersion: room.proposalVersion,
+    text: "This group response remains available after its author leaves.",
+    visibility: "group",
+    questionId: null,
+    replyOption: null,
+  });
+  const first = await f.engine.run(f.roomId, f.auth);
+  assert.equal(first.outcome, "COMPLETED");
+  room = await f.store.read(f.roomId);
+  const proposalVersion = room.proposalVersion;
+  await f.engine.rooms.approve(f.roomId, f.auth, proposalVersion);
+  await f.engine.rooms.approve(f.roomId, f.other, proposalVersion);
+
+  room = await f.store.read(f.roomId);
+  await f.engine.rooms.submit(f.roomId, f.other, {
+    messageId: "departing_private_response",
+    expectedRevision: room.revision + (room.privateRevisions[f.other.participantId] ?? 0),
+    proposalVersion,
+    text: "PRIVATE_DEPARTING_RESPONSE",
+    visibility: "private",
+    questionId: null,
+    replyOption: null,
+  });
+  room = await f.store.read(f.roomId);
+  const revisionBeforeLeave = room.revision;
+  await f.engine.rooms.leave(
+    f.roomId,
+    f.other,
+    room.revision + (room.privateRevisions[f.other.participantId] ?? 0),
+  );
+
+  room = await f.store.read(f.roomId);
+  assert.equal(room.proposalVersion, proposalVersion);
+  assert.equal(room.revision, revisionBeforeLeave + 1);
+  assert.deepEqual(room.participants.map((participant) => participant.id), [f.auth.participantId]);
+  assert.equal(room.approvals[f.auth.participantId], proposalVersion);
+  assert.equal(room.approvals[f.other.participantId], undefined);
+  assert.equal(room.responses.some((response) => response.id === "departing_group_response"), true);
+  assert.equal(room.responses.some((response) => response.id === "departing_private_response"), false);
+  await assert.rejects(f.engine.rooms.view(f.roomId, f.other), /UNAUTHORIZED/);
+
+  const second = await f.engine.run(f.roomId, f.auth);
+  assert.equal(second.outcome, "COMPLETED");
+  const remainingView = await f.engine.rooms.view(f.roomId, f.auth);
+  assert.equal(remainingView.responses.some((response) => response.id === "departing_group_response"), true);
+  assert.equal(JSON.stringify(remainingView).includes("PRIVATE_DEPARTING_RESPONSE"), false);
+  assert.equal(remainingView.approvalCount, 1);
+  assert.equal(remainingView.approved, true);
+  assert.equal((await f.store.read(f.roomId)).proposalVersion, proposalVersion);
 });
 test("readiness increases and decreases; hard constraints block a green status even if Judge says ready", async () => {
   const f = await fixture(
@@ -405,6 +540,31 @@ test("outdated results cannot overwrite newer room state", async () => {
     false,
   );
 });
+test("joining during analysis cancels stale output and keeps the proposal version", async () => {
+  let release!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const f = await fixture([
+    { role: "Judge", output: judge(), wait: () => gate },
+  ]);
+  const before = await f.store.read(f.roomId);
+  const pending = f.engine.run(f.roomId, f.auth);
+  while (f.calls.length === 0)
+    await new Promise((resolve) => setTimeout(resolve, 1));
+
+  const joined = await f.engine.rooms.join(f.roomId, f.invitation, "Jordan");
+  release();
+  const result = await pending;
+  const current = await f.store.read(f.roomId);
+  assert.equal(result.outcome, "BLOCKED");
+  assert.equal(current.proposalVersion, before.proposalVersion);
+  assert.equal(current.revision, before.revision + 1);
+  assert.equal(current.activeCycleId, null);
+  assert.equal(current.analysisStatus, "idle");
+  assert.equal(current.participants.some((participant) => participant.id === joined.participantId), true);
+  assert.equal(current.readiness, before.readiness);
+});
 test("private facts and Listener output never enter shared roles, traces or another participant's projection", async () => {
   const f = await fixture([
     {
@@ -429,8 +589,10 @@ test("private facts and Listener output never enter shared roles, traces or anot
     room.revision,
     "PRIVATE_CANARY",
   );
+  await f.engine.processPrivate(f.roomId, f.auth.participantId);
   room = await f.store.read(f.roomId);
-  await f.engine.rooms.confirmFact(f.roomId, f.auth, room.revision, {
+  const ownerView = await f.engine.rooms.view(f.roomId, f.auth);
+  await f.engine.rooms.confirmFact(f.roomId, f.auth, ownerView.revision, {
     id: "shared_canary",
     key: "meetingLocation",
     value: "GROUP_CONTEXT_CANARY",
@@ -456,6 +618,10 @@ test("private facts and Listener output never enter shared roles, traces or anot
   );
   assert.equal(JSON.stringify(result).includes("PRIVATE_CANARY"), false);
   assert.equal(
+    JSON.stringify(await f.engine.rooms.view(f.roomId, f.auth)).includes("PRIVATE_CANARY"),
+    true,
+  );
+  assert.equal(
     JSON.stringify(await f.engine.rooms.view(f.roomId, f.other)).includes(
       "PRIVATE_CANARY",
     ),
@@ -466,6 +632,129 @@ test("private facts and Listener output never enter shared roles, traces or anot
       "PRIVATE_CANARY",
     ),
     false,
+  );
+});
+test("group responses reach shared reasoning without attaching the owner's private facts", async () => {
+  const f = await fixture([
+    {
+      role: "Listener",
+      output: { candidates: [{ key: "departure_window", value: "after 8 AM" }] },
+    },
+    {
+      role: "Judge",
+      output: judge({
+        findings: [finding({
+          id: "schedule_response_conflict",
+          category: "Schedule Check",
+          severity: "critical",
+          evidenceIds: [groupResponseEvidenceId("shared_schedule_message")],
+          uncertainty: "conflicting",
+        })],
+        readinessAssessment: {
+          readyForReview: false,
+          explanation: "A group schedule conflict remains unresolved.",
+        },
+      }),
+    },
+  ]);
+  let room = await f.store.read(f.roomId);
+  await f.engine.rooms.confirmFact(f.roomId, f.auth, room.revision, {
+    id: "private_budget_fact",
+    key: "private_budget",
+    value: "PRIVATE_FACT_MUST_NOT_REACH_GROUP_LISTENER_OR_JUDGE",
+    visibility: "private",
+    confirmed: true,
+    ownerId: f.auth.participantId,
+  });
+  room = await f.store.read(f.roomId);
+  await f.engine.rooms.submit(f.roomId, f.auth, {
+    messageId: "shared_schedule_message",
+    expectedRevision: room.revision + (room.privateRevisions[f.auth.participantId] ?? 0),
+    proposalVersion: room.proposalVersion,
+    text: "SYNTH_GROUP_SCHEDULE: I can leave only after 8 AM.",
+    visibility: "group",
+    questionId: null,
+    replyOption: null,
+  });
+
+  const result = await f.engine.run(f.roomId, f.auth);
+  const listenerInput = f.calls.find((call) => call.role === "Listener")?.input;
+  const judgeInput = f.calls.find((call) => call.role === "Judge")?.input as {
+    groupResponses?: Array<{ text: string; ownerId: string; evidenceId: string }>;
+    groupObservations?: Array<{
+      ownerId: string;
+      confirmed: boolean;
+      candidates: Array<{ key: string; value: unknown }>;
+    }>;
+  } | undefined;
+  const listenerJson = JSON.stringify(listenerInput);
+  const judgeJson = JSON.stringify(judgeInput);
+  assert.match(listenerJson, /groupInput/);
+  assert.equal(listenerJson.includes("privateFacts"), false);
+  assert.equal(listenerJson.includes("PRIVATE_FACT_MUST_NOT_REACH"), false);
+  assert.equal(judgeJson.includes("PRIVATE_FACT_MUST_NOT_REACH"), false);
+  assert.equal(judgeInput?.groupResponses?.some((item) => item.text.includes("SYNTH_GROUP_SCHEDULE")), true);
+  assert.equal(judgeInput?.groupResponses?.some((item) =>
+    item.evidenceId === groupResponseEvidenceId("shared_schedule_message"),
+  ), true);
+  assert.equal(judgeInput?.groupObservations?.some((item) =>
+    item.ownerId === f.auth.participantId && item.confirmed === false &&
+    item.candidates.some((candidate) => candidate.key === "departure_window" && candidate.value === "after 8 AM"),
+  ), true);
+  assert.equal(result.outcome, "COMPLETED");
+  assert.equal(JSON.stringify(result.traces.find((trace) => trace.role === "Listener")?.input).includes("SYNTH_GROUP_SCHEDULE"), true);
+});
+test("Judge evidence accepts Listener observations beyond the raw response context window", async () => {
+  const messageIds = Array.from({ length: 7 }, (_, index) => `shared_response_${index}`);
+  const f = await fixture([
+    ...messageIds.map((_, index) => ({
+      role: "Listener" as const,
+      output: { candidates: [{ key: `availability_${index}`, value: `window_${index}` }] },
+    })),
+    {
+      role: "Judge",
+      output: judge({
+        findings: [finding({
+          id: "older_group_observation",
+          category: "Schedule Check",
+          evidenceIds: [groupResponseEvidenceId(messageIds[0]!)],
+        })],
+        readinessAssessment: {
+          readyForReview: false,
+          explanation: "An older participant schedule observation remains unverified.",
+        },
+      }),
+    },
+  ]);
+
+  for (const [index, messageId] of messageIds.entries()) {
+    const room = await f.store.read(f.roomId);
+    await f.engine.rooms.submit(f.roomId, f.auth, {
+      messageId,
+      expectedRevision: room.revision,
+      proposalVersion: room.proposalVersion,
+      text: `SYNTH_GROUP_AVAILABILITY_${index}`,
+      visibility: "group",
+      questionId: null,
+      replyOption: null,
+    });
+  }
+
+  const result = await f.engine.run(f.roomId, f.auth);
+  const judgeInput = f.calls.find((call) => call.role === "Judge")?.input as {
+    groupResponses?: Array<{ evidenceId: string }>;
+    groupObservations?: Array<{ sourceEvidenceId: string }>;
+  } | undefined;
+  assert.equal(result.outcome, "COMPLETED");
+  assert.equal(judgeInput?.groupResponses?.some((item) =>
+    item.evidenceId === groupResponseEvidenceId(messageIds[0]!),
+  ), false);
+  assert.equal(judgeInput?.groupObservations?.some((item) =>
+    item.sourceEvidenceId === groupResponseEvidenceId(messageIds[0]!),
+  ), true);
+  assert.equal(
+    result.finalEvaluation?.findings.some((item) => item.id === "older_group_observation"),
+    true,
   );
 });
 test("public targeted questions require explicit participant consent", async () => {
@@ -524,6 +813,164 @@ test("Meta output-token truncation is recorded with a safe, inspectable trace fa
     "Meta reached the configured output-token limit before completing the response.",
   );
   assert.equal(JSON.stringify(result).includes("SECRET RESPONSE TEXT"), false);
+});
+test("structured handoff failures expose only a safe schema path", async () => {
+  const question: Question = {
+    id: "schedule_question",
+    findingId: "budget_gap",
+    targetId: null,
+    visibility: "group",
+    kind: "clarification",
+    text: "Which departure time works?",
+    options: [],
+  };
+  const f = await fixture([
+    {
+      role: "Judge",
+      output: judge({
+        findings: [finding()],
+        next: "question",
+        participantInputRequired: true,
+        canStop: false,
+      }),
+    },
+    { role: "Question Strategist", output: { questions: [question] } },
+    {
+      role: "Speaker",
+      output: {
+        replies: [{
+          questionId: null,
+          findingId: null,
+          text: "SENSITIVE_INVALID_SPEAKER_VALUE",
+        }],
+        mascot: "curious",
+      },
+    },
+  ]);
+  const result = await f.engine.run(f.roomId, f.auth);
+  const failure = result.traces.at(-1)!;
+  assert.equal(result.outcome, "BLOCKED");
+  assert.equal(failure.failureCode, "INVALID_HANDOFF");
+  assert.match(failure.failureMessage ?? "", /replies\[0\]/);
+  assert.equal(JSON.stringify(result).includes("SENSITIVE_INVALID_SPEAKER_VALUE"), false);
+});
+test("Speaker target exclusivity is encoded in provider JSON Schema", () => {
+  const schema = z.toJSONSchema(RoleSchemas.Speaker) as unknown as {
+    properties: { replies: { items: { anyOf?: unknown[] } } };
+  };
+  assert.equal(schema.properties.replies.items.anyOf?.length, 2);
+  assert.equal(
+    RoleSchemas.Speaker.safeParse({
+      replies: [{ questionId: null, findingId: null, text: "Invalid target" }],
+      mascot: "curious",
+    }).success,
+    false,
+  );
+  assert.equal(
+    RoleSchemas.Speaker.safeParse({
+      replies: [{ questionId: "schedule_question", findingId: null, text: "Which time works?" }],
+      mascot: "curious",
+    }).success,
+    true,
+  );
+  assert.equal(RoleSchemas.Speaker.safeParse({
+    replies: [{ questionId: null, findingId: "schedule_gap", text: "Please confirm the time." }],
+    mascot: "concerned",
+  }).success, true);
+  assert.equal(RoleSchemas.Speaker.safeParse({
+    replies: [{ questionId: "schedule_question", findingId: "schedule_gap", text: "Ambiguous target" }],
+    mascot: "curious",
+  }).success, false);
+});
+test("the final Judge reviews authored finding replies and can prevent their publication", async () => {
+  const f = await fixture([
+    { role: "Judge", output: judge({ findings: [finding()], next: "speak" }) },
+    { role: "Speaker", output: { replies: [
+      { findingId: "budget_gap", questionId: null, text: "Unsupported authored claim" },
+    ], mascot: "content" } },
+    { role: "Judge", output: judge({ findings: [finding()], canStop: false }) },
+  ]);
+  const result = await f.engine.run(f.roomId, f.auth);
+  const finalInput = f.calls[2]!.input as { draftFindingReplies: unknown[] };
+  assert.deepEqual(finalInput.draftFindingReplies, [{ findingId: "budget_gap", text: "Unsupported authored claim" }]);
+  assert.equal(result.outcome, "BLOCKED");
+  assert.equal(result.reason, "NO_USEFUL_STOP");
+  assert.equal(result.messages.length, 0);
+});
+
+test("Judge rejects fabricated, expired, foreign-room and owner-private evidence", async (t) => {
+  for (const kind of ["fabricated", "expired", "foreign_room", "other_private", "own_private"] as const) {
+    await t.test(kind, async () => {
+      const messageId = "expired_group_evidence";
+      const evidenceId = kind === "expired" ? groupResponseEvidenceId(messageId) : `${kind}_evidence`;
+      const f = await fixture([{ role: "Judge", output: judge({
+        findings: [finding({ evidenceIds: [evidenceId] })],
+      }) }]);
+      let room = await f.store.read(f.roomId);
+      if (kind === "own_private" || kind === "other_private") {
+        const owner = kind === "own_private" ? f.auth : f.other;
+        await f.engine.rooms.confirmFact(f.roomId, owner, room.revision, {
+          id: evidenceId, key: "budget", value: "PRIVATE_EVIDENCE_CANARY",
+          ownerId: owner.participantId, visibility: "private", confirmed: true,
+        });
+      } else if (kind === "expired") {
+        await f.engine.rooms.submit(f.roomId, f.auth, {
+          messageId, expectedRevision: room.revision, proposalVersion: room.proposalVersion,
+          text: "Only this old proposal has my agreement.", visibility: "group", questionId: null, replyOption: null,
+        });
+        room = await f.store.read(f.roomId);
+        await f.engine.rooms.revise(f.roomId, f.auth, room.revision, {
+          ...room.proposal, label: "Materially changed plan", values: { cost: 999 },
+        });
+      } else if (kind === "foreign_room") {
+        const foreign = await fixture([]);
+        const foreignRoom = await foreign.store.read(foreign.roomId);
+        await foreign.engine.rooms.confirmFact(foreign.roomId, foreign.auth, foreignRoom.revision, {
+          id: evidenceId, key: "budget", value: 200, ownerId: foreign.auth.participantId,
+          visibility: "group", confirmed: true,
+        });
+      }
+      const result = await f.engine.run(f.roomId, f.auth);
+      assert.equal(result.outcome, "BLOCKED");
+      assert.equal(result.reason, "UNKNOWN_EVIDENCE");
+      assert.equal(result.finalEvaluation, null);
+      assert.equal(result.messages.length, 0);
+      const inputs = JSON.stringify(f.calls);
+      assert.equal(inputs.includes("PRIVATE_EVIDENCE_CANARY"), false);
+      assert.equal(inputs.includes("Only this old proposal"), false);
+    });
+  }
+});
+
+test("Judge may cite another participant's current shared response, which remains unconfirmed", async () => {
+  const messageId = "other_group_response";
+  const f = await fixture([
+    { role: "Listener", output: { candidates: [{ key: "check_1", value: true }] } },
+    { role: "Judge", output: judge({ findings: [finding({
+      status: "resolved", uncertainty: "none", evidenceIds: [groupResponseEvidenceId(messageId)],
+    })] }) },
+  ]);
+  const room = await f.store.read(f.roomId);
+  await f.engine.rooms.submit(f.roomId, f.other, {
+    messageId, expectedRevision: room.revision, proposalVersion: room.proposalVersion,
+    text: "A shared budget suggestion, awaiting confirmation.", visibility: "group", questionId: null, replyOption: null,
+  });
+  const result = await f.engine.run(f.roomId, f.auth);
+  assert.equal(result.outcome, "COMPLETED");
+  assert.equal(result.finalEvaluation?.findings[0]?.status, "unverified");
+});
+
+test("Listener cannot use a queue item as evidence for another participant's response", async () => {
+  const f = await fixture([]);
+  const room = await f.store.read(f.roomId);
+  await f.engine.rooms.submit(f.roomId, f.auth, {
+    messageId: "owner_bound_source", expectedRevision: room.revision, proposalVersion: room.proposalVersion,
+    text: "My group contribution", visibility: "group", questionId: null, replyOption: null,
+  });
+  await f.store.transaction(f.roomId, (state) => { state!.pendingInputs[0]!.actorId = f.other.participantId; });
+  const result = await f.engine.run(f.roomId, f.auth);
+  assert.equal(result.reason, "INVALID_EVIDENCE_SOURCE");
+  assert.equal(f.calls.length, 0);
 });
 test("all six exact category names are preserved and applicability is policy-driven", async () => {
   assert.deepEqual(Categories, [
@@ -715,9 +1162,11 @@ test("simultaneous private submissions are queued without overwriting either par
     room.revision,
     "SECOND_PRIVATE",
   );
-  assert.equal((await f.store.read(f.roomId)).pendingInputs.length, 2);
-  await f.engine.run(f.roomId, f.auth);
   assert.equal((await f.store.read(f.roomId)).pendingInputs.length, 0);
+  assert.equal((await f.store.read(f.roomId)).privatePendingInputs.length, 2);
+  await f.engine.processPrivate(f.roomId, f.auth.participantId);
+  await f.engine.processPrivate(f.roomId, f.other.participantId);
+  assert.equal((await f.store.read(f.roomId)).privatePendingInputs.length, 0);
   assert.equal(
     (await f.engine.rooms.view(f.roomId, f.auth)).candidates[0].value,
     "FIRST_PRIVATE",

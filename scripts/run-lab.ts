@@ -9,6 +9,7 @@ import {
 } from "../server/src/agents/fixtures.js";
 import { AgentEngine } from "../server/src/agents/engine.js";
 import { saveLab, type LabRecord } from "../server/src/agents/lab.js";
+import { buildLabRecords } from "../server/src/agents/lab-scenarios.js";
 import { runAllScenarioMocks } from "../server/src/agents/scenario-runner.js";
 import { fileURLToPath } from "node:url";
 
@@ -16,9 +17,10 @@ import { fileURLToPath } from "node:url";
 globalThis.fetch = async () => {
   throw new Error("Live network is disabled in Setvia Lab.");
 };
-const records: LabRecord[] = [];
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const privateRoot = resolve(process.env.SETVIA_PRIVATE_ROOT ?? resolve(appRoot, "..", "setvia-local"));
+const records: LabRecord[] = await buildLabRecords();
+const foundationOffset = records.length;
 const complete = await fixture([{ role: "Judge", output: judge() }], "meeting");
 records.push({
   scenario: "Project kickoff — unnecessary agents skipped",
@@ -106,14 +108,14 @@ const expected = [
   "BLOCKED",
 ] as const;
 const specificChecks = [
-  records[0].cycle.traces.length === 1,
-  records[1].cycle.traces.some((trace) =>
+  records[foundationOffset].cycle.traces.length === 1,
+  records[foundationOffset + 1].cycle.traces.some((trace) =>
     trace.rejectedOptionIds.includes("expensive"),
   ),
-  records[2].cycle.questions.length === 1 &&
-    records[2].cycle.traces.at(-1)?.role === "Judge",
-  records[3].cycle.readiness?.status === "blocked",
-  records[4].cycle.finalEvaluation === null,
+  records[foundationOffset + 2].cycle.questions.length === 1 &&
+    records[foundationOffset + 2].cycle.traces.at(-1)?.role === "Judge",
+  records[foundationOffset + 3].cycle.readiness?.status === "blocked",
+  records[foundationOffset + 4].cycle.finalEvaluation === null,
 ];
 records.forEach((record, index) => {
   record.expectedOutcome = expected[index];
@@ -136,8 +138,14 @@ console.log(
       realisticScenarios: realistic.length,
       passed,
       failed: records.length - passed,
-      participants: realistic.map(({ record }) => ({ scenario: record.scenarioId, count: record.participantCount })),
-      mockRequests: records.reduce((sum, record) => sum + record.cycle.attempts, 0),
+      participants: realistic.map(({ record }) => ({
+        scenario: record.scenarioId,
+        count: record.participantCount,
+      })),
+      mockRequests: records.reduce(
+        (sum, record) => sum + record.cycle.attempts,
+        0,
+      ),
       liveRequests: 0,
       ...paths,
     },

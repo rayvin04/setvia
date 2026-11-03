@@ -14,7 +14,7 @@ export interface MetaHttpEvent {
   phase: "started" | "response" | "transport_error" | "usage";
   requestNumber: number;
   requestHash: string;
-  role: Role;
+  role: Role | "Scenario Generator";
   promptVersion: string;
   status?: number;
   durationMs?: number;

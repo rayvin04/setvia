@@ -33,11 +33,12 @@ async function loadRecords(fileArg: string): Promise<LabRecord[]> {
   if (!parsed || typeof parsed !== "object" || !("fixtureVersion" in parsed) || !["lab-v1", "lab-v2"].includes(String(parsed.fixtureVersion)) || !("records" in parsed) || !Array.isArray(parsed.records))
     throw new Error("Unsupported Lab report format.");
   const records = (parsed.records as LabRecord[]).filter((record) =>
-    !!record && typeof record === "object" && (record.scenarioId !== undefined || record.rubric !== undefined),
+    !!record && typeof record === "object" && record.scenarioId !== "F" &&
+    (record.scenarioId !== undefined || record.rubric !== undefined),
   );
   if (records.length < 1 || records.some((record) =>
     record.mode !== "MOCK" && record.mode !== "LIVE" ||
-    !record.scenarioId || (!SCENARIO_IDS.includes(record.scenarioId) && record.scenarioId !== "E_STRESS") ||
+    !record.scenarioId || (!new Set<string>([...SCENARIO_IDS, "E_STRESS"]).has(record.scenarioId)) ||
     !record.rubric || !record.groundTruth || !record.simulation
   )) throw new Error("This review tool accepts only the five authored synthetic scenario records.");
   for (const record of records) {

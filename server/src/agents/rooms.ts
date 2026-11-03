@@ -17,11 +17,19 @@ import {
   type PolicyInput,
   type Room,
   type PlanOption,
-  type Constraint,
+  type ConstraintInput,
+  type RoomActivity,
+  type RoomResponse,
 } from "./contracts.js";
 import { RoomStore, StateError } from "./store.js";
 export const digest = (token: string) =>
   createHash("sha256").update(token).digest("hex");
+export const GROUP_RESPONSE_CONTEXT_LIMIT = 6;
+export const groupResponseEvidenceId = (messageId: string) =>
+  `groupmsg_${digest(messageId).slice(0, 32)}`;
+export const currentGroupResponses = (room: Room) => room.responses.filter(
+  (response) => response.visibility === "group" && response.proposalVersion === room.proposalVersion,
+);
 const secret = () => randomBytes(32).toString("hex");
 export function authorize(room: Room, auth: Auth) {
   const participant = room.participants.find(
@@ -53,17 +61,71 @@ export function sharedContext(room: Room) {
       name: p.name,
       publicTargetingAllowed: p.publicTargetingConsent,
     })),
+    // Only messages participants explicitly shared with the group enter model
+    // context. Keep a small tail; older confirmed details live in facts and the
+    // full transcript remains available in the room projection.
+    groupResponses: currentGroupResponses(room)
+      .slice(-GROUP_RESPONSE_CONTEXT_LIMIT)
+      .map((response) => ({
+        evidenceId: groupResponseEvidenceId(response.id),
+        ownerId: response.ownerId,
+        proposalVersion: response.proposalVersion,
+        questionId: response.questionId,
+        replyOption: response.replyOption,
+        confirmed: false,
+        text: response.text,
+      })),
     facts: room.facts.filter((f) => f.visibility === "group"),
     policy: room.policy,
-    constraints: room.constraints,
+    constraints: room.constraints.filter((constraint) => constraint.visibility === "group"),
     proposal: room.proposal,
   };
+}
+type ActivityInput = Pick<
+  RoomActivity,
+  "kind" | "actorId" | "summary" | "category"
+> & Partial<Pick<RoomActivity, "visibility" | "targetId">>;
+type SubmitRoomInput = {
+  messageId: string;
+  expectedRevision: number;
+  proposalVersion: number;
+  text: string;
+  visibility: "group" | "private";
+  questionId: string | null;
+  replyOption: string | null;
+};
+
+function addActivity(room: Room, input: ActivityInput) {
+  const activity = {
+    id: randomUUID(),
+    kind: input.kind,
+    revision: room.revision,
+    proposalVersion: room.proposalVersion,
+    occurredAt: new Date().toISOString(),
+    actorId: input.actorId,
+    summary: input.summary,
+    category: input.category,
+    visibility: input.visibility ?? "group",
+    targetId: input.targetId ?? null,
+  } satisfies RoomActivity;
+  room.activity = [...room.activity, activity].slice(-100);
 }
 export class RoomService {
   constructor(
     readonly store: RoomStore,
-    private onChange: (id: string) => void = () => {},
+    private onGroupChange: (id: string) => void = () => {},
+    private onPrivateChange: (id: string, ownerId: string) => void = () => {},
   ) {}
+  private bumpGroup(room: Room) {
+    room.revision++;
+    room.publicSequence++;
+    room.eventSequence++;
+  }
+  private bumpPrivate(room: Room, ownerId: string) {
+    room.privateRevisions[ownerId] = (room.privateRevisions[ownerId] ?? 0) + 1;
+    room.privateSequences[ownerId] = (room.privateSequences[ownerId] ?? 0) + 1;
+    room.eventSequence++;
+  }
   async create(
     eventType: string,
     policy: PolicyInput,
@@ -72,6 +134,7 @@ export class RoomService {
       estimatedAttendeeCount: number | null;
       confirmedAttendeeCount: number | null;
     } = { estimatedAttendeeCount: null, confirmedAttendeeCount: null },
+    options: { syntheticDemo?: boolean } = {},
   ) {
     if (
       attendance.estimatedAttendeeCount != null &&
@@ -83,8 +146,12 @@ export class RoomService {
     const room = RoomSchema.parse({
       schemaVersion: 1,
       id: randomUUID(),
+      eventSequence: 0,
+      publicSequence: 0,
       revision: 0,
+      analysisStatus: "idle",
       eventType,
+      syntheticDemo: options.syntheticDemo ?? false,
       estimatedAttendeeCount: attendance.estimatedAttendeeCount,
       confirmedAttendeeCount: attendance.confirmedAttendeeCount,
       invitationHash: digest(invitation),
@@ -97,6 +164,9 @@ export class RoomService {
       proposalVersion: 1,
       approvals: {},
       pendingInputs: [],
+      responses: [],
+      activity: [],
+      readinessHistory: [],
       questions: [],
       options: [],
       readiness: null,
@@ -129,12 +199,17 @@ export class RoomService {
         tokenHash: digest(token),
         publicTargetingConsent: false,
       });
-      room.revision++;
-      room.proposalVersion++;
-      room.approvals = {};
-      room.questions = [];
+      room.activeCycleId = null;
+      room.analysisStatus = "idle";
+      this.bumpGroup(room);
+      addActivity(room, {
+        kind: "participant_joined",
+        actorId: participantId,
+        summary: `${room.participants.at(-1)!.name} joined the planning room.`,
+        category: null,
+      });
     });
-    this.onChange(roomId);
+    this.onGroupChange(roomId);
     return { participantId, token };
   }
   async update(
@@ -146,41 +221,153 @@ export class RoomService {
     await this.store.transaction(roomId, (room) => {
       if (!room) throw new StateError("ROOM_NOT_FOUND");
       authorize(room, auth);
-      if (room.revision !== expectedRevision)
+      const viewerRevision = room.revision + (room.privateRevisions[auth.participantId] ?? 0);
+      if (viewerRevision !== expectedRevision)
         throw new StateError("STALE_STATE");
       action(room);
       room.activeCycleId = null;
+      room.analysisStatus = "idle";
       RoomSchema.parse(room);
-      room.revision++;
+      this.bumpGroup(room);
     });
-    this.onChange(roomId);
+    this.onGroupChange(roomId);
   }
+  async submit(roomId: string, auth: Auth, input: SubmitRoomInput): Promise<{ receipt: RoomResponse; duplicate: boolean }>;
+  async submit(roomId: string, auth: Auth, revision: number, text: string, questionId?: string): Promise<{ receipt: RoomResponse; duplicate: boolean }>;
   async submit(
     roomId: string,
     auth: Auth,
-    expectedRevision: number,
-    text: string,
-    questionId?: string,
-  ) {
-    return this.update(roomId, auth, expectedRevision, (room) => {
-      if (questionId) {
-        const q = room.questions.find((q) => q.id === questionId);
-        if (!q || (q.targetId && q.targetId !== auth.participantId))
-          throw new StateError("UNAUTHORIZED_ANSWER");
-        room.questions = room.questions.filter((q) => q.id !== questionId);
+    supplied: SubmitRoomInput | number,
+    legacyText?: string,
+    legacyQuestionId?: string,
+  ): Promise<{ receipt: RoomResponse; duplicate: boolean }> {
+    let input: SubmitRoomInput;
+    if (typeof supplied === "number") {
+      const room = await this.store.read(roomId);
+      authorize(room, auth);
+      const question = legacyQuestionId
+        ? room.questions.find((candidate) => candidate.id === legacyQuestionId)
+        : undefined;
+      input = {
+        messageId: randomUUID(),
+        expectedRevision: supplied,
+        proposalVersion: room.proposalVersion,
+        text: legacyText ?? "",
+        visibility: question?.visibility ?? "private",
+        questionId: legacyQuestionId ?? null,
+        replyOption: null,
+      };
+    } else input = supplied;
+    const parsedMessage = z
+      .object({
+        messageId: z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/),
+        expectedRevision: z.number().int().nonnegative(),
+        proposalVersion: z.number().int().positive(),
+        text: z.string().trim().min(1).max(1_000),
+        visibility: z.enum(["group", "private"]),
+        questionId: z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/).nullable(),
+        replyOption: z.string().min(1).max(160).nullable(),
+      })
+      .strict()
+      .parse(input);
+    const result = await this.store.transaction(roomId, (room) => {
+      if (!room) throw new StateError("ROOM_NOT_FOUND");
+      authorize(room, auth);
+      const prior = room.responses.find((item) => item.id === parsedMessage.messageId);
+      if (prior) {
+        if (prior.ownerId !== auth.participantId)
+          throw new StateError("DUPLICATE_MESSAGE_ID");
+        return { receipt: structuredClone(prior), duplicate: true };
       }
-      if (room.pendingInputs.length >= 50)
+      // Revision-only conflicts can arise when two people send together. Accept
+      // either contribution if it still targets the same proposal version.
+      if (
+        parsedMessage.expectedRevision >
+          room.revision + (room.privateRevisions[auth.participantId] ?? 0) ||
+        parsedMessage.proposalVersion !== room.proposalVersion
+      )
+        throw new StateError("STALE_STATE");
+      let question: Room["questions"][number] | undefined;
+      if (parsedMessage.questionId !== null) {
+        question = room.questions.find((q) => q.id === parsedMessage.questionId);
+        if (!question || (question.targetId && question.targetId !== auth.participantId))
+          throw new StateError("UNAUTHORIZED_ANSWER");
+        if (question.visibility === "private" && parsedMessage.visibility !== "private")
+          throw new StateError("PRIVATE_ANSWER_REQUIRED");
+        if (
+          parsedMessage.replyOption !== null &&
+          !question.options.includes(parsedMessage.replyOption)
+        )
+          throw new StateError("INVALID_REPLY_OPTION");
+        if (parsedMessage.replyOption !== null && parsedMessage.text !== parsedMessage.replyOption)
+          throw new StateError("INVALID_REPLY_OPTION");
+      } else if (parsedMessage.replyOption !== null) {
+        throw new StateError("REPLY_WITHOUT_QUESTION");
+      }
+      const queue = parsedMessage.visibility === "group"
+        ? room.pendingInputs
+        : room.privatePendingInputs;
+      if (queue.length >= (parsedMessage.visibility === "group" ? 50 : 100))
         throw new StateError("INPUT_QUEUE_LIMIT");
-      room.pendingInputs.push({
+      if (room.responses.length >= 500) throw new StateError("RESPONSE_LIMIT");
+      const receipt = {
+        id: parsedMessage.messageId,
+        ownerId: auth.participantId,
+        visibility: parsedMessage.visibility,
+        text: parsedMessage.text,
+        questionId: parsedMessage.questionId,
+        replyOption: parsedMessage.replyOption,
+        proposalVersion: room.proposalVersion,
+        occurredAt: new Date().toISOString(),
+      } satisfies RoomResponse;
+      queue.push({
         id: randomUUID(),
         actorId: auth.participantId,
-        text: z.string().trim().min(1).max(4000).parse(text),
+        messageId: parsedMessage.messageId,
+        text: parsedMessage.text,
+        visibility: parsedMessage.visibility,
+        questionId: parsedMessage.questionId,
+        replyOption: parsedMessage.replyOption,
       });
+      room.responses.push(receipt);
+      if (question)
+        room.questions = room.questions.filter((q) => q.id !== question!.id);
+      if (parsedMessage.visibility === "group") {
+        room.activeCycleId = null;
+        room.analysisStatus = "queued";
+        this.bumpGroup(room);
+      } else {
+        room.privateAnalysisStatus[auth.participantId] = "queued";
+        this.bumpPrivate(room, auth.participantId);
+      }
+      const participant = room.participants.find((p) => p.id === auth.participantId)!;
+      addActivity(room, {
+        kind: "participant_responded",
+        actorId: auth.participantId,
+        summary: parsedMessage.visibility === "private"
+          ? "Your private response was recorded."
+          : `${participant.name} responded to the room.`,
+        category: null,
+        visibility: parsedMessage.visibility,
+        targetId: parsedMessage.visibility === "private" ? auth.participantId : null,
+      });
+      RoomSchema.parse(room);
+      return { receipt, duplicate: false };
     });
+    if (!result.duplicate) {
+      if (parsedMessage.visibility === "group") this.onGroupChange(roomId);
+      else this.onPrivateChange(roomId, auth.participantId);
+    }
+    return result;
   }
   async confirmFact(roomId: string, auth: Auth, revision: number, fact: FactInput) {
-    return this.update(roomId, auth, revision, (room) => {
-      const parsed = FactSchema.parse(fact);
+    const parsed = FactSchema.parse(fact);
+    const isOrWasGroup = await this.store.read(roomId).then((room) =>
+      room.facts.some((item) => item.id === parsed.id && item.visibility === "group") ||
+      parsed.visibility === "group",
+    );
+    const update = isOrWasGroup ? this.update.bind(this) : this.updatePrivate.bind(this);
+    return update(roomId, auth, revision, (room) => {
       if (parsed.ownerId !== auth.participantId)
         throw new StateError("UNAUTHORIZED");
       const old = room.facts.find((f) => f.id === parsed.id);
@@ -191,6 +378,13 @@ export class RoomService {
         { ...parsed, confirmed: true },
       ];
       room.candidates = room.candidates.filter((f) => f.id !== parsed.id);
+      if (parsed.visibility === "group")
+        addActivity(room, {
+          kind: "constraint_confirmed",
+          actorId: auth.participantId,
+          summary: "A participant confirmed information for the group plan.",
+          category: null,
+        });
       if (
         old?.visibility === "group" &&
         parsed.visibility === "private" &&
@@ -212,12 +406,21 @@ export class RoomService {
     roomId: string,
     auth: Auth,
     revision: number,
-    constraints: Constraint[],
+    constraints: ConstraintInput[],
   ) {
-    return this.update(roomId, auth, revision, (room) => {
+    const own = z.array(ConstraintSchema).max(100).parse(constraints);
+    const roomBefore = await this.store.read(roomId);
+    authorize(roomBefore, auth);
+    const groupImpact =
+      own.some((constraint) => constraint.visibility === "group") ||
+      roomBefore.constraints.some(
+        (constraint) =>
+          constraint.ownerId === auth.participantId && constraint.visibility === "group",
+      );
+    const update = groupImpact ? this.update.bind(this) : this.updatePrivate.bind(this);
+    return update(roomId, auth, revision, (room) => {
       // Room-wide constraints are explicit shared participant actions. No model or
       // private extraction can install one. Future organizer policy can narrow this.
-      const own = z.array(ConstraintSchema).max(100).parse(constraints);
       if (
         own.some(
           (c) =>
@@ -232,9 +435,11 @@ export class RoomService {
         ...room.constraints.filter((c) => c.ownerId !== auth.participantId),
         ...own,
       ];
-      room.proposalVersion++;
-      room.approvals = {};
-      room.questions = [];
+      if (groupImpact) {
+        room.proposalVersion++;
+        room.approvals = {};
+        room.questions = [];
+      }
     });
   }
   async configurePolicy(
@@ -290,9 +495,33 @@ export class RoomService {
       room.pendingInputs = room.pendingInputs.filter(
         (e) => e.actorId !== auth.participantId,
       );
-      room.proposalVersion++;
-      room.approvals = {};
-      room.questions = [];
+      room.privatePendingInputs = room.privatePendingInputs.filter(
+        (e) => e.actorId !== auth.participantId,
+      );
+      room.responses = room.responses.filter(
+        (response) => response.visibility !== "private" || response.ownerId !== auth.participantId,
+      );
+      room.activity = room.activity.filter(
+        (entry) => entry.visibility !== "private" || entry.targetId !== auth.participantId,
+      );
+      room.privateAnalyses = room.privateAnalyses.filter(
+        (analysis) => analysis.ownerId !== auth.participantId,
+      );
+      room.questions = room.questions.filter(
+        (question) => question.visibility !== "private" || question.targetId !== auth.participantId,
+      );
+      if (room.lastCycle) {
+        room.lastCycle.questions = room.lastCycle.questions.filter(
+          (question) => question.visibility !== "private" || question.targetId !== auth.participantId,
+        );
+        room.lastCycle.messages = room.lastCycle.messages.filter(
+          (message) => message.visibility !== "private" || message.targetId !== auth.participantId,
+        );
+      }
+      delete room.privateAnalysisStatus[auth.participantId];
+      delete room.privateRevisions[auth.participantId];
+      delete room.privateSequences[auth.participantId];
+      delete room.approvals[auth.participantId];
     });
   }
   async approve(roomId: string, auth: Auth, version: number) {
@@ -301,17 +530,59 @@ export class RoomService {
       authorize(room, auth);
       if (room.proposalVersion !== version)
         throw new StateError("STALE_PROPOSAL");
+      if (
+        room.lastCycle?.baseRevision !== room.revision ||
+        room.lastCycle.outcome !== "COMPLETED" ||
+        room.readiness?.status !== "ready_for_human_review"
+      )
+        throw new StateError("REVIEW_NOT_READY");
       room.approvals[auth.participantId] = version;
+      room.publicSequence++;
+      room.eventSequence++;
+      addActivity(room, {
+        kind: "participant_approved",
+        actorId: auth.participantId,
+        summary: "A planner approved this proposal version.",
+        category: null,
+      });
+    });
+    this.onGroupChange(roomId);
+  }
+  async shareCandidate(
+    roomId: string,
+    auth: Auth,
+    expectedRevision: number,
+    candidateId: string,
+  ) {
+    const room = await this.store.read(roomId);
+    authorize(room, auth);
+    const candidate = room.candidates.find(
+      (item) => item.id === candidateId && item.ownerId === auth.participantId && item.visibility === "private",
+    );
+    if (!candidate) throw new StateError("CANDIDATE_NOT_FOUND");
+    return this.confirmFact(roomId, auth, expectedRevision, {
+      ...candidate,
+      visibility: "group",
+      confirmed: true,
     });
   }
   async view(roomId: string, auth: Auth) {
     const room = await this.store.read(roomId);
     authorize(room, auth);
-    const latest = room.lastCycle?.baseRevision === room.revision;
+    const latest = room.lastCycle?.baseRevision === room.revision && room.activeCycleId === null;
+    const viewerRevision = room.revision + (room.privateRevisions[auth.participantId] ?? 0);
     return {
       ...sharedContext(room),
       roomId: room.id,
       viewerId: auth.participantId,
+      sequence: room.publicSequence + (room.privateSequences[auth.participantId] ?? 0),
+      revision: viewerRevision,
+      eventAttendance: {
+        estimatedAttendeeCount: room.estimatedAttendeeCount ?? null,
+        confirmedAttendeeCount: room.confirmedAttendeeCount ?? null,
+      },
+      analysisStatus: room.analysisStatus,
+      privateAnalysisStatus: room.privateAnalysisStatus[auth.participantId] ?? "idle",
       participantApprovals: room.participants
         .filter((p) => room.approvals[p.id] === room.proposalVersion)
         .map((p) => p.id),
@@ -322,10 +593,18 @@ export class RoomService {
       candidates: room.candidates.filter(
         (f) => f.ownerId === auth.participantId,
       ),
+      responses: room.responses.filter(
+        (response) =>
+          response.visibility === "group" || response.ownerId === auth.participantId,
+      ),
+      activity: room.activity.filter(
+        (entry) => entry.visibility === "group" || entry.targetId === auth.participantId,
+      ),
       questions: room.questions.filter(
         (q) => q.visibility === "group" || q.targetId === auth.participantId,
       ),
       readiness: room.readiness,
+      readinessHistory: room.readinessHistory,
       analysisCurrent: latest,
       options: latest
         ? room.options.filter((o) =>
@@ -354,5 +633,117 @@ export class RoomService {
         (p) => room.approvals[p.id] === room.proposalVersion,
       ).length,
     };
+  }
+
+  async updatePrivate(
+    roomId: string,
+    auth: Auth,
+    expectedRevision: number,
+    action: (room: Room) => void,
+  ) {
+    await this.store.transaction(roomId, (room) => {
+      if (!room) throw new StateError("ROOM_NOT_FOUND");
+      authorize(room, auth);
+      const viewerRevision = room.revision + (room.privateRevisions[auth.participantId] ?? 0);
+      if (viewerRevision !== expectedRevision) throw new StateError("STALE_STATE");
+      action(room);
+      RoomSchema.parse(room);
+      this.bumpPrivate(room, auth.participantId);
+    });
+    this.onPrivateChange(roomId, auth.participantId);
+  }
+
+  async completePrivateAnalysis(
+    roomId: string,
+    ownerId: string,
+    inputId: string,
+    analysis: Room["privateAnalyses"][number],
+  ) {
+    await this.store.transaction(roomId, (room) => {
+      if (!room) throw new StateError("ROOM_NOT_FOUND");
+      const input = room.privatePendingInputs.find(
+        (item) => item.id === inputId && item.actorId === ownerId,
+      );
+      if (!input || analysis.ownerId !== ownerId || analysis.sourceMessageId !== (input.messageId ?? input.id))
+        throw new StateError("STALE_PRIVATE_ANALYSIS");
+      const participant = room.participants.find((item) => item.id === ownerId);
+      if (!participant) throw new StateError("UNAUTHORIZED");
+      const candidates = analysis.candidates.map((candidate) => ({
+        ...candidate,
+        ownerId,
+        confirmed: false,
+        visibility: "private" as const,
+        scope: "participant" as const,
+      }));
+      const seen = new Set(room.candidates.map((candidate) => candidate.id));
+      room.candidates = [...room.candidates, ...candidates.filter((candidate) => !seen.has(candidate.id))].slice(-200);
+      room.privateAnalyses = [...room.privateAnalyses, analysis].slice(-100);
+      room.privatePendingInputs = room.privatePendingInputs.filter(
+        (item) => item.id !== inputId,
+      );
+      room.privateAnalysisStatus[ownerId] = "complete";
+      this.bumpPrivate(room, ownerId);
+      addActivity(room, {
+        kind: "analysis_completed",
+        actorId: null,
+        summary: "Your private response is ready for review.",
+        category: null,
+        visibility: "private",
+        targetId: ownerId,
+      });
+      RoomSchema.parse(room);
+    });
+    this.onPrivateChange(roomId, ownerId);
+  }
+
+  async markPrivateAnalysisRunning(roomId: string, ownerId: string) {
+    await this.store.transaction(roomId, (room) => {
+      if (!room) throw new StateError("ROOM_NOT_FOUND");
+      if (!room.participants.some((participant) => participant.id === ownerId))
+        throw new StateError("UNAUTHORIZED");
+      if (!room.privatePendingInputs.some((input) => input.actorId === ownerId)) return;
+      room.privateAnalysisStatus[ownerId] = "running";
+      this.bumpPrivate(room, ownerId);
+      addActivity(room, {
+        kind: "analysis_started",
+        actorId: null,
+        summary: "Setvia is reviewing your private response.",
+        category: null,
+        visibility: "private",
+        targetId: ownerId,
+      });
+    });
+    this.onPrivateChange(roomId, ownerId);
+  }
+
+  async failPrivateAnalysis(
+    roomId: string,
+    ownerId: string,
+    inputId: string,
+    analysis?: Room["privateAnalyses"][number],
+  ) {
+    await this.store.transaction(roomId, (room) => {
+      if (!room) throw new StateError("ROOM_NOT_FOUND");
+      const input = room.privatePendingInputs.find(
+        (item) => item.id === inputId && item.actorId === ownerId,
+      );
+      if (!input) return;
+      room.privatePendingInputs = room.privatePendingInputs.filter(
+        (item) => item.id !== inputId,
+      );
+      room.privateAnalysisStatus[ownerId] = "blocked";
+      if (analysis) room.privateAnalyses = [...room.privateAnalyses, analysis].slice(-100);
+      this.bumpPrivate(room, ownerId);
+      addActivity(room, {
+        kind: "analysis_blocked",
+        actorId: null,
+        summary: "Your private response could not be analyzed. It was saved for you.",
+        category: null,
+        visibility: "private",
+        targetId: ownerId,
+      });
+      RoomSchema.parse(room);
+    });
+    this.onPrivateChange(roomId, ownerId);
   }
 }

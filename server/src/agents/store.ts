@@ -5,9 +5,11 @@ import {
   writeFile,
   open,
   stat,
+  unlink,
 } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { randomUUID } from "node:crypto";
+import { hostname } from "node:os";
 import { RoomSchema, type Room } from "./contracts.js";
 
 export class StateError extends Error {
@@ -40,6 +42,51 @@ export class JsonPersistence implements Persistence {
       (rel !== ".." && !rel.startsWith(".." + sep) && !isAbsolute(rel))
     )
       throw new StateError("PRIVATE_STORAGE_REQUIRED");
+  }
+  async acquireRuntimeLock() {
+    await mkdir(this.root, { recursive: true, mode: 0o700 });
+    const lockPath = resolve(this.root, ".setvia-runtime.lock");
+    const instanceId = randomUUID();
+    const lock = JSON.stringify({ pid: process.pid, host: hostname(), instanceId, startedAt: new Date().toISOString() }) + "\n";
+    const create = async () => {
+      const handle = await open(lockPath, "wx", 0o600);
+      try {
+        await handle.writeFile(lock, "utf8");
+        await handle.sync();
+      } finally {
+        await handle.close();
+      }
+    };
+    try {
+      await create();
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code !== "EEXIST") throw error;
+      let prior: { pid?: unknown; host?: unknown; instanceId?: unknown } | null = null;
+      try { prior = JSON.parse(await readFile(lockPath, "utf8")); } catch { /* fail closed below */ }
+      let alive = true;
+      if (prior?.host === hostname() && typeof prior.pid === "number" && Number.isInteger(prior.pid)) {
+        try { process.kill(prior.pid, 0); } catch (probeError) {
+          alive = (probeError as NodeJS.ErrnoException).code !== "ESRCH";
+        }
+      }
+      if (alive) throw new StateError("RUNTIME_ALREADY_ACTIVE");
+      const stalePath = lockPath + ".stale-" + Date.now() + "-" + randomUUID();
+      try {
+        await rename(lockPath, stalePath);
+        await create();
+      } catch {
+        throw new StateError("RUNTIME_ALREADY_ACTIVE");
+      }
+    }
+    let released = false;
+    return async () => {
+      if (released) return;
+      released = true;
+      try {
+        const current = JSON.parse(await readFile(lockPath, "utf8")) as { instanceId?: unknown };
+        if (current.instanceId === instanceId) await unlink(lockPath);
+      } catch { /* Preserve a lock that no longer belongs to this process. */ }
+    };
   }
   private path(id: string) {
     if (!/^[a-zA-Z0-9_-]{1,80}$/.test(id)) throw new StateError("INVALID_ID");

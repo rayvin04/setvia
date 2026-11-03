@@ -186,7 +186,7 @@ function beachSteps(p: PreparedScenario): Step[] {
     { role: "Negotiator", output: { options: [revised] } },
     { role: "Judge", output: actionable({ findings: initial, verdicts: [{ optionId: revised.id, accepted: true }], taskFindingIds: ["beach_destination_unknown"], next: "question", participantInputRequired: true }) },
     { role: "Question Strategist", output: { questions } },
-    { role: "Speaker", output: { questionIds: questions.map((q) => q.id), findingIds: [], mascot: "curious" } },
+    { role: "Speaker", output: { replies: questions.map((q) => ({ questionId: q.id, findingId: null, text: "Which option works for your group?" })), mascot: "curious" } },
     { role: "Judge", output: finalWithQuestions(initial, questions, [{ optionId: revised.id, accepted: true }]) },
   ];
 }
@@ -206,7 +206,7 @@ function hikingSteps(p: PreparedScenario): Step[] {
   return [
     { role: "Judge", output: first },
     { role: "Question Strategist", output: { questions } },
-    { role: "Speaker", output: { questionIds: questions.map((q) => q.id), findingIds: [], mascot: "concerned" } },
+    { role: "Speaker", output: { replies: questions.map((q) => ({ questionId: q.id, findingId: null, text: "What would help you decide?" })), mascot: "concerned" } },
     { role: "Judge", output: finalWithQuestions(findings, questions) },
   ];
 }
@@ -253,7 +253,7 @@ function familySteps(p: PreparedScenario): Step[] {
     ...listeners,
     { role: "Judge", output: first },
     { role: "Question Strategist", output: { questions } },
-    { role: "Speaker", output: { questionIds: questions.map((q) => q.id), findingIds: [], mascot: "curious" } },
+    { role: "Speaker", output: { replies: questions.map((q) => ({ questionId: q.id, findingId: null, text: "Which time works for you?" })), mascot: "curious" } },
     { role: "Judge", output: finalWithQuestions(findings, questions) },
   ];
 }
@@ -276,7 +276,7 @@ function volunteerSteps(p: PreparedScenario): Step[] {
   return [
     { role: "Judge", output: first },
     { role: "Question Strategist", output: { questions } },
-    { role: "Speaker", output: { questionIds: questions.map((q) => q.id), findingIds: [], mascot: "concerned" } },
+    { role: "Speaker", output: { replies: questions.map((q) => ({ questionId: q.id, findingId: null, text: "Could you confirm these details?" })), mascot: "concerned" } },
     { role: "Judge", output: finalWithQuestions(findings, questions) },
   ];
 }
@@ -362,7 +362,7 @@ export async function prepareScenario(
     room.constraints = scenario.constraints.map(({ owner, ...constraint }) => {
       const auth = authByParticipant.get(owner);
       if (!auth) throw new Error("SCENARIO_CONSTRAINT_OWNER_MISSING");
-      return { ...constraint, ownerId: auth.participantId };
+      return { ...constraint, visibility: constraint.visibility ?? "group", ownerId: auth.participantId };
     });
     room.revision++;
   });
@@ -484,11 +484,11 @@ async function assertionsFor(
   recordSafeJson: string,
 ): Promise<ScenarioAssertion[]> {
   const scenario = prepared.scenario;
-  const path = cycle.traces.map((trace) => trace.role);
+  const path = prepared.calls.map((call) => call.role);
   const assertions: ScenarioAssertion[] = [
     { id: "expected_outcome", label: "Execution stops in the ground-truth state", passed: cycle.outcome === expectedOutcome(scenario), detail: `expected ${expectedOutcome(scenario)}, got ${cycle.outcome}` },
     { id: "conditional_agent_path", label: "Only the scenario-appropriate agents ran", passed: JSON.stringify(path) === JSON.stringify(expectedRolePath(scenario)), detail: path.join(" → ") },
-    { id: "bounded_calls", label: "Model calls remain below the per-scenario cap", passed: cycle.attempts <= 10 && cycle.traces.length <= 10, detail: `${cycle.attempts} attempts; ${cycle.traces.length} invocations; cap 10` },
+    { id: "bounded_calls", label: "Model calls remain below the per-scenario cap", passed: prepared.calls.length <= 10 && cycle.traces.length <= 10, detail: `${prepared.calls.length} total attempts; ${cycle.traces.length} shared-cycle invocations; cap 10` },
     { id: "all_categories_configured", label: "All six Reality Check categories remain configurable", passed: scenario.policy.length === 6 && scenario.policy.every((p, index) => p.category === Categories[index]), detail: scenario.policy.map((p) => p.category).join(", ") },
   ];
   const allJudgeFindings = traceOutputFindings(cycle);
@@ -669,6 +669,9 @@ async function runScenario(
   if (!scenario.synthetic) throw new Error("SYNTHETIC_FIXTURE_REQUIRED");
   const prepared = await prepareScenario(scenario, options);
   const start = performance.now();
+  const seededRoom = await prepared.store.read(prepared.roomId);
+  for (const ownerId of new Set(seededRoom.privatePendingInputs.map((input) => input.actorId)))
+    await prepared.engine.processPrivate(prepared.roomId, ownerId);
   const cycle = await prepared.engine.run(prepared.roomId, prepared.organizerAuth);
   const durationMs = Math.round(performance.now() - start);
   const finalRoom = await prepared.store.read(prepared.roomId);

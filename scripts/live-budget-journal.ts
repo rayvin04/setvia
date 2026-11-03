@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { lstat, mkdir, open, readFile, realpath, rm, writeFile } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
 import { z } from "zod";
-import type { Role } from "../server/src/agents/contracts.js";
+import { Roles } from "../server/src/agents/contracts.js";
 import type { MetaHttpEvent } from "../server/src/agents/meta-gateway.js";
 import type { LiveAttemptRecord } from "../server/src/agents/lab.js";
 
@@ -20,7 +20,7 @@ const AttemptSchema = z.object({
   scenarioId: z.string().min(1).max(20),
   model: z.literal("muse-spark-1.3"),
   promptVersion: z.string().regex(/^agents-v[0-9]+$/),
-  role: z.enum(["Listener", "Judge", "Negotiator", "Question Strategist", "Speaker"]),
+  role: z.enum([...Roles, "Scenario Generator"]),
   requestHash: z.string().regex(/^[a-f0-9]{64}$/),
   status: z.enum(["reserved", "response_received", "transport_error", "usage_recorded"]),
   httpStatus: z.number().int().min(100).max(599).nullable(),

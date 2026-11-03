@@ -1,6 +1,7 @@
 import { randomUUID, createHash } from "node:crypto";
 import {
   RoleSchemas,
+  CycleSchema,
   type AgentGateway,
   type Auth,
   type Cycle,
@@ -10,10 +11,17 @@ import {
   type Question,
   type Role,
   type Room,
+  type RoomActivity,
   type Trace,
 } from "./contracts.js";
 import { RoomStore, StateError } from "./store.js";
-import { RoomService, authorize, sharedContext } from "./rooms.js";
+import {
+  RoomService,
+  authorize,
+  currentGroupResponses,
+  groupResponseEvidenceId,
+  sharedContext,
+} from "./rooms.js";
 import { calculateReadiness, explicitViolations, violations } from "./readiness.js";
 import { MetaApiError } from "../ai/errors.js";
 
@@ -62,7 +70,25 @@ const fingerprint = (value: unknown) => {
 function unique(ids: string[]) {
   if (new Set(ids).size !== ids.length) throw new StateError("INVALID_HANDOFF");
 }
-function validateJudge(
+function appendActivity(
+  room: Room,
+  entry: Pick<RoomActivity, "kind" | "actorId" | "summary" | "category"> &
+    Partial<Pick<RoomActivity, "visibility" | "targetId">>,
+) {
+  room.activity = [...room.activity, {
+    id: randomUUID(),
+    kind: entry.kind,
+    revision: room.revision,
+    proposalVersion: room.proposalVersion,
+    occurredAt: new Date().toISOString(),
+    actorId: entry.actorId,
+    summary: entry.summary,
+    category: entry.category,
+    visibility: entry.visibility ?? "group",
+    targetId: entry.targetId ?? null,
+  }].slice(-100);
+}
+export function validateJudge(
   room: Room,
   raw: unknown,
   options: PlanOption[],
@@ -95,10 +121,18 @@ function validateJudge(
     { confirmed: boolean; key: string; value: unknown }
   >([
     ...facts.map((f) => [f.id, f] as const),
-    ...room.constraints.map(
+    ...room.constraints.filter((constraint) => constraint.visibility === "group").map(
       (c) =>
         [c.id, { confirmed: true, key: c.key, value: c.expected }] as const,
     ),
+    ...currentGroupResponses(room)
+      .map((response) => [
+        groupResponseEvidenceId(response.id),
+        { confirmed: false, key: "group_response", value: response.text },
+      ] as const),
+    // This catalogue also resolves current Listener observations and prior
+    // findings outside the small raw-message tail. IDs must resolve to actual
+    // group responses for this proposal; observations cannot invent sources.
   ]);
   for (const f of judge.findings) {
     if (f.evidenceIds.some((id) => !evidence.has(id)))
@@ -179,6 +213,16 @@ function validateJudge(
     throw new StateError("INVALID_TASK");
   return judge;
 }
+export function validateSpeaker(raw: unknown, questions: Question[], findings: Finding[]) {
+  const speaker = RoleSchemas.Speaker.parse(raw);
+  unique(speaker.replies.flatMap((reply) => reply.questionId === null ? [] : [reply.questionId]));
+  unique(speaker.replies.flatMap((reply) => reply.findingId === null ? [] : [reply.findingId]));
+  if (speaker.replies.some((reply) => reply.questionId !== null
+    ? !questions.some((question) => question.id === reply.questionId)
+    : !findings.some((finding) => finding.id === reply.findingId)))
+    throw new StateError("INVALID_DRAFT");
+  return speaker;
+}
 function validateQuestions(
   room: Room,
   questions: Question[],
@@ -238,11 +282,30 @@ function traceFailure(error: unknown): { code: string; message: string } {
         : messages[error.code],
     };
   }
-  if (error instanceof Error && error.name === "ZodError")
+  if (error instanceof Error && error.name === "ZodError") {
+    const issues = (error as Error & {
+      issues?: Array<{ path?: unknown; code?: unknown }>;
+    }).issues;
+    const issue = issues?.[0];
+    const location = Array.isArray(issue?.path)
+      ? issue.path.reduce<string>((current, segment) => {
+          if (typeof segment === "number" && Number.isSafeInteger(segment) && segment >= 0)
+            return `${current}[${segment}]`;
+          if (typeof segment === "string" && /^[A-Za-z][A-Za-z0-9_]*$/.test(segment))
+            return current ? `${current}.${segment}` : segment;
+          return current;
+        }, "")
+      : "";
+    const issueCode = typeof issue?.code === "string" && /^[a-z0-9_]{1,40}$/.test(issue.code)
+      ? issue.code
+      : "";
     return {
       code: "INVALID_HANDOFF",
-      message: "Structured output did not match the role schema.",
+      message: location
+        ? `Structured output did not match the role schema at ${location}${issueCode ? ` (${issueCode})` : ""}.`
+        : "Structured output did not match the role schema.",
     };
+  }
   if (error instanceof SyntaxError)
     return {
       code: "INVALID_MODEL_JSON",
@@ -273,11 +336,15 @@ async function withAbort<T>(
 export class AgentEngine {
   readonly rooms: RoomService;
   private active = new Map<string, AbortController>();
+  private activePrivate = new Map<string, AbortController>();
   readonly limits: Limits;
+  private readonly publishRoom: (roomId: string) => void;
   constructor(
     readonly store: RoomStore,
     readonly gateway: AgentGateway,
     limits?: Limits,
+    publishRoom: (roomId: string) => void = () => {},
+    publishPrivate: (roomId: string, ownerId: string) => void = () => {},
   ) {
     if (gateway.mode === "META" && !limits)
       throw new StateError("LIVE_LIMITS_REQUIRED");
@@ -287,10 +354,27 @@ export class AgentEngine {
     for (const value of Object.values(limits))
       if (!Number.isSafeInteger(value) || value < 1)
         throw new StateError("INVALID_LIMITS");
-    this.rooms = new RoomService(store, (id) => this.cancel(id));
+    this.publishRoom = publishRoom;
+    this.rooms = new RoomService(
+      store,
+      (id) => {
+        this.cancel(id);
+        publishRoom(id);
+      },
+      publishPrivate,
+    );
   }
   cancel(id: string) {
     this.active.get(id)?.abort();
+  }
+
+  cancelPrivate(roomId: string, ownerId: string) {
+    this.activePrivate.get(roomId + ":" + ownerId)?.abort();
+  }
+
+  cancelAll() {
+    for (const controller of this.active.values()) controller.abort();
+    for (const controller of this.activePrivate.values()) controller.abort();
   }
 
   async run(
@@ -298,13 +382,26 @@ export class AgentEngine {
     auth: Auth,
     options: { signal?: AbortSignal; retryBlocked?: boolean } = {},
   ): Promise<Cycle> {
+    return this.runInternal(roomId, auth, options);
+  }
+
+  async runAfterMembershipChange(roomId: string): Promise<Cycle> {
+    return this.runInternal(roomId, null, {});
+  }
+
+  private async runInternal(
+    roomId: string,
+    auth: Auth | null,
+    options: { signal?: AbortSignal; retryBlocked?: boolean },
+  ): Promise<Cycle> {
     const controller = new AbortController();
     let room!: Room;
     let existing: Cycle | null = null;
     const cycleId = randomUUID();
     await this.store.transaction(roomId, (state) => {
       if (!state) throw new StateError("ROOM_NOT_FOUND");
-      authorize(state, auth);
+      if (auth) authorize(state, auth);
+      else if (!state.participants.length) throw new StateError("ROOM_EMPTY");
       if (
         state.lastCycle?.baseRevision === state.revision &&
         state.activeCycleId === null &&
@@ -315,9 +412,19 @@ export class AgentEngine {
       }
       this.cancel(roomId);
       state.activeCycleId = cycleId;
+      state.analysisStatus = "running";
+      state.publicSequence++;
+      state.eventSequence++;
+      appendActivity(state, {
+        kind: "analysis_started",
+        actorId: auth?.participantId ?? null,
+        summary: "Setvia is reviewing the shared plan with its agent team.",
+        category: null,
+      });
       room = structuredClone(state);
     });
     if (existing) return existing;
+    this.publishRoom(roomId);
     this.active.set(roomId, controller);
     const deadline = setTimeout(
       () => controller.abort("TIMEOUT"),
@@ -363,11 +470,41 @@ export class AgentEngine {
     }
     let candidates = room.candidates;
     const handledInputIds = new Set<string>();
+    const groupObservations: Array<{
+      sourceEvidenceId: string;
+      ownerId: string;
+      proposalVersion: number;
+      questionId: string | null;
+      replyOption: string | null;
+      confirmed: false;
+      scope: "participant";
+      candidates: Array<{ key: string; value: string | number | boolean | null }>;
+    }> = [];
+    const analysisContext = () => ({
+      ...sharedContext(room),
+      groupObservations: structuredClone(groupObservations),
+    });
     let planned: PlanOption[] = [];
     let draftQuestions: Question[] = [];
     let draftMascot: Cycle["mascot"] = null;
     let draftFindingIds: string[] = [];
-    let previousFindings = room.lastCycle?.finalEvaluation?.findings ?? [];
+    let authoredFindingTexts = new Map<string, string>();
+    const priorReadiness = room.readiness;
+    const currentEvidenceIds = new Set([
+      ...room.facts.filter((fact) => fact.visibility === "group").map((fact) => fact.id),
+      ...room.constraints.filter((constraint) => constraint.visibility === "group").map((constraint) => constraint.id),
+      ...currentGroupResponses(room).map((response) => groupResponseEvidenceId(response.id)),
+    ]);
+    const validatedFindingsBeforeCycle = (room.lastCycle?.finalEvaluation?.findings ?? []).map((finding) => {
+      // A previous finding remains a concern when its evidence expires or is
+      // revoked. Never send the stale reference back as current evidence.
+      const evidenceIds = finding.evidenceIds.filter((id) => currentEvidenceIds.has(id));
+      return evidenceIds.length === finding.evidenceIds.length ? finding : {
+        ...finding, evidenceIds, status: "unverified" as const, uncertainty: "missing" as const,
+      };
+    });
+    let previousFindings = validatedFindingsBeforeCycle;
+    let admission: Awaited<ReturnType<NonNullable<AgentGateway["openCycle"]>>> | undefined;
 
     const assertCurrent = async () => {
       signal.throwIfAborted();
@@ -418,7 +555,7 @@ export class AgentEngine {
       const callStartedAt = performance.now();
       try {
         const result = await withAbort(
-          this.gateway.call(role, payload, {
+          (admission ?? this.gateway).call(role, payload, {
             signal,
             reserveAttempt: async (allowance) => {
               await assertCurrent();
@@ -523,12 +660,13 @@ export class AgentEngine {
       requestedBy: Trace["requestedBy"],
     ) => {
       const input = {
-        ...sharedContext(room),
+        ...analysisContext(),
         proposedOptions: planned,
         previousFindings: previousFindings.filter(
           (f) => !f.id.startsWith("hard_"),
         ),
         draftQuestions,
+        draftFindingReplies: [...authoredFindingTexts].map(([findingId, text]) => ({ findingId, text })),
         draftMascot,
         task: phase,
       };
@@ -551,37 +689,45 @@ export class AgentEngine {
       return judge;
     };
     try {
+      admission = await this.gateway.openCycle?.(this.limits.maxRequests);
       for (const pendingInput of room.pendingInputs) {
+        if (pendingInput.visibility !== "group")
+          throw new StateError("PRIVATE_INPUT_IN_GROUP_ANALYSIS");
+        const source = room.responses.find((response) => response.id === pendingInput.messageId);
+        if (!source || source.visibility !== "group" || source.ownerId !== pendingInput.actorId ||
+          source.text !== pendingInput.text || source.questionId !== pendingInput.questionId ||
+          source.replyOption !== pendingInput.replyOption)
+          throw new StateError("INVALID_EVIDENCE_SOURCE");
+        if (source.proposalVersion !== room.proposalVersion) {
+          handledInputIds.add(pendingInput.id);
+          continue;
+        }
         const parsed = RoleSchemas.Listener.parse(
           await invoke(
             "Listener",
             "interpret",
             {
-              // The Listener needs only this participant's text and private
-              // facts. Sending the group roster, proposal, and shared facts
-              // here would widen disclosure without helping extraction.
-              privateInput: { text: pendingInput.text },
-              privateFacts: room.facts.filter(
-                (f) =>
-                  f.visibility === "private" &&
-                  f.ownerId === pendingInput.actorId,
-              ),
+              // A group-visible response authorizes only that text for this
+              // Listener call. Never attach the owner's private facts here.
+              groupInput: {
+                text: pendingInput.text,
+                questionId: pendingInput.questionId,
+                replyOption: pendingInput.replyOption,
+              },
             },
             "orchestrator",
-            true,
           ),
         );
-        candidates = [
-          ...candidates,
-          ...parsed.candidates.map((c) => ({
-            ...c,
-            id: randomUUID(),
-            ownerId: pendingInput.actorId,
-            confirmed: false,
-            visibility: "private" as const,
-            scope: "participant" as const,
-          })),
-        ].slice(-200);
+        groupObservations.push({
+          sourceEvidenceId: groupResponseEvidenceId(source.id),
+          ownerId: source.ownerId,
+          proposalVersion: source.proposalVersion,
+          questionId: pendingInput.questionId,
+          replyOption: pendingInput.replyOption,
+          confirmed: false,
+          scope: "participant",
+          candidates: parsed.candidates.map(({ key, value }) => ({ key, value })),
+        });
         handledInputIds.add(pendingInput.id);
       }
       let judge = await judgePass("review", "orchestrator");
@@ -615,12 +761,13 @@ export class AgentEngine {
           draftQuestions = [];
           draftMascot = null;
           draftFindingIds = [];
+          authoredFindingTexts.clear();
           const proposal = RoleSchemas.Negotiator.parse(
             await invoke(
               "Negotiator",
               "revise",
               {
-                ...sharedContext(room),
+                ...analysisContext(),
                 findings: judge.findings,
                 previousOptions: planned,
                 previousVerdicts: judge.verdicts,
@@ -641,9 +788,11 @@ export class AgentEngine {
               "Question Strategist",
               "questions",
               {
-                ...sharedContext(room),
+                ...analysisContext(),
                 findings: judge.findings,
-                existingQuestions: room.questions,
+                existingQuestions: room.questions.filter(
+                  (question) => question.visibility === "group",
+                ),
                 feasibleOptions: planned.filter((o) =>
                   judge.verdicts.some((v) => v.optionId === o.id && v.accepted),
                 ),
@@ -655,34 +804,39 @@ export class AgentEngine {
           draftQuestions = strategy.questions;
         }
         if (draftQuestions.length || judge.next === "speak") {
-          const speaker = RoleSchemas.Speaker.parse(
+          const speaker = validateSpeaker(
             await invoke(
               "Speaker",
               "draft",
               {
-                ...sharedContext(room),
+                ...analysisContext(),
                 findings: judge.findings,
                 questions: draftQuestions,
               },
               draftQuestions.length ? "Question Strategist" : "Judge",
-            ),
+            ), draftQuestions, judge.findings,
           );
-          unique(speaker.questionIds);
-          unique(speaker.findingIds);
-          if (
-            speaker.questionIds.some(
-              (id) => !draftQuestions.some((q) => q.id === id),
-            ) ||
-            speaker.findingIds.some(
-              (id) => !judge.findings.some((f) => f.id === id),
-            )
-          )
-            throw new StateError("INVALID_DRAFT");
-          draftQuestions = draftQuestions.filter((q) =>
-            speaker.questionIds.includes(q.id),
+          const findingIds = speaker.replies.flatMap((reply) =>
+            reply.findingId === null ? [] : [reply.findingId],
           );
+          const authoredQuestions = new Map(
+            speaker.replies
+              .filter((reply) => reply.questionId !== null)
+              .map((reply) => [reply.questionId!, reply.text]),
+          );
+          draftQuestions = draftQuestions
+            .filter((question) => authoredQuestions.has(question.id))
+            .map((question) => ({
+              ...question,
+              text: authoredQuestions.get(question.id)!,
+            }));
           draftMascot = speaker.mascot;
-          draftFindingIds = speaker.findingIds;
+          draftFindingIds = findingIds;
+          authoredFindingTexts = new Map(
+            speaker.replies
+              .filter((reply) => reply.findingId !== null)
+              .map((reply) => [reply.findingId!, reply.text]),
+          );
           judge = await judgePass("final", "Speaker");
           if (judge.next === "negotiate") {
             draftQuestions = [];
@@ -728,7 +882,7 @@ export class AgentEngine {
           ...judge.findings
             .filter((f) => draftFindingIds.includes(f.id))
             .map((f) => ({
-              text: f.message,
+              text: authoredFindingTexts.get(f.id)!,
               visibility: "group" as const,
               targetId: null,
               questionId: null,
@@ -754,6 +908,7 @@ export class AgentEngine {
       cycle.mascot = null;
       cycle.readiness = room.readiness;
     } finally {
+      await admission?.release();
       clearTimeout(deadline);
       if (this.active.get(roomId) === controller) this.active.delete(roomId);
     }
@@ -768,7 +923,17 @@ export class AgentEngine {
           return;
         state.activeCycleId = null;
         state.lastCycle = structuredClone(cycle);
-        state.candidates = candidates;
+        state.analysisStatus = cycle.outcome === "BLOCKED" ? "blocked" : "complete";
+        state.publicSequence++;
+        state.eventSequence++;
+        const candidateIds = new Set(candidates.map((candidate) => candidate.id));
+        const concurrentlyAddedPrivate = state.candidates.filter(
+          (candidate) =>
+            candidate.visibility === "private" &&
+            !room.candidates.some((before) => before.id === candidate.id) &&
+            !candidateIds.has(candidate.id),
+        );
+        state.candidates = [...candidates, ...concurrentlyAddedPrivate].slice(-200);
         state.pendingInputs = state.pendingInputs.filter(
           (input) => !handledInputIds.has(input.id),
         );
@@ -776,7 +941,85 @@ export class AgentEngine {
           state.readiness = cycle.readiness;
           state.questions = cycle.questions;
           state.options = planned;
+          if (cycle.readiness) {
+            state.readinessHistory = [
+              ...state.readinessHistory,
+              {
+                id: randomUUID(),
+                revision: state.revision,
+                proposalVersion: state.proposalVersion,
+                occurredAt: new Date().toISOString(),
+                readiness: structuredClone(cycle.readiness),
+                explanation:
+                  cycle.finalEvaluation.readinessAssessment.explanation ||
+                  (priorReadiness
+                    ? `Validated readiness is now ${cycle.readiness.percentage}%.`
+                    : "The first validated readiness result is available."),
+              },
+            ].slice(-30);
+          }
         }
+        if (cycle.finalEvaluation) {
+          const nextFindings = cycle.finalEvaluation.findings;
+          const priorIds = new Set(validatedFindingsBeforeCycle.map((finding) => finding.id));
+          const newCategories = new Set(nextFindings
+            .filter((finding) => finding.status !== "resolved" && !priorIds.has(finding.id))
+            .map((finding) => finding.category));
+          for (const category of newCategories) appendActivity(state, {
+            kind: "finding_detected",
+            actorId: null,
+            summary: `Setvia found a new item to review in ${category}.`,
+            category,
+          });
+
+          const currentById = new Map(nextFindings.map((finding) => [finding.id, finding]));
+          const resolvedCategories = new Set(validatedFindingsBeforeCycle
+            .filter((finding) => finding.status !== "resolved" && currentById.get(finding.id)?.status === "resolved")
+            .map((finding) => finding.category));
+          for (const category of resolvedCategories) appendActivity(state, {
+            kind: "issue_resolved",
+            actorId: null,
+            summary: `A previously flagged item was resolved in ${category}.`,
+            category,
+          });
+
+          const groupQuestions = cycle.questions.filter((question) => question.visibility === "group");
+          if (groupQuestions.length) appendActivity(state, {
+            kind: "question_asked",
+            actorId: null,
+            summary: groupQuestions.length === 1 ? "Setvia asked the group to confirm a planning detail." : `Setvia asked the group ${groupQuestions.length} planning questions.`,
+            category: null,
+          });
+          for (const question of cycle.questions) {
+            if (question.visibility !== "private" || !question.targetId) continue;
+            appendActivity(state, {
+              kind: "question_asked",
+              actorId: null,
+              summary: "Setvia sent you a private planning question.",
+              category: null,
+              visibility: "private",
+              targetId: question.targetId,
+            });
+          }
+
+          if (priorReadiness && cycle.readiness && (
+            priorReadiness.percentage !== cycle.readiness.percentage ||
+            priorReadiness.status !== cycle.readiness.status
+          )) appendActivity(state, {
+            kind: "readiness_changed",
+            actorId: null,
+            summary: `Validated readiness changed from ${priorReadiness.percentage}% to ${cycle.readiness.percentage}%.`,
+            category: null,
+          });
+        }
+        appendActivity(state, {
+          kind: cycle.outcome === "BLOCKED" ? "analysis_blocked" : "analysis_completed",
+          actorId: null,
+          summary: cycle.outcome === "BLOCKED"
+            ? "Setvia could not complete this analysis. The last validated result is retained."
+            : "Setvia completed a validated analysis of the shared plan.",
+          category: null,
+        });
       });
     } catch {
       cycle.outcome = "BLOCKED";
@@ -786,6 +1029,175 @@ export class AgentEngine {
       cycle.messages = [];
       cycle.questions = [];
     }
+    this.publishRoom(roomId);
     return cycle;
+  }
+
+  /**
+   * Process owner-only inputs with Listener in an isolated call. This method
+   * never invokes Judge and never changes public readiness or shared revision.
+   */
+  async processPrivate(roomId: string, ownerId: string) {
+    const initial = await this.store.read(roomId);
+    if (!initial.participants.some((participant) => participant.id === ownerId))
+      throw new StateError("UNAUTHORIZED");
+    const queue = initial.privatePendingInputs.filter((input) => input.actorId === ownerId);
+    if (!queue.length) return [];
+    await this.rooms.markPrivateAnalysisRunning(roomId, ownerId);
+    const completed: Room["privateAnalyses"] = [];
+    for (const pending of queue) {
+      const room = await this.store.read(roomId);
+      if (!room.participants.some((participant) => participant.id === ownerId))
+        break;
+      const cycle: Cycle = {
+        id: randomUUID(),
+        baseRevision: room.revision,
+        outcome: "COMPLETED",
+        reason: "ANALYSIS_COMPLETE",
+        finalEvaluation: null,
+        readiness: null,
+        traces: [],
+        attempts: 0,
+        reservedTokens: 0,
+        reservedCostMicros: 0,
+        usageKnown: true,
+        questions: [],
+        mascot: null,
+        messages: [],
+      };
+      const trace: Trace = {
+        sequence: 1,
+        role: "Listener",
+        phase: "interpret",
+        requestedBy: "orchestrator",
+        promptVersion: this.gateway.promptVersion ?? "agents-v1",
+        promptHash: this.gateway.promptHashes?.Listener ?? null,
+        mode: this.gateway.mode,
+        schemaVersion: "agents-v2",
+        input: { redacted: true, context: "owner-private" },
+        output: null,
+        status: "failed",
+        acceptedOptionIds: [],
+        rejectedOptionIds: [],
+        attempts: 0,
+        inputTokens: null,
+        cachedInputTokens: null,
+        outputTokens: null,
+        reasoningTokens: null,
+        totalTokens: null,
+        estimatedCostMicros: null,
+        durationMs: 0,
+      };
+      cycle.traces.push(trace);
+      const startedAt = performance.now();
+      const controller = new AbortController();
+      const activeKey = roomId + ":" + ownerId;
+      this.activePrivate.set(activeKey, controller);
+      const timeout = setTimeout(() => controller.abort("TIMEOUT"), this.limits.timeoutMs);
+      let analysis: Room["privateAnalyses"][number];
+      try {
+        const result = await withAbort(
+          this.gateway.call(
+            "Listener",
+            {
+              privateInput: { text: pending.text },
+              privateFacts: room.facts.filter(
+                (fact) => fact.ownerId === ownerId && fact.visibility === "private",
+              ),
+            },
+            {
+              signal: controller.signal,
+              reserveAttempt: async (allowance) => {
+                const tokens = allowance?.tokens ?? this.limits.callTokens;
+                const costMicros = allowance?.costMicros ?? this.limits.callCostMicros;
+                if (
+                  !Number.isSafeInteger(tokens) || tokens < 1 || tokens > this.limits.callTokens ||
+                  !Number.isSafeInteger(costMicros) || costMicros < 1 || costMicros > this.limits.callCostMicros ||
+                  cycle.attempts + 1 > this.limits.maxRequests ||
+                  cycle.reservedTokens + tokens > this.limits.maxTokens ||
+                  cycle.reservedCostMicros + costMicros > this.limits.maxCostMicros
+                ) throw new StateError("PRIVATE_REQUEST_BUDGET_LIMIT");
+                await this.store.transaction(roomId, (state) => {
+                  if (!state || !state.participants.some((participant) => participant.id === ownerId))
+                    throw new StateError("UNAUTHORIZED");
+                  if (
+                    state.lifetimeAttempts + 1 > this.limits.roomMaxRequests ||
+                    state.lifetimeReservedTokens + tokens > this.limits.roomMaxTokens ||
+                    state.lifetimeReservedCostMicros + costMicros > this.limits.roomMaxCostMicros
+                  ) throw new StateError("ROOM_BUDGET_LIMIT");
+                  state.lifetimeAttempts++;
+                  state.lifetimeReservedTokens += tokens;
+                  state.lifetimeReservedCostMicros += costMicros;
+                });
+                cycle.attempts++;
+                trace.attempts++;
+                cycle.reservedTokens += tokens;
+                cycle.reservedCostMicros += costMicros;
+              },
+            },
+          ),
+          controller.signal,
+        );
+        trace.durationMs = Math.round(performance.now() - startedAt);
+        if (trace.attempts !== 1) throw new StateError("UNMETERED_CALL");
+        const parsed = RoleSchemas.Listener.parse(result.output);
+        if (result.usage) {
+          trace.inputTokens = result.usage.inputTokens;
+          trace.cachedInputTokens = result.usage.cachedInputTokens ?? null;
+          trace.outputTokens = result.usage.outputTokens;
+          trace.reasoningTokens = result.usage.reasoningTokens ?? null;
+          trace.totalTokens = result.usage.totalTokens ?? result.usage.inputTokens + result.usage.outputTokens;
+          trace.estimatedCostMicros = result.usage.estimatedCostMicros;
+          if (
+            result.usage.inputTokens + result.usage.outputTokens > this.limits.callTokens ||
+            result.usage.estimatedCostMicros > this.limits.callCostMicros
+          ) throw new StateError("USAGE_BOUND_EXCEEDED");
+        } else cycle.usageKnown = false;
+        trace.output = structuredClone(parsed);
+        trace.status = "accepted";
+        cycle.reason = "ANALYSIS_COMPLETE";
+        analysis = {
+          ownerId,
+          sourceMessageId: pending.messageId ?? pending.id,
+          proposalVersion: room.proposalVersion,
+          updatedAt: new Date().toISOString(),
+          cycle: CycleSchema.parse(cycle),
+          candidates: parsed.candidates.map((candidate) => ({
+            ...candidate,
+            id: randomUUID(),
+            ownerId,
+            confirmed: false,
+            visibility: "private" as const,
+            scope: "participant" as const,
+          })),
+        };
+        await this.rooms.completePrivateAnalysis(roomId, ownerId, pending.id, analysis);
+      } catch (error) {
+        const failure = traceFailure(error);
+        trace.failureCode = failure.code;
+        trace.failureMessage = failure.message;
+        trace.durationMs = Math.round(performance.now() - startedAt);
+        trace.status = "failed";
+        cycle.outcome = "BLOCKED";
+        cycle.reason = controller.signal.reason === "TIMEOUT" ? "TIMEOUT" : "PRIVATE_ANALYSIS_FAILED";
+        cycle.finalEvaluation = null;
+        cycle.readiness = null;
+        cycle.usageKnown = false;
+        analysis = {
+          ownerId,
+          sourceMessageId: pending.messageId ?? pending.id,
+          proposalVersion: room.proposalVersion,
+          updatedAt: new Date().toISOString(),
+          cycle: CycleSchema.parse(cycle),
+          candidates: [],
+        };
+        await this.rooms.failPrivateAnalysis(roomId, ownerId, pending.id, analysis);
+      } finally {
+        clearTimeout(timeout);
+        if (this.activePrivate.get(activeKey) === controller) this.activePrivate.delete(activeKey);
+      }
+      completed.push(analysis);
+    }
+    return completed;
   }
 }

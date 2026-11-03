@@ -64,6 +64,9 @@ export const ConstraintSchema = z
   .object({
     id,
     ownerId: id,
+    // Personal constraints remain outside shared model context unless their
+    // owner explicitly chooses group visibility.
+    visibility: z.enum(["group", "private"]).default("group"),
     category: CategorySchema,
     key: id,
     operator: z.enum(["required", "eq", "neq", "lte", "gte"]),
@@ -72,6 +75,7 @@ export const ConstraintSchema = z
   })
   .strict();
 export type Constraint = z.infer<typeof ConstraintSchema>;
+export type ConstraintInput = z.input<typeof ConstraintSchema>;
 export const PolicySchema = z
   .array(
     z
@@ -145,6 +149,23 @@ export const JudgeSchema = z
   })
   .strict();
 export type JudgeEvaluation = z.infer<typeof JudgeSchema>;
+// Encode the single authorized target directly in JSON Schema. A Zod
+// refinement is enforced locally but is not representable in the provider's
+// strict structured-output schema, which previously let ambiguous targets
+// reach the local validator and block an otherwise valid cycle.
+const SpeakerReplySchema = z.union([
+  z.object({
+    questionId: id,
+    findingId: z.null(),
+    text: z.string().trim().min(1).max(500),
+  }).strict(),
+  z.object({
+    questionId: z.null(),
+    findingId: id,
+    text: z.string().trim().min(1).max(500),
+  }).strict(),
+]);
+
 export const RoleSchemas = {
   Listener: z
     .object({
@@ -160,8 +181,7 @@ export const RoleSchemas = {
     .strict(),
   Speaker: z
     .object({
-      questionIds: z.array(id).max(8),
-      findingIds: z.array(id).max(20),
+      replies: z.array(SpeakerReplySchema).max(28),
       mascot: z.enum(["thinking", "curious", "concerned", "content"]),
     })
     .strict(),
@@ -214,7 +234,9 @@ export const TraceSchema = z
       .regex(/^[a-f0-9]{64}$/)
       .nullable(),
     mode: z.enum(["MOCK", "META"]),
-    schemaVersion: z.literal("agents-v1"),
+    // v1 Lab history remains readable after the Speaker handoff adds authored
+    // reply text in v2.
+    schemaVersion: z.enum(["agents-v1", "agents-v2"]),
     input: z.unknown(),
     output: z.unknown(),
     status: z.enum(["accepted", "rejected", "failed"]),
@@ -264,12 +286,92 @@ export const CycleSchema = z
   })
   .strict();
 export type Cycle = z.infer<typeof CycleSchema>;
+export const RoomResponseSchema = z
+  .object({
+    id,
+    ownerId: id,
+    visibility: z.enum(["group", "private"]),
+    text: z.string().trim().min(1).max(1_000),
+    questionId: id.nullable(),
+    replyOption: z.string().min(1).max(160).nullable(),
+    proposalVersion: z.number().int().positive(),
+    occurredAt: z.iso.datetime(),
+  })
+  .strict();
+export type RoomResponse = z.infer<typeof RoomResponseSchema>;
+const PendingRoomInputSchema = z
+  .object({
+    id,
+    actorId: id,
+    messageId: id.nullable().default(null),
+    text: z.string().trim().min(1).max(4_000),
+    visibility: z.enum(["group", "private"]).default("private"),
+    questionId: id.nullable().default(null),
+    replyOption: z.string().min(1).max(160).nullable().default(null),
+  })
+  .strict();
+export type PendingRoomInput = z.infer<typeof PendingRoomInputSchema>;
+export const PrivateAnalysisSchema = z
+  .object({
+    ownerId: id,
+    sourceMessageId: id,
+    proposalVersion: z.number().int().positive(),
+    updatedAt: z.iso.datetime(),
+    cycle: CycleSchema,
+    candidates: z.array(FactSchema).max(20),
+  })
+  .strict();
+export type PrivateAnalysis = z.infer<typeof PrivateAnalysisSchema>;
+export const RoomActivitySchema = z
+  .object({
+    id,
+    kind: z.enum([
+      "participant_joined",
+      "participant_responded",
+      "finding_detected",
+      "constraint_confirmed",
+      "proposal_revised",
+      "question_asked",
+      "issue_resolved",
+      "readiness_changed",
+      "participant_approved",
+      "analysis_started",
+      "analysis_completed",
+      "analysis_blocked",
+    ]),
+    revision: z.number().int().nonnegative(),
+    proposalVersion: z.number().int().positive(),
+    occurredAt: z.iso.datetime(),
+    actorId: id.nullable(),
+    summary: z.string().trim().min(1).max(300),
+    category: CategorySchema.nullable(),
+    visibility: z.enum(["group", "private"]).default("group"),
+    targetId: id.nullable().default(null),
+  })
+  .strict();
+export type RoomActivity = z.infer<typeof RoomActivitySchema>;
+export const ReadinessHistorySchema = z
+  .object({
+    id,
+    revision: z.number().int().nonnegative(),
+    proposalVersion: z.number().int().positive(),
+    occurredAt: z.iso.datetime(),
+    readiness: ReadinessSchema,
+    explanation: z.string().trim().min(1).max(500),
+  })
+  .strict();
 export const RoomSchema = z
   .object({
     schemaVersion: z.literal(1),
     id,
+    eventSequence: z.number().int().nonnegative().default(0),
+    publicSequence: z.number().int().nonnegative().default(0),
+    privateSequences: z.record(id, z.number().int().nonnegative()).default({}),
+    privateRevisions: z.record(id, z.number().int().nonnegative()).default({}),
     revision: z.number().int().nonnegative(),
+    analysisStatus: z.enum(["idle", "queued", "running", "blocked", "complete"]).default("idle"),
     eventType: z.string().min(1).max(80),
+    syntheticDemo: z.boolean().default(false),
     // Event attendance counts are separate from active room membership. They
     // are optional so existing schemaVersion 1 snapshots remain compatible.
     estimatedAttendeeCount: z.number().int().nonnegative().nullable().optional(),
@@ -294,13 +396,13 @@ export const RoomSchema = z
     proposal: OptionSchema,
     proposalVersion: z.number().int().positive(),
     approvals: z.record(id, z.number().int().positive()),
-    pendingInputs: z
-      .array(
-        z
-          .object({ id, actorId: id, text: z.string().min(1).max(4000) })
-          .strict(),
-      )
-      .max(50),
+    pendingInputs: z.array(PendingRoomInputSchema).max(50),
+    privatePendingInputs: z.array(PendingRoomInputSchema).max(100).default([]),
+    responses: z.array(RoomResponseSchema).max(500).default([]),
+    activity: z.array(RoomActivitySchema).max(100).default([]),
+    privateAnalysisStatus: z.record(id, z.enum(["queued", "running", "blocked", "complete"])).default({}),
+    privateAnalyses: z.array(PrivateAnalysisSchema).max(100).default([]),
+    readinessHistory: z.array(ReadinessHistorySchema).max(30).default([]),
     questions: z.array(QuestionSchema).max(8),
     options: z.array(OptionSchema).max(8),
     readiness: ReadinessSchema.nullable(),
@@ -352,6 +454,12 @@ export interface AgentGateway {
   mode: "MOCK" | "META";
   promptVersion?: string;
   promptHashes?: Partial<Record<Role, string>>;
+  // Live adapters hold the complete bounded cycle allowance before its first
+  // request. Unused capacity is released when the cycle settles.
+  openCycle?(maxRequests: number): Promise<{
+    call: AgentGateway["call"];
+    release(): Promise<void>;
+  }>;
   call(role: Role, input: unknown, context: CallContext): Promise<AgentResult>;
 }
 // Extension boundary only. No image generation or model request is made here.

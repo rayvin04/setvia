@@ -145,13 +145,13 @@ export function App() {
         </nav>
         <div className="rail-spacer" />
         <div className="local-card"><span className="local-dot" /> Local only <small>Private reports stay on this machine.</small></div>
-        <div className="rail-foot">MUSE SPARK · STANDARD<br />Synthetic evaluation workspace</div>
+        <div className="rail-foot">MUSE SPARK · STANDARD<br />Synthetic and live evaluations</div>
       </aside>
 
       <main className="main" id="top">
         <header className="topbar">
           <div className="breadcrumbs"><span>Setvia Lab</span><i>/</i><strong>{tabLabel(tab)}</strong></div>
-          <div className="top-actions"><span className="local-pill"><span className="local-dot" /> Local only</span><button className="icon-button" type="button" onClick={() => void refreshRuns()} aria-label="Refresh run history" title="Refresh history"><RefreshCw size={16} strokeWidth={1.8} aria-hidden="true" /></button></div>
+          <div className="top-actions"><span className="local-pill"><span className="local-dot" /> Local only</span><button className={`icon-button ${loading ? "is-refreshing" : ""}`} type="button" onClick={() => void refreshRuns()} disabled={loading} aria-label={loading ? "Refreshing run history" : "Refresh run history"} title={loading ? "Refreshing history" : "Refresh history"}><RefreshCw size={16} strokeWidth={1.8} aria-hidden="true" /></button></div>
         </header>
 
         <div className="page-head">
@@ -172,7 +172,7 @@ export function App() {
         <div className="workbench">
           <section className="history-panel panel">
             <div className="panel-heading"><h2>Run archive</h2><span className="count" aria-label={`${runs.length} saved runs`}>{runs.length.toString().padStart(2, "0")}</span></div>
-            <p className="panel-copy">Synthetic runs and private reviews.</p>
+            <p className="panel-copy">Mock and live runs, with private human reviews.</p>
             <div className="run-list" aria-label="Run history">
               {loading && <div className="empty-state">Reading local history…</div>}
               {!loading && runs.length === 0 && <div className="empty-state"><strong>No run reports yet.</strong><span>Run the mock suite or a pre-approved live evaluation to populate this workspace.</span></div>}

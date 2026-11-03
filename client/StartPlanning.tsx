@@ -14,6 +14,7 @@ import {
 import { PlanApiError, extractPlanFromImage, extractPlanFromText } from "./plan-api";
 import { clearLocalDraft, loadLocalDraft, saveLocalDraft } from "./draft-store";
 import { ProxyStatementSchema, type PlanExtraction, type ProxyStatement } from "../shared/plan-schema.js";
+import { RoomLaunch } from "./dashboard/RoomLaunch";
 
 type SourceMode = "text" | "image";
 type ProxyForm = Omit<ProxyStatement, "confirmedByParticipant"> & { confirmedByParticipant: boolean };
@@ -494,7 +495,8 @@ export function StartPlanning() {
                 </li>)}</ul>}
               </details>
             </section>
-            <p className="planning-footnote">This creates a local planning draft only. Shared rooms and group decisions are part of a later phase.</p>
+            <RoomLaunch draft={draft} />
+            <p className="planning-footnote">Your draft stays in this browser until you choose to create a live room. Synthetic dashboard previews never call Meta.</p>
           </div>
         </form>
         <div className="planning-live-status" role="status" aria-live="polite" aria-atomic="true">

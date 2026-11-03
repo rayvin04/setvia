@@ -2,7 +2,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { resolve } from "node:path";
 import { JsonPersistence, StateError } from "./store.js";
-import { CycleSchema, type Cycle, type Readiness } from "./contracts.js";
+import { CycleSchema, type Cycle, type Readiness, type Role } from "./contracts.js";
 import type { GroundTruth, RubricDimension, ScenarioId } from "./scenarios.js";
 
 export interface LiveAttemptRecord {
@@ -11,7 +11,7 @@ export interface LiveAttemptRecord {
   scenarioId: string;
   model: "muse-spark-1.3";
   promptVersion: string;
-  role: "Listener" | "Judge" | "Negotiator" | "Question Strategist" | "Speaker";
+  role: Role | "Scenario Generator";
   requestHash: string;
   status: "reserved" | "response_received" | "transport_error" | "usage_recorded";
   httpStatus: number | null;
@@ -71,7 +71,15 @@ export interface LabRecord {
   cycle: Cycle;
   expectedOutcome?: Cycle["outcome"];
   passed?: boolean;
-  scenarioId?: ScenarioId;
+  scenarioId?: ScenarioId | "F";
+  roomIntegration?: {
+    sourceRoomHash: string;
+    eventType: string;
+    publicRevision: number;
+    proposalVersion: number;
+    privateOwnerLabel?: string;
+    privateCandidates?: Array<{ key: string; value: unknown }>;
+  };
   simulation?: true;
   participantCount?: number;
   model?: string | null;

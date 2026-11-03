@@ -24,7 +24,7 @@ export function constraintPasses(
 }
 export function violations(room: Room, option: PlanOption): Constraint[] {
   return room.constraints.filter(
-    (c) => c.hard && !constraintPasses(c, option.values),
+    (c) => c.visibility === "group" && c.hard && !constraintPasses(c, option.values),
   );
 }
 export function explicitViolations(
@@ -51,7 +51,7 @@ export function calculateReadiness(room: Room, findings: Finding[]): Readiness {
         status: "not_applicable" as const,
       };
     const constraints = room.constraints.filter(
-      (c) => c.category === policy.category,
+      (c) => c.visibility === "group" && c.category === policy.category,
     );
     const evidence = policy.requiredKeys.map((key) => {
       const facts = visible.filter((f) => f.key === key && f.value !== null);

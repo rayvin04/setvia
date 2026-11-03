@@ -52,4 +52,5 @@ Thumbs.db
 
 *.tsbuildinfo
 .playwright-cli/
+.setvia-test-temp/
 
