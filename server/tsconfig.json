@@ -18,6 +18,8 @@
     "../scripts/review-lab.ts",
     "../scripts/live-budget-journal.ts",
     "../scripts/live-budget-journal.test.ts",
+    "../scripts/serve-room-offline.ts",
+    "../scripts/verify-room-contracts.ts",
     "../lab-ui/server.ts"
   ]
 }

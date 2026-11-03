@@ -124,6 +124,21 @@ test("text route calls the existing structured extractor and returns a validated
   });
 });
 
+test("standalone extraction cannot bypass the bounded room runtime's inference ledgers", async () => {
+  const { client, requests } = mockClient();
+  await withServer(createApp({ client, rooms: {} as never }), async (baseUrl) => {
+    for (const path of ["text", "image"]) {
+      const response = await fetch(`${baseUrl}/api/ai/extract/${path}`, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ description: "Do not bypass a room's exhausted budget." }),
+      });
+      assert.equal(response.status, 503);
+      assert.match(String((await responseBody(response)).error), /Enter the starting plan manually/);
+    }
+    assert.equal(requests.length, 0);
+  });
+});
+
 test("image route validates and sends an in-memory image block to the extractor", async () => {
   const { client, requests } = mockClient();
   const bytes = new Uint8Array(

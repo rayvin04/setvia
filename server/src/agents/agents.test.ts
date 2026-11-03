@@ -5,7 +5,7 @@ import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve, sep } from "node:path";
 import { Categories, RoleSchemas, RoomSchema, type Question } from "./contracts.js";
-import { AgentEngine, MOCK_LIMITS } from "./engine.js";
+import { AgentEngine, MOCK_LIMITS, validateJudge } from "./engine.js";
 import {
   fixture,
   judge,
@@ -958,6 +958,20 @@ test("Judge may cite another participant's current shared response, which remain
   const result = await f.engine.run(f.roomId, f.auth);
   assert.equal(result.outcome, "COMPLETED");
   assert.equal(result.finalEvaluation?.findings[0]?.status, "unverified");
+});
+
+test("the Judge must cite a current response's opaque evidence ID rather than its raw message UUID", async () => {
+  const f = await fixture([]);
+  const messageId = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee";
+  let room = await f.store.read(f.roomId);
+  await f.engine.rooms.submit(f.roomId, f.auth, {
+    messageId, expectedRevision: room.revision, proposalVersion: room.proposalVersion,
+    text: "A synthetic group statement", visibility: "group", questionId: null, replyOption: null,
+  });
+  room = await f.store.read(f.roomId);
+  assert.throws(() => validateJudge(room, judge({ findings: [finding({ evidenceIds: [messageId] })] }), [], []), /UNKNOWN_EVIDENCE/);
+  assert.doesNotThrow(() => validateJudge(room, judge({ findings: [finding({ evidenceIds: [groupResponseEvidenceId(messageId)] })] }), [], []));
+  assert.equal(JSON.stringify(sharedContext(room)).includes(messageId), false);
 });
 
 test("Listener cannot use a queue item as evidence for another participant's response", async () => {

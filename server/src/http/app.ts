@@ -345,6 +345,15 @@ export function createApp(options: AppOptions) {
     } catch (error) { sendRoomFailure(response, error); }
   });
 
+  app.use("/api/ai", (_request, response, next) => {
+    // The standalone extractor does not reserve from the room evaluation
+    // ledgers. A valid server key must not make that a path around live caps.
+    if (options.rooms) {
+      response.status(503).json({ error: "Planning extraction is unavailable during the bounded room evaluation. Enter the starting plan manually." });
+      return;
+    }
+    next();
+  });
   app.use("/api/ai", createRateLimiter(limit, windowMs, now));
 
   app.post(

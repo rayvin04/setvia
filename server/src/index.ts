@@ -33,7 +33,7 @@ const runtime = liveEnabled
   ? await createLocalRoomRuntime({
       privateRoot,
       publicRoot: appRoot,
-      promptVersion: process.env.SETVIA_PROMPT_VERSION ?? "agents-v5",
+      promptVersion: process.env.SETVIA_PROMPT_VERSION ?? "agents-v7",
       syntheticDemo: process.env.SETVIA_SYNTHETIC_DEMO === "1",
     })
   : undefined;

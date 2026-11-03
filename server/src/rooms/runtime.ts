@@ -579,6 +579,7 @@ export class RoomRuntime {
 }
 
 export async function createRoomMetaGateway(privateRoot: string, promptVersion: string, onHttpEvent: (event: MetaHttpEvent) => Promise<void>) {
+  if (!/^agents-v[0-9]+$/.test(promptVersion)) throw new StateError("INVALID_PROMPT_VERSION");
   const prompts = {} as Record<Role, string>;
   for (const role of Roles) {
     const file = role === "Question Strategist" ? "question-strategist.txt" : role.toLowerCase() + ".txt";
@@ -608,7 +609,7 @@ export async function createLocalRoomRuntime(options: {
     journal = await LiveBudgetJournal.open(privateRoot, options.publicRoot, ["F"]);
     const runBudget = await IntegrationRunBudget.open(resolve(privateRoot, "room-state", "integration-budget.ndjson"));
     budget = runBudget;
-    const promptVersion = options.promptVersion ?? "agents-v5";
+    const promptVersion = options.promptVersion ?? "agents-v7";
     const base = await createRoomMetaGateway(privateRoot, promptVersion, (event) => journal!.handle(event, "F"));
     const gateway: AgentGateway = {
       mode: base.mode,
