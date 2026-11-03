@@ -1,5 +1,25 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import {
+  validatePlanningMessage,
+  PlanningMessageError,
+  planningMessageErrorText,
+  MAX_PLANNING_MESSAGE_LENGTH,
+  type PlanningMessage,
+} from "../../shared/planning-message.js";
+import { createPreviewInteractions } from "./preview-interactions.js";
+import {
+  currentQuestion,
+  questionQuickReplies,
+  virtualKeyboardInset,
+} from "./composer-model.js";
+import {
+  MessageComposer,
+  type MessageComposerProps,
+} from "./MessageComposer.js";
+import { PlanPanel } from "./PlanningPanels.js";
 import { createPreviewFixture } from "../../server/src/dashboard/fixtures.js";
 import {
   DashboardSnapshotSchema,
@@ -14,6 +34,327 @@ import {
 } from "./model.js";
 
 const beach = createPreviewFixture("beach");
+function messageFor(
+  snapshot: Awaited<typeof beach>["initial"]["alex"],
+  overrides: Partial<PlanningMessage> = {},
+): PlanningMessage {
+  const room = snapshot!.room;
+  return {
+    roomId: room.roomId,
+    viewerId: room.viewerId,
+    expectedRevision: room.revision,
+    proposalVersion: room.proposalVersion,
+    questionId: null,
+    replyOption: null,
+    visibility: "private",
+    text: "I can bring the first-aid kit.",
+    ...overrides,
+  };
+}
+
+test("composer validates trimmed nonempty messages, lengths and current viewer/version leases", async () => {
+  const snapshot = (await beach).initial.alex!;
+  assert.equal(
+    validatePlanningMessage(
+      snapshot.room,
+      messageFor(snapshot, { text: "  My budget is ₱500.  " }),
+    ).text,
+    "My budget is ₱500.",
+  );
+  for (const extra of [
+    { text: " \n " },
+    { text: "x".repeat(MAX_PLANNING_MESSAGE_LENGTH + 1) },
+    { viewerId: "another_person" },
+    { roomId: "another_room" },
+    { proposalVersion: snapshot.room.proposalVersion - 1 },
+    { expectedRevision: snapshot.room.revision - 1 },
+  ])
+    assert.throws(
+      () => validatePlanningMessage(snapshot.room, messageFor(snapshot, extra)),
+      PlanningMessageError,
+    );
+});
+test("group preview contributions are projected to room members without inventing approval or readiness", async () => {
+  const frames = await beach;
+  const mika = frames.initial.mika!;
+  const original = structuredClone(mika);
+  const adapter = createPreviewInteractions({
+    createId: () => "contribution_1",
+  });
+  const receipt = await adapter.submit(
+    messageFor(mika, {
+      visibility: "group",
+      text: "We forgot transportation.",
+    }),
+    () => mika,
+    new AbortController().signal,
+  );
+  assert.equal(receipt.mode, "preview");
+  const alex = adapter.project(frames.initial.alex!);
+  assert.equal(alex.contributions[0].text, "We forgot transportation.");
+  assert.equal(responseCount(alex.snapshot), 4);
+  assert.deepEqual(alex.snapshot.room.readiness, mika.room.readiness);
+  assert.equal(alex.snapshot.room.approvalCount, 2);
+  assert.deepEqual(mika, original);
+});
+test("private preview responses never enter another viewer's contribution or activity projection", async () => {
+  const frames = await beach;
+  const mika = frames.initial.mika!;
+  const adapter = createPreviewInteractions();
+  await adapter.submit(
+    messageFor(mika, { text: "PRIVATE_COMPOSER_CANARY" }),
+    () => mika,
+    new AbortController().signal,
+  );
+  assert.equal(
+    adapter.project(mika).contributions[0].text,
+    "PRIVATE_COMPOSER_CANARY",
+  );
+  assert.doesNotMatch(
+    JSON.stringify(adapter.project(frames.initial.alex!)),
+    /PRIVATE_COMPOSER_CANARY/,
+  );
+  assert.equal(
+    adapter.project({
+      ...frames.initial.alex!,
+      source: "room",
+      responseTracking: "unavailable",
+      responses: [],
+    }).contributions.length,
+    0,
+  );
+});
+test("answering a group question acknowledges only this member and does not approve the proposal", async () => {
+  const frames = await beach;
+  const alex = frames.initial.alex!;
+  const q = currentQuestion(alex.room)!;
+  const adapter = createPreviewInteractions();
+  await adapter.submit(
+    messageFor(alex, {
+      questionId: q.id,
+      replyOption: q.options[0],
+      text: q.options[0],
+    }),
+    () => alex,
+    new AbortController().signal,
+  );
+  assert.equal(currentQuestion(adapter.project(alex).snapshot.room), undefined);
+  assert.equal(
+    currentQuestion(adapter.project(frames.initial.sam!).snapshot.room)?.id,
+    q.id,
+  );
+  assert.equal(adapter.project(alex).snapshot.room.approvalCount, 2);
+  assert.equal(adapter.project(alex).snapshot.room.readiness?.percentage, 72);
+});
+test("private targeted questions require the recipient and private audience", async () => {
+  const frames = await createPreviewFixture("family");
+  const alex = frames.initial.alex!;
+  const q = currentQuestion(alex.room)!;
+  const input = messageFor(alex, {
+    questionId: q.id,
+    text: "I need a step-free entrance.",
+  });
+  assert.equal(validatePlanningMessage(alex.room, input).visibility, "private");
+  assert.throws(
+    () => validatePlanningMessage(alex.room, { ...input, visibility: "group" }),
+    /private answer/,
+  );
+  assert.throws(
+    () =>
+      validatePlanningMessage(frames.initial.sam!.room, {
+        ...input,
+        viewerId: frames.initial.sam!.room.viewerId,
+      }),
+    /no longer available/,
+  );
+  assert.throws(
+    () =>
+      validatePlanningMessage(
+        alex.room,
+        { ...input, visibility: "group", questionId: null },
+        ["private"],
+      ),
+    /visibility is unavailable/,
+  );
+});
+test("preview submission preserves multiline text and reset removes temporary contributions", async () => {
+  const snapshot = (await beach).initial.alex!;
+  const adapter = createPreviewInteractions();
+  const text =
+    "Saturday does not work.\nMy budget is ₱500.\nI can help with food.";
+  await adapter.submit(
+    messageFor(snapshot, { text }),
+    () => snapshot,
+    new AbortController().signal,
+  );
+  assert.equal(adapter.project(snapshot).contributions[0].text, text);
+  adapter.reset(snapshot.room.roomId);
+  assert.deepEqual(adapter.project(snapshot).contributions, []);
+});
+test("pending preview messages revalidate revision and participant before recording", async () => {
+  const frames = await beach;
+  let current = frames.initial.alex!;
+  let release!: () => void;
+  const adapter = createPreviewInteractions({
+    beforeRecord: () =>
+      new Promise<void>((resolve) => {
+        release = resolve;
+      }),
+  });
+  const promise = adapter.submit(
+    messageFor(current),
+    () => current,
+    new AbortController().signal,
+  );
+  assert.equal(adapter.project(current).contributions.length, 0);
+  current = frames.updated.alex!;
+  release();
+  await assert.rejects(promise, /proposal changed/);
+  assert.equal(adapter.project(current).contributions.length, 0);
+});
+test("switching viewers or aborting a pending response cannot record under a foreign identity", async () => {
+  const frames = await beach;
+  let current = frames.initial.alex!;
+  let release!: () => void;
+  const adapter = createPreviewInteractions({
+    beforeRecord: () =>
+      new Promise<void>((resolve) => {
+        release = resolve;
+      }),
+  });
+  const signal = new AbortController();
+  const promise = adapter.submit(
+    messageFor(current),
+    () => current,
+    signal.signal,
+  );
+  current = frames.initial.sam!;
+  release();
+  await assert.rejects(promise, /participant changed/);
+  const aborted = new AbortController();
+  const cancelled = adapter.submit(
+    messageFor(current),
+    () => current,
+    aborted.signal,
+  );
+  aborted.abort();
+  release();
+  await assert.rejects(cancelled);
+  assert.equal(adapter.project(current).contributions.length, 0);
+});
+test("preview failures are recoverable and unknown errors never expose their payload", async () => {
+  const snapshot = (await beach).initial.alex!;
+  const adapter = createPreviewInteractions({ limit: 1 });
+  await adapter.submit(
+    messageFor(snapshot),
+    () => snapshot,
+    new AbortController().signal,
+  );
+  await assert.rejects(
+    adapter.submit(
+      messageFor(snapshot),
+      () => snapshot,
+      new AbortController().signal,
+    ),
+    /Reset the preview/,
+  );
+  assert.doesNotMatch(
+    planningMessageErrorText(new Error("PRIVATE_ERROR_PAYLOAD")),
+    /PRIVATE_ERROR_PAYLOAD/,
+  );
+  adapter.reset(snapshot.room.roomId);
+  await adapter.submit(
+    messageFor(snapshot),
+    () => snapshot,
+    new AbortController().signal,
+  );
+  assert.equal(adapter.project(snapshot).contributions.length, 1);
+});
+test("quick replies retain validated arbitrary choices and make alternative input or detail review explicit", async () => {
+  const snapshot = (await beach).initial.alex!;
+  const room = snapshot.room;
+  const q = {
+    ...currentQuestion(room)!,
+    options: [
+      "₱500",
+      "Monday",
+      "Reject",
+      "Suggest another time",
+      "Review details",
+    ],
+  };
+  const replies = questionQuickReplies(q);
+  assert.deepEqual(
+    replies.map((reply) => reply.label),
+    q.options,
+  );
+  assert.deepEqual(
+    replies.map((reply) => reply.intent),
+    ["submit", "submit", "submit", "compose", "review"],
+  );
+  assert.throws(
+    () =>
+      validatePlanningMessage(
+        { ...room, questions: [q] },
+        messageFor(snapshot, {
+          questionId: q.id,
+          replyOption: "Unvalidated answer",
+        }),
+      ),
+    /reply option changed/,
+  );
+});
+test("composer renders labeled pending, disabled and safe error states", async () => {
+  const room = (await beach).initial.alex!.room;
+  const props: MessageComposerProps = {
+    roomId: room.roomId,
+    viewer: room.participants[0],
+    revision: room.revision,
+    proposalVersion: room.proposalVersion,
+    question: currentQuestion(room),
+    replies: questionQuickReplies(currentQuestion(room)),
+    allowedVisibilities: ["private", "group"],
+    onSubmit: async () => {
+      throw new Error("not called during render");
+    },
+    mode: "preview",
+  };
+  const pending = renderToStaticMarkup(
+    createElement(MessageComposer, { ...props, pending: true }),
+  );
+  assert.match(pending, /aria-busy="true"/);
+  assert.match(pending, /Recording preview response/);
+  assert.match(pending, /disabled=""/);
+  assert.match(pending, /maxLength="1000"/i);
+  const error = renderToStaticMarkup(
+    createElement(MessageComposer, {
+      ...props,
+      disabled: true,
+      disabledReason: "Wait for this update.",
+      error: "Your response wasn’t recorded. Please try again.",
+    }),
+  );
+  assert.match(error, /role="alert"/);
+  assert.match(error, /aria-describedby=/);
+  assert.match(error, /Wait for this update/);
+  assert.match(error, /Message visibility/);
+});
+test("event attendees remain separate from response and approval denominators", async () => {
+  const snapshot = structuredClone((await beach).initial.alex!);
+  snapshot.room.proposal.values.expectedAttendees = 150;
+  const html = renderToStaticMarkup(createElement(PlanPanel, { snapshot }));
+  assert.match(html, /150 expected/);
+  assert.match(html, /separate from room members/);
+  assert.equal(snapshot.room.participants.length, 4);
+  assert.equal(responseCount(snapshot), 3);
+  assert.equal(snapshot.room.approvalCount, 2);
+});
+test("visual viewport offsets keep a mobile composer above an overlay keyboard", () => {
+  assert.equal(virtualKeyboardInset(780, 400, 0), 380);
+  assert.equal(virtualKeyboardInset(780, 400, 50), 330);
+  assert.equal(virtualKeyboardInset(400, 400, 0), 0);
+  assert.equal(virtualKeyboardInset(780, 900, 0), 0);
+});
 test("dashboard contracts support the foundation's 58-person scenario", async () => {
   const snapshot = structuredClone((await beach).initial.alex!);
   const original = snapshot.room.participants[0];

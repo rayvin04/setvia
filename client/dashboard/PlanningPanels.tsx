@@ -114,10 +114,6 @@ export function ParticipantsPanel({
           credentials.
         </p>
       </div>
-      <p className="privacy-note">
-        <LockKeyhole size={13} aria-hidden="true" />
-        Raw responses stay private.
-      </p>
     </section>
   );
 }
@@ -140,13 +136,6 @@ export function ResponsesPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
               ? "Responses unavailable"
               : `${count}/${total} Responded`}
           </h2>
-          <p>
-            {count === total
-              ? "Everyone has shared their input."
-              : count === null
-                ? "Response status is not available yet."
-                : "A little more input. A better plan."}
-          </p>
         </div>
       </div>
       {count !== null ? (
@@ -270,11 +259,18 @@ export function PlanPanel({
     { icon: Wallet, label: "Budget", value: budget },
     {
       icon: values.agenda ? ListChecks : CarFront,
-      label: values.agenda ? "Agenda" : "Getting there",
+      label: values.agenda ? "Agenda" : "Travel",
       value: values.agenda ?? values.transport,
     },
     { icon: Backpack, label: "Bring along", value: values.preparation },
   ];
+  const expectedAttendees = values.expectedAttendees ?? values.attendeeCount;
+  if (typeof expectedAttendees === "number")
+    rows.push({
+      icon: Users,
+      label: "Event attendees",
+      value: `${expectedAttendees} expected · separate from room members`,
+    });
   const heading = compact ? "inline-plan-title" : "plan-title";
   return (
     <section
@@ -288,7 +284,11 @@ export function PlanPanel({
       {!compact ? <p className="plan-subtitle">{room.proposal.label}</p> : null}
       <dl className="plan-details">
         {rows
-          .filter((row) => row.value || !Object.keys(values).length)
+          .filter(
+            (row) =>
+              (row.value || !Object.keys(values).length) &&
+              (!compact || row.label !== "Bring along"),
+          )
           .map(({ icon: Icon, label, value }) => (
             <div key={label}>
               <dt>

@@ -5,16 +5,12 @@ import {
   ShieldAlert,
   CircleCheck,
   Minus,
-  MessageCircle,
-  ThumbsUp,
-  Radio,
-  Users,
   Mountain,
   TreePalm,
   CircleAlert,
 } from "lucide-react";
 import type { DashboardSnapshot } from "../../shared/dashboard";
-import { readinessChange, readinessPresentation, responseCount } from "./model";
+import { readinessChange, readinessPresentation } from "./model";
 import { PlanPanel } from "./PlanningPanels";
 
 function AnimatedScore({
@@ -52,7 +48,13 @@ function AnimatedScore({
   );
 }
 
-export function ReadinessPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
+export function ReadinessPanel({
+  snapshot,
+  compact = false,
+}: {
+  snapshot: DashboardSnapshot;
+  compact?: boolean;
+}) {
   const { room } = snapshot;
   const state = readinessPresentation(room);
   const value = room.readiness?.percentage ?? null;
@@ -60,33 +62,34 @@ export function ReadinessPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
     room.readiness && room.readiness.delta !== null && !state.historical
       ? room.readiness.percentage - room.readiness.delta
       : null;
-  const responded = responseCount(snapshot);
   const reduced = useReducedMotion();
   const unresolved = room.findings.filter((f) => f.status !== "resolved");
   const critical = unresolved.filter((f) => f.severity === "critical");
   return (
     <section
-      className={`readiness-panel dashboard-panel tone-${state.tone}`}
+      className={`readiness-panel dashboard-panel tone-${state.tone}${compact ? " is-compact" : ""}${state.historical ? " is-historical" : ""}`}
       aria-labelledby="readiness-title"
       data-testid="readiness-panel"
     >
-      <div className="room-panel-title">
-        <span>
-          {room.eventType === "Mountain hike" ||
-          room.eventType === "Outdoor group project" ? (
-            <Mountain size={28} aria-hidden="true" />
-          ) : (
-            <TreePalm size={28} aria-hidden="true" />
-          )}
-        </span>
-        <div>
-          <h1>{room.proposal.label}</h1>
-          <p>
-            {room.eventType} · Proposal v{room.proposalVersion} ·{" "}
-            {room.participants.length} members
-          </p>
+      {!compact ? (
+        <div className="room-panel-title">
+          <span>
+            {room.eventType === "Mountain hike" ||
+            room.eventType === "Outdoor group project" ? (
+              <Mountain size={28} aria-hidden="true" />
+            ) : (
+              <TreePalm size={28} aria-hidden="true" />
+            )}
+          </span>
+          <div>
+            <h1>{room.proposal.label}</h1>
+            <p>
+              {room.eventType} · Proposal v{room.proposalVersion} ·{" "}
+              {room.participants.length} members
+            </p>
+          </div>
         </div>
-      </div>
+      ) : null}
       <div className="readiness-and-plan">
         <div className="gauge-column">
           <div className="panel-heading">
@@ -109,6 +112,7 @@ export function ReadinessPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
           ) : null}
           <div
             className="readiness-gauge"
+            data-digits={String(value ?? "—").length}
             role="img"
             aria-label={
               value === null
@@ -212,89 +216,62 @@ export function ReadinessPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
           </ul>
         </div>
       ) : null}
-      <p className="readiness-description">{state.detail}</p>
-      <div className="readiness-change" data-testid="readiness-change">
-        {previous !== null ? (
-          <>
-            <span className="change-score">
-              {(room.readiness?.delta ?? 0) > 0 ? (
-                <ArrowUpRight size={16} aria-hidden="true" />
-              ) : (
-                <Minus size={16} aria-hidden="true" />
-              )}
-              {previous}% <span aria-hidden="true">→</span> {value}%
-            </span>
-            <span>
-              {room.readiness?.delta
-                ? `${room.readiness.delta > 0 ? "+" : ""}${room.readiness.delta} points`
-                : "Score unchanged"}
-            </span>
-          </>
-        ) : (
-          <>
-            <span className="change-score">
-              {value === null
-                ? "Awaiting the first check"
-                : state.historical
-                  ? "Fresh evaluation needed"
-                  : "First evaluation"}
-            </span>
-            <span>
-              {value === null ? "No score yet" : "Checked information"}
-            </span>
-          </>
-        )}
-      </div>
-      <div className="readiness-counters mobile-readiness-counters">
-        <div>
-          <MessageCircle size={16} aria-hidden="true" />
-          <span>
-            <strong>
-              {responded === null
-                ? "—"
-                : `${responded} / ${room.participants.length}`}
-            </strong>
-            <span>
-              {responded === null
-                ? "Responses unavailable"
-                : `Responded to v${room.proposalVersion}`}
-            </span>
-          </span>
+      <div className="readiness-foot">
+        <div className="readiness-change" data-testid="readiness-change">
+          {previous !== null ? (
+            <>
+              <span className="change-score">
+                {(room.readiness?.delta ?? 0) > 0 ? (
+                  <ArrowUpRight size={16} aria-hidden="true" />
+                ) : (
+                  <Minus size={16} aria-hidden="true" />
+                )}
+                {previous}% <span aria-hidden="true">→</span> {value}%
+              </span>
+              <span>
+                {room.readiness?.delta
+                  ? `${room.readiness.delta > 0 ? "+" : ""}${room.readiness.delta} points`
+                  : "Score unchanged"}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="change-score">
+                {value === null
+                  ? "Awaiting the first check"
+                  : state.historical
+                    ? "Fresh evaluation needed"
+                    : "First evaluation"}
+              </span>
+            </>
+          )}
         </div>
-        <div>
-          <ThumbsUp size={16} aria-hidden="true" />
-          <span>
-            <strong>
-              {room.approvalCount} / {room.participants.length}
-            </strong>
-            <span>Approved v{room.proposalVersion}</span>
-          </span>
-        </div>
-      </div>
-      {critical.length ? (
-        <div className="critical-blocker" role="status">
-          <ShieldAlert size={18} aria-hidden="true" />
-          <div>
-            <strong>Resolve {critical[0].category} before proceeding.</strong>
-            <p>{critical[0].message}</p>
+        {critical.length ? (
+          <div className="critical-blocker" role="status">
+            <ShieldAlert size={18} aria-hidden="true" />
+            <div>
+              <strong>Resolve {critical[0].category} before proceeding.</strong>
+              <p>{critical[0].message}</p>
+            </div>
           </div>
-        </div>
-      ) : null}
-      <details className="readiness-explanation">
-        <summary>Why this score?</summary>
-        <p>{readinessChange(snapshot)}</p>
-        {unresolved.length ? (
-          <p>
-            {unresolved.length} unresolved finding
-            {unresolved.length === 1 ? "" : "s"}. Review the Reality Checks for
-            required actions.
-          </p>
         ) : null}
-        <p>
-          Readiness checks available information. Approval belongs to this exact
-          proposal version.
-        </p>
-      </details>
+        <details className="readiness-explanation">
+          <summary>Why this score?</summary>
+          <p>{state.detail}</p>
+          <p>{readinessChange(snapshot)}</p>
+          {unresolved.length ? (
+            <p>
+              {unresolved.length} unresolved finding
+              {unresolved.length === 1 ? "" : "s"}. Review the Reality Checks
+              for required actions.
+            </p>
+          ) : null}
+          <p>
+            Readiness checks available information. Approval belongs to this
+            exact proposal version.
+          </p>
+        </details>
+      </div>
     </section>
   );
 }

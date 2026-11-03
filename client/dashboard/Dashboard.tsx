@@ -1,23 +1,33 @@
-import { useEffect, useRef, useState } from "react";
-import type { KeyboardEvent, MouseEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
+import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useReducedMotion } from "motion/react";
 import {
-  ArrowLeft,
+  Activity,
   ArrowRight,
-  RotateCcw,
-  Play,
-  FlaskConical,
+  CalendarDays,
+  ChevronDown,
+  ChevronRight,
   CircleAlert,
   ClipboardList,
-  Users,
-  ShieldCheck,
-  Activity,
-  LockKeyhole,
-  ChevronDown,
+  FlaskConical,
   Home,
-  CalendarDays,
+  LayoutDashboard,
   Layers,
+  LockKeyhole,
+  Play,
+  RotateCcw,
+  Settings2,
+  ShieldCheck,
+  Users,
 } from "lucide-react";
 import { Wordmark } from "../components";
 import { Avatar, Mascot } from "../Mascot";
@@ -26,19 +36,32 @@ import {
   type DashboardAction,
   type DashboardSnapshot,
 } from "../../shared/dashboard";
+import type { SubmitPlanningMessage } from "../../shared/planning-message";
 import { ReadinessPanel } from "./ReadinessPanel";
 import {
   ActivityPanel,
   DecisionCards,
+  LocationPanel,
   ParticipantsPanel,
   PlanPanel,
   ProgressPanel,
   ResponsesPanel,
-  LocationPanel,
 } from "./PlanningPanels";
 import { SpeakerPanel } from "./SpeakerPanel";
 import { RealityChecks } from "./RealityChecks";
-import { acceptDashboardUpdate } from "./model";
+import { MessageComposer, type MessageComposerHandle } from "./MessageComposer";
+import { PreviewContributions } from "./PreviewContributions";
+import {
+  createPreviewInteractions,
+  type PreviewContribution,
+} from "./preview-interactions";
+import { currentQuestion, questionQuickReplies } from "./composer-model";
+import {
+  acceptDashboardUpdate,
+  categoryPresentation,
+  responseCount,
+} from "./model";
+import { Categories } from "../../server/src/agents/contracts";
 import {
   fetchPreview,
   scenarios,
@@ -48,14 +71,27 @@ import {
   type ViewerId,
 } from "./api";
 import "./dashboard.css";
+import "./dashboard-refinement.css";
 
 const sections = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "plan", label: "Plan", icon: ClipboardList },
   { id: "people", label: "People", icon: Users },
   { id: "issues", label: "Issues", icon: ShieldCheck },
   { id: "activity", label: "Activity", icon: Activity },
 ] as const;
 type SectionId = (typeof sections)[number]["id"];
+const compactQuery = "(max-width: 1149px)";
+function subscribeViewport(callback: () => void) {
+  const query = window.matchMedia(compactQuery);
+  query.addEventListener("change", callback);
+  return () => query.removeEventListener("change", callback);
+}
+function compactViewport() {
+  return (
+    typeof window !== "undefined" && window.matchMedia(compactQuery).matches
+  );
+}
 
 function MobileTabs({
   active,
@@ -75,7 +111,7 @@ function MobileTabs({
             : event.key === "End"
               ? sections.length - 1
               : -1;
-    if (next === -1) return;
+    if (next < 0) return;
     event.preventDefault();
     onChange(sections[next].id);
     document.getElementById(`dashboard-tab-${sections[next].id}`)?.focus();
@@ -96,11 +132,103 @@ function MobileTabs({
             onKeyDown={(event) => move(event, index)}
           >
             <section.icon size={17} aria-hidden="true" />
-            {section.label}
+            <span>{section.label}</span>
           </button>
         ))}
       </div>
     </nav>
+  );
+}
+
+function MobileIdentity({ snapshot }: { snapshot: DashboardSnapshot }) {
+  const responses = responseCount(snapshot);
+  return (
+    <div className="mobile-room-identity">
+      <h1>{snapshot.room.proposal.label}</h1>
+      <div>
+        <span className="identity-avatars" aria-hidden="true">
+          {snapshot.room.participants.slice(0, 3).map((person, index) => (
+            <Avatar key={person.id} index={index} />
+          ))}
+        </span>
+        <span>{snapshot.room.participants.length} room members</span>
+        <span>·</span>
+        <span>
+          {responses === null
+            ? "Responses unknown"
+            : `${responses}/${snapshot.room.participants.length} responded`}
+        </span>
+        <span className="identity-approvals">
+          {snapshot.room.approvalCount} approved v
+          {snapshot.room.proposalVersion}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function RealityOverview({
+  snapshot,
+  onOpen,
+}: {
+  snapshot: DashboardSnapshot;
+  onOpen: () => void;
+}) {
+  const states = Categories.map((category) => ({
+    category,
+    ...categoryPresentation(snapshot.room, category),
+  }));
+  const blocked = states.filter((state) => state.label === "Blocked").length;
+  const attention = states.filter(
+    (state) => state.label === "Needs attention",
+  ).length;
+  return (
+    <button
+      type="button"
+      className="reality-overview dashboard-panel"
+      onClick={onOpen}
+    >
+      <span>
+        <ShieldCheck size={17} aria-hidden="true" />
+        <strong>Reality Check</strong>
+        <span>
+          {blocked
+            ? `${blocked} blocked`
+            : attention
+              ? `${attention} need attention`
+              : snapshot.room.readiness
+                ? "Review the six checks"
+                : "Not evaluated"}
+        </span>
+        <ChevronRight size={15} aria-hidden="true" />
+      </span>
+      <span className="reality-overview-categories">
+        {states.map((state) => (
+          <span key={state.category} className={`tone-${state.tone}`}>
+            <i aria-hidden="true" />
+            {state.category.replace(" Check", "")}
+          </span>
+        ))}
+      </span>
+    </button>
+  );
+}
+
+function PlanningDetails({
+  snapshot,
+  onAction,
+  busy,
+}: {
+  snapshot: DashboardSnapshot;
+  onAction?: (action: DashboardAction) => void;
+  busy: boolean;
+}) {
+  return (
+    <div className="plan-detail-content">
+      <LocationPanel snapshot={snapshot} />
+      <DecisionCards snapshot={snapshot} onAction={onAction} busy={busy} />
+      <ProgressPanel snapshot={snapshot} />
+    </div>
   );
 }
 
@@ -111,6 +239,8 @@ export function PlanningDashboard({
   notice = "",
   activeSection,
   onSectionChange,
+  onFocusComposer,
+  contributions,
 }: {
   snapshot: DashboardSnapshot;
   onAction?: (action: DashboardAction) => void;
@@ -118,91 +248,119 @@ export function PlanningDashboard({
   notice?: string;
   activeSection: SectionId;
   onSectionChange: (section: SectionId) => void;
+  onFocusComposer: () => void;
+  contributions: PreviewContribution[];
 }) {
-  const reduced = useReducedMotion();
-  const review = (findingId: string) => {
-    onSectionChange("issues");
-    requestAnimationFrame(() => {
-      const finding = document.getElementById(`finding-${findingId}`);
-      const details = finding?.closest("details");
-      if (details) {
-        details.open = true;
-        details.querySelector("summary")?.focus();
-        details.scrollIntoView({
-          block: "center",
-          behavior: reduced ? "instant" : "smooth",
-        });
-      }
-    });
-  };
+  const compact = useSyncExternalStore(
+    subscribeViewport,
+    compactViewport,
+    () => false,
+  );
+  const ownLatest = contributions
+    .filter((entry) => entry.participantId === snapshot.room.viewerId)
+    .at(-1);
   return (
     <>
       <div className="dashboard-action-notice" role="status" aria-live="polite">
         {notice}
       </div>
-      <div className="dashboard-grid" data-tab={activeSection} aria-busy={busy}>
-        <div className="dashboard-column dashboard-left">
+      {compact ? (
+        <>
+          <MobileIdentity snapshot={snapshot} />
+          <MobileTabs active={activeSection} onChange={onSectionChange} />
           <div
-            className="dashboard-part people-section"
-            data-section="people"
-            id="dashboard-section-people"
+            className="mobile-dashboard-panel"
+            id={`dashboard-section-${activeSection}`}
             role="tabpanel"
-            aria-labelledby="dashboard-tab-people"
+            aria-labelledby={`dashboard-tab-${activeSection}`}
           >
-            <ParticipantsPanel snapshot={snapshot} />
-            <ResponsesPanel snapshot={snapshot} />
+            {activeSection === "overview" ? (
+              <div className="mobile-overview">
+                <ReadinessPanel snapshot={snapshot} compact />
+                <div className="overview-companion">
+                  <SpeakerPanel
+                    snapshot={snapshot}
+                    onRespond={onFocusComposer}
+                    reactionKey={ownLatest?.id}
+                  />
+                  <RealityOverview
+                    snapshot={snapshot}
+                    onOpen={() => onSectionChange("issues")}
+                  />
+                  <PreviewContributions contributions={contributions} latest />
+                </div>
+              </div>
+            ) : null}
+            {activeSection === "plan" ? (
+              <div className="mobile-plan-content">
+                <PlanPanel snapshot={snapshot} />
+                <PlanningDetails
+                  snapshot={snapshot}
+                  onAction={onAction}
+                  busy={busy}
+                />
+              </div>
+            ) : null}
+            {activeSection === "people" ? (
+              <div className="people-section">
+                <ParticipantsPanel snapshot={snapshot} />
+                <ResponsesPanel snapshot={snapshot} />
+              </div>
+            ) : null}
+            {activeSection === "issues" ? (
+              <RealityChecks room={snapshot.room} />
+            ) : null}
+            {activeSection === "activity" ? (
+              <>
+                <PreviewContributions contributions={contributions} />
+                <ActivityPanel snapshot={snapshot} full />
+                <ProgressPanel snapshot={snapshot} />
+              </>
+            ) : null}
           </div>
-          <div
-            className="dashboard-part"
-            data-section="activity"
-            id="dashboard-section-activity"
-            role="tabpanel"
-            aria-labelledby="dashboard-tab-activity"
-          >
-            <ActivityPanel snapshot={snapshot} />
-          </div>
-        </div>
-        <div className="dashboard-column dashboard-center">
-          <ReadinessPanel snapshot={snapshot} />
-          <div
-            className="dashboard-part plan-section"
-            data-section="plan"
-            id="dashboard-section-plan"
-            role="tabpanel"
-            aria-labelledby="dashboard-tab-plan"
-          >
-            <div className="mobile-plan">
-              <PlanPanel snapshot={snapshot} />
+        </>
+      ) : (
+        <div className="dashboard-grid" aria-busy={busy}>
+          <div className="dashboard-column dashboard-left">
+            <div className="people-section">
+              <ParticipantsPanel snapshot={snapshot} />
+              <ResponsesPanel snapshot={snapshot} />
             </div>
-            <LocationPanel snapshot={snapshot} />
-            <DecisionCards
-              snapshot={snapshot}
-              onAction={onAction}
-              busy={busy}
-            />
-            <ProgressPanel snapshot={snapshot} />
+            <div className="desktop-activity">
+              <PreviewContributions contributions={contributions} />
+              <ActivityPanel snapshot={snapshot} />
+            </div>
           </div>
-        </div>
-        <div className="dashboard-column dashboard-right">
-          <SpeakerPanel
-            key={`${snapshot.room.viewerId}-${snapshot.room.proposalVersion}-${snapshot.room.revision}`}
-            snapshot={snapshot}
-            onAction={onAction}
-            onReview={review}
-            busy={busy}
-          />
-          <div
-            className="dashboard-part"
-            data-section="issues"
-            id="dashboard-section-issues"
-            role="tabpanel"
-            aria-labelledby="dashboard-tab-issues"
-          >
+          <div className="dashboard-column dashboard-center">
+            <ReadinessPanel snapshot={snapshot} />
+            <details className="advanced-plan dashboard-panel">
+              <summary>
+                <Layers size={16} aria-hidden="true" />
+                <span>Plan details & decisions</span>
+                <span>
+                  {snapshot.room.options.length
+                    ? `${snapshot.room.options.length} options`
+                    : "History"}
+                </span>
+                <ChevronDown size={15} aria-hidden="true" />
+              </summary>
+              <PlanningDetails
+                snapshot={snapshot}
+                onAction={onAction}
+                busy={busy}
+              />
+            </details>
+          </div>
+          <div className="dashboard-column dashboard-right">
+            <SpeakerPanel
+              snapshot={snapshot}
+              onRespond={onFocusComposer}
+              reactionKey={ownLatest?.id}
+            />
             <RealityChecks room={snapshot.room} />
           </div>
         </div>
-        <MobileTabs active={activeSection} onChange={onSectionChange} />
-      </div>
+      )}
     </>
   );
 }
@@ -211,15 +369,15 @@ function DashboardLoading({ intentional = false }: { intentional?: boolean }) {
   return (
     <div className="dashboard-loading" role="status">
       <Mascot />
-      <h2>
+      <h1>
         {intentional
           ? "The loading state, previewed."
-          : "Opening your planning dashboard…"}
-      </h2>
+          : "Opening your planning room…"}
+      </h1>
       <p>
         {intentional
           ? "This is an interface preview. No analysis is running."
-          : "Loading a synthetic, authorized participant view."}
+          : "Loading the authorized synthetic participant view."}
       </p>
       <div className="dashboard-loading-bars" aria-hidden="true">
         <span />
@@ -231,14 +389,13 @@ function DashboardLoading({ intentional = false }: { intentional?: boolean }) {
           className="dashboard-button primary"
           to="/dashboard?scenario=beach"
         >
-          Open beach trip preview
+          Open beach preview
           <ArrowRight size={15} aria-hidden="true" />
         </Link>
       ) : null}
     </div>
   );
 }
-
 function RoomNotConnected() {
   return (
     <div className="room-unavailable">
@@ -259,14 +416,16 @@ function RoomNotConnected() {
 export default function DashboardRoute() {
   const location = useLocation();
   const [params, setParams] = useSearchParams();
-  const rawScenario = params.get("scenario");
-  const rawViewer = params.get("viewer");
-  const scenario: ScenarioId = scenarios.some((s) => s.id === rawScenario)
-    ? (rawScenario as ScenarioId)
-    : "hike";
-  const viewer: ViewerId = viewers.includes(rawViewer as ViewerId)
-    ? (rawViewer as ViewerId)
-    : "alex";
+  const scenario = (
+    scenarios.some((s) => s.id === params.get("scenario"))
+      ? params.get("scenario")
+      : "hike"
+  ) as ScenarioId;
+  const viewer = (
+    viewers.includes(params.get("viewer") as ViewerId)
+      ? params.get("viewer")
+      : "alex"
+  ) as ViewerId;
   const requestKey = `${scenario}:${viewer}`;
   const [load, setLoad] = useState<{
     key: string;
@@ -277,11 +436,28 @@ export default function DashboardRoute() {
   const [notice, setNotice] = useState("");
   const [frame, setFrame] = useState<PreviewFrame>("initial");
   const [retry, setRetry] = useState(0);
-  const [section, setSection] = useState<SectionId>("plan");
-  const reduced = useReducedMotion();
+  const [section, setSection] = useState<SectionId>("overview");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [composerHeight, setComposerHeight] = useState(162);
+  const [composerInset, setComposerInset] = useState(0);
+  const [interactionsVersion, setInteractionsVersion] = useState(0);
+  const [interactions] = useState(() => createPreviewInteractions());
+  const composer = useRef<MessageComposerHandle>(null);
+  const currentView = useRef<DashboardSnapshot | null>(null);
   const updateAbort = useRef<AbortController | null>(null);
-  const snapshot = load.key === requestKey ? load.snapshot : null;
+  const reduced = useReducedMotion();
+  const baseSnapshot = load.key === requestKey ? load.snapshot : null;
+  const projected = useMemo(
+    () => (baseSnapshot ? interactions.project(baseSnapshot) : null),
+    [baseSnapshot, interactions, interactionsVersion],
+  );
+  const snapshot = projected?.snapshot ?? null;
   const realRoute = location.pathname.startsWith("/rooms/");
+  const question = snapshot ? currentQuestion(snapshot.room) : undefined;
+  const replies = useMemo(() => questionQuickReplies(question), [question]);
+  useLayoutEffect(() => {
+    currentView.current = snapshot;
+  }, [snapshot]);
   useEffect(() => {
     const controller = new AbortController();
     updateAbort.current?.abort();
@@ -289,22 +465,19 @@ export default function DashboardRoute() {
     setNotice("");
     setFrame("initial");
     setBusy(false);
-    setSection("plan");
+    setSection("overview");
     if (!realRoute && scenario !== "loading")
       void fetchPreview(scenario, viewer, "initial", controller.signal)
         .then((value) => {
           if (!controller.signal.aborted)
             setLoad({ key: requestKey, snapshot: value, error: null });
         })
-        .catch((error: unknown) => {
+        .catch(() => {
           if (!controller.signal.aborted)
             setLoad({
               key: requestKey,
               snapshot: null,
-              error:
-                error instanceof Error
-                  ? error.message
-                  : "The preview could not load.",
+              error: "The dashboard preview couldn’t load. Try again.",
             });
         });
     return () => {
@@ -312,10 +485,30 @@ export default function DashboardRoute() {
       updateAbort.current?.abort();
     };
   }, [requestKey, scenario, viewer, retry, realRoute]);
-  const change = (nextScenario: ScenarioId, nextViewer: ViewerId) =>
-    setParams({ scenario: nextScenario, viewer: nextViewer });
-  const advance = async (nextFrame: PreviewFrame) => {
-    if (!snapshot || scenario === "loading") return;
+  const submit = useCallback<SubmitPlanningMessage>(
+    async (input, signal) => {
+      const receipt = await interactions.submit(
+        input,
+        () => currentView.current,
+        signal,
+      );
+      if (!signal.aborted) {
+        setInteractionsVersion((version) => version + 1);
+        setNotice(
+          "Response recorded in preview. Readiness and proposal approvals are unchanged.",
+        );
+      }
+      return receipt;
+    },
+    [interactions],
+  );
+  const reset = () => {
+    if (baseSnapshot) interactions.reset(baseSnapshot.room.roomId);
+    setInteractionsVersion((version) => version + 1);
+    setRetry((value) => value + 1);
+  };
+  async function advance(nextFrame: PreviewFrame) {
+    if (!baseSnapshot || scenario === "loading") return;
     updateAbort.current?.abort();
     const controller = new AbortController();
     updateAbort.current = controller;
@@ -329,8 +522,8 @@ export default function DashboardRoute() {
         controller.signal,
       );
       if (controller.signal.aborted) return;
-      const accepted = acceptDashboardUpdate(snapshot, incoming);
-      if (accepted === snapshot) {
+      const accepted = acceptDashboardUpdate(baseSnapshot, incoming);
+      if (accepted === baseSnapshot) {
         setNotice("This update is outdated. The current plan was kept.");
         return;
       }
@@ -347,37 +540,31 @@ export default function DashboardRoute() {
     } finally {
       if (!controller.signal.aborted) setBusy(false);
     }
-  };
-  const act = (input: DashboardAction) => {
+  }
+  function act(input: DashboardAction) {
     if (!snapshot || busy) return;
     try {
       const action = validateDashboardAction(snapshot.room, input);
-      if (action.kind === "proposal") {
+      if (action.kind === "proposal")
         void advance(action.optionId === "carpool" ? "carpool" : "revised");
-        return;
-      }
+    } catch {
       setNotice(
-        `${action.kind === "information" ? "Answer" : "Choice"} previewed for ${viewer[0].toUpperCase() + viewer.slice(1)} in this page only. Readiness and approvals are unchanged.`,
-      );
-    } catch (error) {
-      setNotice(
-        error instanceof Error ? error.message : "This action is unavailable.",
+        "This decision changed. Review the current proposal before responding.",
       );
     }
-  };
-  const navigateSection = (
-    event: MouseEvent<HTMLAnchorElement>,
-    target: "plan" | "people",
-  ) => {
+  }
+  function navigate(event: MouseEvent<HTMLAnchorElement>, target: SectionId) {
     event.preventDefault();
     setSection(target);
     requestAnimationFrame(() => {
       const heading = document.getElementById(
         target === "people"
           ? "people-title"
-          : window.matchMedia("(min-width: 1101px)").matches
-            ? "inline-plan-title"
-            : "plan-title",
+          : target === "plan"
+            ? compactViewport()
+              ? "plan-title"
+              : "inline-plan-title"
+            : "readiness-title",
       );
       if (!heading) return;
       heading.setAttribute("tabindex", "-1");
@@ -387,34 +574,60 @@ export default function DashboardRoute() {
         behavior: reduced ? "instant" : "smooth",
       });
     });
-  };
+  }
+  function reviewFinding(findingId: string) {
+    setSection("issues");
+    requestAnimationFrame(() => {
+      const finding = document.getElementById(`finding-${findingId}`);
+      const details = finding?.closest("details");
+      if (details) {
+        details.open = true;
+        details.querySelector("summary")?.focus();
+        details.scrollIntoView({
+          block: "center",
+          behavior: reduced ? "instant" : "smooth",
+        });
+      }
+    });
+  }
+  const activeViewer = snapshot?.room.participants.find(
+    (person) => person.id === snapshot.room.viewerId,
+  );
   return (
-    <div className="dashboard-shell">
+    <div
+      className="dashboard-shell dashboard-refined"
+      style={
+        {
+          "--composer-height": `${composerHeight}px`,
+          "--composer-inset": `${composerInset}px`,
+        } as CSSProperties
+      }
+    >
       <header className="dashboard-header">
         <Wordmark />
         <nav aria-label="Workspace">
           <Link to="/">
-            <Home size={19} aria-hidden="true" />
+            <Home size={18} aria-hidden="true" />
             Home
           </Link>
           <Link to="/dashboard" aria-current={!realRoute ? "page" : undefined}>
-            <CalendarDays size={19} aria-hidden="true" />
+            <CalendarDays size={18} aria-hidden="true" />
             Planning Rooms
           </Link>
-          {!realRoute && snapshot ? (
+          {snapshot && !realRoute ? (
             <>
               <a
                 href="#plan-title"
-                onClick={(event) => navigateSection(event, "plan")}
+                onClick={(event) => navigate(event, "plan")}
               >
-                <Layers size={19} aria-hidden="true" />
+                <Layers size={18} aria-hidden="true" />
                 Plan
               </a>
               <a
                 href="#people-title"
-                onClick={(event) => navigateSection(event, "people")}
+                onClick={(event) => navigate(event, "people")}
               >
-                <Users size={19} aria-hidden="true" />
+                <Users size={18} aria-hidden="true" />
                 People
               </a>
             </>
@@ -423,7 +636,7 @@ export default function DashboardRoute() {
         <div>
           <Link to="/demos">
             Demos
-            <ArrowUpRightIcon />
+            <ArrowRight size={13} aria-hidden="true" />
           </Link>
           <span
             className="dashboard-viewer-avatar"
@@ -436,37 +649,29 @@ export default function DashboardRoute() {
       {realRoute ? (
         <RoomNotConnected />
       ) : (
-        <>
-          <div className="synthetic-banner">
-            <FlaskConical size={15} aria-hidden="true" />
-            <strong>Synthetic preview</strong>
-            <span>Fictional people & events. No live AI or collaboration.</span>
-            <Link to="/demos">
-              About the demos
-              <ArrowRight size={13} aria-hidden="true" />
-            </Link>
-          </div>
-          <div className="dashboard-content">
-            {!snapshot ? (
-              <div className="dashboard-title-row">
-                <div>
-                  <Link to="/demos" className="dashboard-back">
-                    <ArrowLeft size={14} aria-hidden="true" />
-                    All demos
-                  </Link>
-                  <h1>
-                    {scenario === "loading"
-                      ? "A plan taking shape."
-                      : "Your planning room."}
-                  </h1>
-                </div>
-                <span className="room-preview-marker">
-                  <span />
-                  Dashboard preview
-                </span>
-              </div>
-            ) : null}
-            <div className="preview-toolbar">
+        <div className="dashboard-content">
+          <div
+            className="preview-toolbar compact-preview-toolbar"
+            data-expanded={settingsOpen}
+          >
+            <span className="synthetic-preview-label">
+              <FlaskConical size={14} aria-hidden="true" />
+              <strong>Synthetic preview</strong>
+              <span>No live AI</span>
+            </span>
+            <button
+              type="button"
+              className="preview-settings-toggle"
+              aria-label="Preview controls"
+              aria-expanded={settingsOpen}
+              aria-controls="preview-control-fields"
+              onClick={() => setSettingsOpen((open) => !open)}
+            >
+              <Settings2 size={16} aria-hidden="true" />
+              {viewer[0].toUpperCase() + viewer.slice(1)}
+              <ChevronDown size={13} aria-hidden="true" />
+            </button>
+            <div className="preview-control-fields" id="preview-control-fields">
               <div className="preview-select">
                 <label htmlFor="dashboard-scenario">Scenario</label>
                 <div>
@@ -474,7 +679,7 @@ export default function DashboardRoute() {
                     id="dashboard-scenario"
                     value={scenario}
                     onChange={(event) =>
-                      change(event.target.value as ScenarioId, viewer)
+                      setParams({ scenario: event.target.value, viewer })
                     }
                   >
                     {scenarios.map((s) => (
@@ -483,7 +688,7 @@ export default function DashboardRoute() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown size={14} aria-hidden="true" />
+                  <ChevronDown size={13} aria-hidden="true" />
                 </div>
               </div>
               <div className="preview-select">
@@ -493,7 +698,7 @@ export default function DashboardRoute() {
                     id="dashboard-viewer"
                     value={viewer}
                     onChange={(event) =>
-                      change(scenario, event.target.value as ViewerId)
+                      setParams({ scenario, viewer: event.target.value })
                     }
                   >
                     {viewers.map((v) => (
@@ -502,22 +707,23 @@ export default function DashboardRoute() {
                       </option>
                     ))}
                   </select>
-                  <ChevronDown size={14} aria-hidden="true" />
+                  <ChevronDown size={13} aria-hidden="true" />
                 </div>
               </div>
               <span className="preview-toolbar-spacer" />
               <button
-                className="dashboard-button subtle"
                 type="button"
-                onClick={() => setRetry((value) => value + 1)}
+                className="dashboard-button subtle"
+                onClick={reset}
                 disabled={busy}
+                aria-label="Reset preview"
               >
                 <RotateCcw size={14} aria-hidden="true" />
-                Reset preview
+                <span>Reset</span>
               </button>
               <button
-                className="dashboard-button primary"
                 type="button"
+                className="dashboard-button primary"
                 disabled={
                   !snapshot ||
                   busy ||
@@ -529,54 +735,61 @@ export default function DashboardRoute() {
                   void advance(frame === "initial" ? "updated" : "revised")
                 }
               >
-                <Play size={13} aria-hidden="true" />
+                <Play size={12} aria-hidden="true" />
                 {busy ? "Loading update…" : "Next preview update"}
               </button>
             </div>
-            {snapshot ? (
-              <PlanningDashboard
-                key={requestKey}
-                snapshot={snapshot}
-                onAction={act}
-                busy={busy}
-                notice={notice}
-                activeSection={section}
-                onSectionChange={setSection}
-              />
-            ) : load.key === requestKey && load.error ? (
-              <div className="dashboard-error" role="alert">
-                <CircleAlert size={28} aria-hidden="true" />
-                <h2>The preview couldn’t load.</h2>
-                <p>{load.error}</p>
-                <button
-                  type="button"
-                  className="dashboard-button primary"
-                  onClick={() => setRetry((value) => value + 1)}
-                >
-                  Try again
-                  <RotateCcw size={15} aria-hidden="true" />
-                </button>
-              </div>
-            ) : (
-              <DashboardLoading intentional={scenario === "loading"} />
-            )}
-            <footer className="dashboard-footer">
-              <span>Made for the way people actually plan.</span>
-              <span>Stage A · Synthetic dashboard · No live AI requests</span>
-            </footer>
           </div>
-        </>
+          {snapshot ? (
+            <PlanningDashboard
+              snapshot={snapshot}
+              onAction={act}
+              busy={busy}
+              notice={notice}
+              activeSection={section}
+              onSectionChange={setSection}
+              onFocusComposer={() => composer.current?.focus()}
+              contributions={projected?.contributions ?? []}
+            />
+          ) : load.key === requestKey && load.error ? (
+            <div className="dashboard-error" role="alert">
+              <CircleAlert size={28} aria-hidden="true" />
+              <h1>The preview couldn’t load.</h1>
+              <p>{load.error}</p>
+              <button
+                type="button"
+                className="dashboard-button primary"
+                onClick={() => setRetry((value) => value + 1)}
+              >
+                Try again
+                <RotateCcw size={15} aria-hidden="true" />
+              </button>
+            </div>
+          ) : (
+            <DashboardLoading intentional={scenario === "loading"} />
+          )}
+          {snapshot && activeViewer ? (
+            <MessageComposer
+              key={`${snapshot.room.roomId}-${snapshot.room.viewerId}`}
+              ref={composer}
+              roomId={snapshot.room.roomId}
+              viewer={activeViewer}
+              revision={snapshot.room.revision}
+              proposalVersion={snapshot.room.proposalVersion}
+              question={question}
+              replies={replies}
+              allowedVisibilities={["private", "group"]}
+              onSubmit={submit}
+              onReview={reviewFinding}
+              onHeightChange={setComposerHeight}
+              onBottomInsetChange={setComposerInset}
+              disabled={busy}
+              disabledReason="Wait for the preview update to finish before sending."
+              mode="preview"
+            />
+          ) : null}
+        </div>
       )}
     </div>
-  );
-}
-
-function ArrowUpRightIcon() {
-  return (
-    <ArrowRight
-      size={13}
-      aria-hidden="true"
-      style={{ transform: "rotate(-40deg)" }}
-    />
   );
 }
