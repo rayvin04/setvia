@@ -24,18 +24,18 @@ export async function fetchPreview(
   frame: PreviewFrame,
   signal: AbortSignal,
 ): Promise<DashboardSnapshot> {
-  const response = await fetch(
-    `/api/dashboard-preview/${scenario}/${viewer}?frame=${frame}`,
-    {
-      signal,
-      credentials: "omit",
-      cache: "no-store",
-      headers: { Accept: "application/json" },
-    },
-  );
+  const response = await fetch("/dashboard-preview/" + scenario + ".json", {
+    signal,
+    credentials: "omit",
+    cache: "force-cache",
+    headers: { Accept: "application/json" },
+  });
   if (!response.ok)
     throw new Error("The dashboard preview couldn’t load. Try again.");
-  const parsed = DashboardSnapshotSchema.safeParse(await response.json());
+  const fixture = (await response.json()) as Partial<
+    Record<PreviewFrame, Partial<Record<ViewerId, unknown>>>
+  >;
+  const parsed = DashboardSnapshotSchema.safeParse(fixture[frame]?.[viewer]);
   if (!parsed.success || parsed.data.source !== "synthetic")
     throw new Error("The preview returned an unsupported room view.");
   return parsed.data;

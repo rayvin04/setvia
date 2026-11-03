@@ -1,69 +1,157 @@
-# Setvia
+<p align="center">
+  <img src="docs/setvia-cover-2026-11-03.jpg" width="100%" alt="Setvia: Make plans that survive the group chat. A premium dark banner shows the original black Setvia cat beside participants, a proposed plan card, a date, a route, a budget cue, and a shared check." />
+</p>
 
-Make plans that survive the group chat.
+<h1 align="center">Setvia</h1>
 
-Setvia turns a rough plan or invitation into an editable, reviewable form. Phase 2C connects the local /start flow to the server-side Meta Muse Spark 1.3 Standard API for text and image extraction. Rooms, collaboration, and export generation remain previews.
+<p align="center">
+  <a href="https://setvia.r4yv.tech"><img alt="Website" src="https://img.shields.io/badge/Website-setvia.r4yv.tech-0297DE?style=flat-square"></a>
+  <a href="https://github.com/rayvin04/setvia/actions/workflows/ci.yml"><img alt="CI workflow" src="https://github.com/rayvin04/setvia/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://dev.meta.ai/docs/overview"><img alt="Meta API integration" src="https://img.shields.io/badge/Meta%20API-Muse%20Spark%201.3-0866FF?style=flat-square"></a>
+  <a href="https://github.com/rayvin04/setvia/tree/1c6a4894a8acc562830dce89a770a126c2f332bb"><img alt="TypeScript project" src="https://img.shields.io/badge/TypeScript-project-3178C6?style=flat-square"></a>
+  <a href="https://dev.meta.ai/events/global-hackathon"><img alt="Meta hackathon 2026" src="https://img.shields.io/badge/Meta%20Hackathon-2026-111827?style=flat-square"></a>
+  <a href="LICENSE"><img alt="All rights reserved" src="https://img.shields.io/badge/License-All%20rights%20reserved-7A1628?style=flat-square"></a>
+</p>
 
-## Local development
+Setvia helps a group turn scattered ideas, constraints, and concerns into a plan participants can review together.
 
-Requires Node.js 22.12+ or 24 LTS.
+**Make plans that survive the group chat.**
 
-    npm install
-    Copy-Item .env.example .env
+## Hackathon submission
 
-Add your Meta Model API key to the local .env file as MODEL_API_KEY. Keep credentials out of source files, browser storage, and shared logs.
+|                               |                                                                                                                                                                                                                                       |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Event**                     | [Meta Global AI Developer Hackathon 2026](https://dev.meta.ai/events/global-hackathon)                                                                                                                                                |
+| **Track**                     | Indie Developer — documented project intent; confirm against the entrant account before submission                                                                                                                                    |
+| **Theme / problem statement** | Build for Your World — intended selection from the project brief; entrant-side selection still needs confirmation                                                                                                                     |
+| **Development period**        | October 26 – November 4, 2026                                                                                                                                                                                                         |
+| **Website**                   | [setvia.r4yv.tech](https://setvia.r4yv.tech) — deployed static Vite site; its public demos are synthetic                                                                                                                              |
+| **Repository**                | [rayvin04/setvia](https://github.com/rayvin04/setvia)                                                                                                                                                                                 |
+| **Demo video**                | **Pending.** Add the real recording URL here when it exists.                                                                                                                                                                          |
+| **Submission status**         | In progress as of November 3, 2026. No completed-submission or award claim is made.                                                                                                                                                   |
+| **Technical documentation**   | [Architecture](docs/architecture.md) · [Meta API reference](docs/meta-api.md) · [Judge guide](docs/judge-guide.md) · [Agent foundation and evaluation](docs/agent-foundation.md) · [Third-party notices](docs/third-party-notices.md) |
 
-Run the backend and frontend in separate terminals:
+This documentation is based on released `main` commit [`1c6a4894a8acc562830dce89a770a126c2f332bb`](https://github.com/rayvin04/setvia/commit/1c6a4894a8acc562830dce89a770a126c2f332bb). The unfinished Stage B integration is on a separate local branch and is not part of this source snapshot or the public deployment.
 
-    npm run dev:server
-    npm run dev
+## Why Setvia exists
 
-Open http://127.0.0.1:5173. The Vite server proxies same-origin /api requests to the local backend on port 3001. The API key stays on the server.
+In the Philippines, people sometimes call a plan that never happens **“drawing lang”**: literally “just drawing,” and in this context, an idea that stays talk or on paper. A group chat can be full of enthusiasm for a trip, reunion, meeting, birthday, or project, while the date, budget, transport, responsibilities, and open concerns are still unresolved.
 
-## Routes and API
+Setvia is designed for the shared problem behind those situations: **several people need to agree on one plan while they have different priorities and constraints.** It can support friends arranging an outing, families organizing a reunion, students coordinating a project, professionals planning a meeting, businesses and wedding committees organizing events, and community or volunteer teams coordinating activities.
 
-- /: landing page
-- /start: text/image plan extraction and adaptive form
-- /join: nickname and room link preview
-- /demos: fictional scenario entry point
-- GET /api/health: local backend readiness
-- POST /api/ai/extract/text: extracts from up to 8,000 characters
-- POST /api/ai/extract/image: extracts from PNG, JPEG, or WebP images up to 5 MiB
+The software makes proposed facts, constraints, missing details, questions, and decisions easier to review together. This is the product goal; no user study or outcome measurement is being used to claim that Setvia has reduced cancellations or improved planning results.
 
-Extracted details are suggestions. Review evidence and uncertainty, resolve conflicts, and confirm information before using it. Image bytes and source text are sent to Meta for extraction; the app does not save them. Local draft saving is optional and stores only structured form fields on this device. It excludes source text, images, extraction evidence, and proxy statements.
+## Judge map
 
-## Verification
+This table is a navigation aid, not an official weighted rubric. The project notes do not include an entrant-verified percentage breakdown, so none is published here.
 
-    npm test
-    npm run build
+| Area                            | Evidence in this repository                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Impact**                      | [Why Setvia exists](#why-setvia-exists), the [six Reality Checks](#six-reality-checks), and the [planning lifecycle](docs/architecture.md#d-planning-lifecycle)                                                                                                                                                                                                                                                                                                                                                     |
+| **Use of Meta AI**              | [Model-to-source map](#meta-model-to-source-map), [Meta API client](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/ai/meta-client.ts), and [agent gateway](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/meta-gateway.ts)                                                                                                                                                                                         |
+| **Technical depth**             | [Architecture diagrams](docs/architecture.md), [typed contracts](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/contracts.ts), [orchestration](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/engine.ts), [readiness](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/readiness.ts), and [privacy boundaries](docs/architecture.md#c-privacy-boundaries) |
+| **Demo and product experience** | [Judge demo path](docs/judge-guide.md) and the [public synthetic preview](https://setvia.r4yv.tech/demos)                                                                                                                                                                                                                                                                                                                                                                                                           |
 
-Automated tests and the browser walkthrough use mocked API responses and synthetic inputs. They do not make billable requests. The separately gated live verification from Phase 2B is documented in docs/meta-api.md. Phase 2C has not been live-verified through the UI.
+## What judges can try today
 
-The deployed application is planned to use Meta models only. Lexend is provided by @fontsource-variable/lexend (OFL-1.1); icons use lucide-react (ISC). Respect reduced-motion preferences.
+The public [scenario page](https://setvia.r4yv.tech/demos) and [planning dashboard](https://setvia.r4yv.tech/dashboard) run without an account. The people, messages, activity, readiness examples, and dashboard responses are fictional preview data. **These routes do not call a live AI model or create a shared planning room.**
 
-## Bounded agents and private Lab
+The public Vercel deployment serves a static Vite frontend. The local Express extraction API and the agent room domain code are not deployed behind it. See the [judge guide](docs/judge-guide.md) for the public and local paths.
 
-The transport-independent multi-agent foundation and Setvia Lab are available locally. Run `npm run lab` for the existing mock regressions plus five realistic synthetic scenarios (8, 6, 14, 22, and 58 participants) and open the printed private HTML report. Use `npm run lab:review -- <private-report.json>` for manual reasoning-quality ratings.
+## Meta model-to-source map
 
-`npm run lab:live -- --scenario A,B --confirm-billable` is a separate, gated Muse Spark evaluation using only fixed synthetic scenarios. It requires a billing-check attestation and an exact interactive approval phrase, and caps each selected scenario at 10 HTTP attempts and $0.82 in reserved cost. It is not run automatically. The mock Lab never loads `.env` or calls the network. See [the foundation documentation](docs/agent-foundation.md) for scope, privacy, limits, and verification. Room collaboration is not yet connected to the production UI.
+The local server uses Meta's Responses API at `https://api.meta.ai/v1/responses`, with the pinned Standard model ID `muse-spark-1.3`. The API key is read by the server from `MODEL_API_KEY`; it is not sent to the browser. Model output is treated as an untrusted suggestion and parsed against typed schemas.
 
-## Planning dashboard preview
+| Model / role                                                                   | Purpose                                                                           | Source location                                                                                                                                                                                                                                                                                                                                                                                        | Status in the released base                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Muse Spark 1.3 — plan extraction**                                           | Extract candidate planning details from text or an image using structured output. | [Meta client](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/ai/meta-client.ts) · [text extraction](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/ai/extract-plan.ts) · [image extraction](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/ai/extract-image.ts) | Implemented for local development. The public static deployment does not run the API. The local UI/API path has been exercised with mocked responses; no live UI-to-Meta extraction result is claimed.                                                                         |
+| **Muse Spark 1.3 — Listener, Judge, Negotiator, Question Strategist, Speaker** | Conditional role calls in a bounded planning cycle with typed handoffs.           | [role contracts](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/contracts.ts) · [engine](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/engine.ts) · [Meta gateway](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/meta-gateway.ts)        | Engine and adapter are in the repository. Agent tests use a mock gateway. A historical synthetic live-call accounting record is documented below; it does not establish a deployed or fully verified real planning-room cycle. Private role prompts are not in the repository. |
+| **Muse Image 1.0 — Visual Planner**                                            | Possible future illustrations for a plan or preparation record.                   | The [VisualPlanner interface](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/contracts.ts) is an extension point only.                                                                                                                                                                                                                             | **Planned, not integrated.** No image-generation request is made by the released code.                                                                                                                                                                                         |
+| **SAM 3.1, Muse Voice, Muse Spark Open**                                       | —                                                                                 | —                                                                                                                                                                                                                                                                                                                                                                                                      | Not integrated in the released base.                                                                                                                                                                                                                                           |
 
-Run `npm run dev` and open `/dashboard` for the Stage A planning dashboard. It uses real typed room projections and deterministic readiness with clearly labeled, server-projected synthetic fixtures. Explore the mountain hike, participant-specific family questions, proposal revisions, 83% safety blocker, and empty or blocked-analysis states. No API key is required for the dashboard preview.
+## How the agent system works
 
-See [the Stage A dashboard documentation](docs/dashboard-stage-a.md) for the preview data boundary and synthetic interactions. The expanded mock Lab includes the five foundation records plus five realistic group-planning scenarios. Local room delivery now uses authenticated HTTP writes and authorized SSE snapshots; production hosting remains separate work.
+The five roles are not a fixed five-call chain:
 
-## Local room verification
+1. **Listener** runs for pending participant input. Its input contains that participant’s text and their own private facts, not the group roster or shared plan. It returns unconfirmed, owner-scoped candidates.
+2. **Judge** reviews authorized group context, evidence references, constraints, findings, and candidate options. Its typed decision determines the next step.
+3. **Negotiator** runs only when the Judge requests another option. The server parses the options and checks hard constraints during the Judge/readiness path before an option can be treated as acceptable.
+4. **Question Strategist** runs when participant input is needed. The application checks question schemas, finding references, targets, participant consent for public targeting, and repeated questions.
+5. **Speaker** runs when a message or question needs to be presented. It selects validated question/finding IDs and a bounded mascot state; the application renders text from those validated objects, then runs a final Judge pass before publication.
 
-The local room runtime supports invitations, participant sessions, private and group responses, version-specific approvals, deterministic readiness, and private JSON snapshots. Run one authoritative backend process. Private prompts, credentials, snapshots and Lab reports must remain outside this checkout.
+Role contracts use strict Zod schemas; the Meta gateway converts them to structured JSON Schema output. Findings reference known group facts or constraints. Application code, not model prose, enforces hard-constraint comparisons, deterministic readiness, privacy projections, request reservations, and versioned approvals.
 
-For an offline browser check, set `SETVIA_PRIVATE_ROOT` to that external private workspace, run `node --import tsx scripts/serve-room-offline.ts`, and start the frontend with `npm run dev -- --port 5175`. The room banner identifies mock inference; the harness sends no Meta requests. Its canned responses exercise the actual room service, agent loop and SSE projection. Extraction is disabled in this harness.
+The engine can continue, wait for participant input, complete, or block. Role invocations, revisions, time, request attempts, token allowances, and estimated cost are bounded. Agent requests reserve an attempt before sending it and disable automatic retries. Cancellation, stale room revisions, malformed output, unsupported evidence, budget exhaustion, and interrupted work fail closed. A blocked or stale cycle cannot publish a new readiness result.
 
-For authorized live execution, set `SETVIA_LIVE_ENABLED=1`, `SETVIA_ROOM_ORIGINS=http://127.0.0.1:5175`, and `SETVIA_PRIVATE_ROOT`. Set `SETVIA_LIVE_BILLING_CHECKED=1` only after the manual billing check and explicit request authorization. Start with `node --env-file="C:\private\setvia.env" --import tsx server/src/index.ts`, substituting the existing private environment file. The current private prompt version is `agents-v8`. Credentials are loaded into the backend process; a worktree-local `.env` copy is unnecessary.
+The real multi-agent loop is not exposed through the deployed public site. The separate Stage B worktree’s latest recorded local verification passed three targeted live contract checks, but the complete real planning-room cycle remains unverified. Stage B changes are unpublished and are not included in the code links above.
 
-Live inference uses persistent Stage B and global ledgers. The runtime holds the complete bounded cycle allowance before its first request and returns unused capacity afterward. Restarting preserves consumed reservations. Exhausted caps require fresh developer authorization. Text and image autofill are unavailable while this bounded room runtime is active because the standalone extractor has no shared ledger adapter; enter the initial plan manually. The separate `scripts/verify-room-contracts.ts --execute` performs three gated synthetic live contract checks; it never publishes a planning-room result.
+## Six Reality Checks
 
-## Synthetic scenario Demo Studio
+The policy supports six categories. It decides which categories apply, which facts are required, how much weight each category has, and whether evidence is needed for each participant.
 
-The local Demo Studio reviews and versions fictional scenarios and uses the authenticated room API for live playback. Developer tools remain local-only. See docs/synthetic-scenario-studio.md.
+| Check                 | What it evaluates                                                                              | Useful evidence                                                                                           |
+| --------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **Schedule Check**    | Availability, timing conflicts, duration, and deadlines.                                       | Participant availability and the proposed date, start time, duration, or deadline.                        |
+| **Budget Check**      | Individual limits, shared costs, estimates, and unclear expenses.                              | Confirmed per-person caps and cost estimates with their scope identified.                                 |
+| **People Check**      | Responses, accessibility needs, attendance conflicts, responsibilities, and roles.             | Current room membership, confirmed attendance, accessibility details, and named owners for tasks.         |
+| **Logistics Check**   | Transport, location, venue, route, and practical coordination.                                 | A confirmed destination, transport plan, venue details, and route information from an appropriate source. |
+| **Preparation Check** | Supplies, equipment, materials, and preparation work.                                          | A preparation list and clear responsibility for each item or task.                                        |
+| **Safety Check**      | Hazards, precautions, emergency preparation, weather, route risk, and relevant local guidance. | Current, reliable evidence and a human review of the relevant conditions.                                 |
 
+Missing or uncertain information is represented as absent or null facts, unconfirmed candidates, and findings with `missing`, `estimated`, or `conflicting` uncertainty. Required missing values leave a category unknown or incomplete. A hard constraint that the proposal fails to satisfy, a conflict in shared facts, or an unresolved critical finding can block readiness.
+
+**Synthetic example:** A Sunday outing proposal returns at 5:00 PM. One participant has confirmed a hard 4:00 PM return limit, and the route duration has not been verified. The Schedule Check is blocked by the constraint; the Logistics Check still needs evidence. A model may suggest an earlier return or ask the group about another ride, but it cannot verify a route or waive the participant’s constraint.
+
+Readiness is a deterministic summary of the current policy and confirmed group-visible evidence. **It is not a safety guarantee, external fact check, or participant approval.** Real prices, routes, venues, accessibility, weather, and hazards are not independently verified by the released app.
+
+## Readiness, revisions, and human approval
+
+The room domain has two counters with different jobs:
+
+- **Room revision** is the freshness guard. Each accepted room update advances it. Agent work is based on one revision; if the room changes before commit, that work is cancelled or rejected as stale.
+- **Proposal version** identifies the exact plan that people review. Plan changes, shared facts, constraints, policy changes, and membership changes advance it in this base commit and clear approvals/questions that no longer apply.
+
+Joining or leaving also advances the proposal version in the released base. Leaving removes that participant’s private facts, candidates, constraints, and pending inputs. Approvals are stored against the exact current version; stale-version approvals are rejected. The room rule requires each joined participant, not every estimated event attendee, to approve the same version. AI completion and a 100% readiness score cannot approve on anyone’s behalf.
+
+## Evaluation and engineering evidence
+
+The repository’s existing live-call accounting covers **11 synthetic runs across five scenario templates**. These figures are protocol and accounting evidence, not human evaluation or a model-quality benchmark.
+
+| Measure                               | Recorded result | What it means                                                                                          |
+| ------------------------------------- | --------------: | ------------------------------------------------------------------------------------------------------ |
+| Client HTTP attempts                  |              39 | Includes one cancelled/transport-error attempt without an HTTP response.                               |
+| Attempts reserved before requests     |              39 | The ledger reserved budget before each client attempt.                                                 |
+| HTTP 200 responses with usage records |              38 | These responses supplied the usage metadata used for the estimate.                                     |
+| Automated assertions                  |       48 passed | No completed human ratings are available.                                                              |
+| Estimated usage from reported tokens  | **US$0.296678** | Calculated from the 38 usage records at the documented Meta Standard input/output rates.               |
+| At-risk reserved amount               | **US$0.400678** | Includes the additional US$0.104 reservation for the attempt with unknown usage; this is not a charge. |
+
+The estimate omits cached-input discounts and is not a Meta invoice. The automated assertions check expected protocol behavior on synthetic inputs; they do not establish planning accuracy, reliability, or real-world impact. See the [accounting details](docs/agent-foundation.md#recorded-muse-spark-evaluation).
+
+In the separate unpublished Stage B worktree, the latest local record reports three targeted live contract checks passing and **no completed full real planning-room cycle**. This result is kept distinct from the 11-run historical accounting above.
+
+The repository includes offline tests, a server TypeScript check, and a frontend build. CI runs those checks without a Meta key; the separate `npm run test:meta` command can make billable Meta requests. No live Meta call was made as part of this documentation work.
+
+## Where to find things
+
+All code links below point to the released base commit named near the top of this README.
+
+| Concern                                 | Source                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Landing page and story                  | [`client/Home.tsx`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/client/Home.tsx) · [`client/HomeStory.tsx`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/client/HomeStory.tsx)                                                                                                                                                                                                         |
+| Planning input                          | [`client/StartPlanning.tsx`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/client/StartPlanning.tsx) · [`server/src/http/app.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/http/app.ts)                                                                                                                                                                                   |
+| Demo scenarios                          | [`client/Scenarios.tsx`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/client/Scenarios.tsx) · [`client/demoData.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/client/demoData.ts) · [`client/demoDetails.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/client/demoDetails.ts)                                                               |
+| Dashboard preview                       | [`client/dashboard/Dashboard.tsx`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/client/dashboard/Dashboard.tsx) · [`client/dashboard/api.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/client/dashboard/api.ts) · [preview fixtures](https://github.com/rayvin04/setvia/tree/1c6a4894a8acc562830dce89a770a126c2f332bb/public/dashboard-preview)                                     |
+| Meta Responses API                      | [`server/src/ai/meta-client.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/ai/meta-client.ts) · [text extraction](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/ai/extract-plan.ts) · [image extraction](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/ai/extract-image.ts)                                       |
+| Agent contracts and orchestration       | [`server/src/agents/contracts.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/contracts.ts) · [`server/src/agents/engine.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/engine.ts) · [`server/src/agents/meta-gateway.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/meta-gateway.ts) |
+| Judge and deterministic readiness       | [`server/src/agents/readiness.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/readiness.ts) · [`server/src/agents/engine.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/engine.ts)                                                                                                                                                             |
+| Room management and privacy projections | [`server/src/agents/rooms.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/rooms.ts) · [`shared/room-model.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/shared/room-model.ts)                                                                                                                                                                                   |
+| Persistence adapters                    | [`server/src/agents/store.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/store.ts)                                                                                                                                                                                                                                                                                                                     |
+| Tests                                   | [agent tests](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/agents.test.ts) · [Meta client tests](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/ai/ai.test.ts) · [HTTP tests](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/http/app.test.ts)                                                                  |
+| CI                                      | [`.github/workflows/ci.yml`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/.github/workflows/ci.yml)                                                                                                                                                                                                                                                                                                                         |
+| Architecture and demo docs              | [`docs/architecture.md`](docs/architecture.md) · [`docs/judge-guide.md`](docs/judge-guide.md) · [`docs/agent-foundation.md`](docs/agent-foundation.md)                                                                                                                                                                                                                                                                                                          |
+
+
+## Copyright
+
+**Copyright © 2026 Rayvin Gianan. All rights reserved.** The Setvia code is public for demonstration and technical inspection. No general permission to modify, redistribute, sublicense, or commercially reuse it is granted. Third-party components and assets remain under their own licenses. See the [proprietary notice draft](docs/proprietary-notice-draft.md) and [third-party notices](docs/third-party-notices.md).
