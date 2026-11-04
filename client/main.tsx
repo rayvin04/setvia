@@ -22,3 +22,4 @@ import "./demo-refinement.css";
 import "./pass3.css";
 import "./story.css";
 import "./cover-motion.css";
+import "./frontend.css";

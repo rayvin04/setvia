@@ -54,7 +54,7 @@ export function readinessPresentation(room: DashboardRoom): {
       tone: "green",
       label: "Ready for review",
       detail:
-        "The checks are complete. Everyone still needs to approve this version.",
+        "The checks are complete. Everyone still needs to approve the plan.",
       historical: false,
     };
   return {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CircleAlert, LockKeyhole, Radio, ShieldCheck, Waves } from "lucide-react";
+import { CircleAlert, LockKeyhole, Radio, ShieldCheck, Waves } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { PlanDraft } from "../plan-mapping";
 import { createRoom, getRoomHealth, RoomApiError, type RoomHealth } from "./room-api";
@@ -142,7 +142,6 @@ export function RoomLaunch({ draft }: { draft: PlanDraft }) {
       {notice ? <p className="room-launch-notice" role="status"><ShieldCheck size={15} aria-hidden="true" />{notice}</p> : null}
       <button type="button" className="button button-primary room-launch-button" disabled={busy || !health?.enabled} onClick={() => void startRoom()}>
         {busy ? "Opening room…" : "Create a live room"}
-        <ArrowRight size={17} aria-hidden="true" />
       </button>
       <div className="room-launch-demo">
         <div><strong>Want to see it in action?</strong><span>A ready-made Beach Trip room starts with four fictional planners. Your chat and Setvia's analysis are live.</span></div>

@@ -8,8 +8,8 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
+import { motion, useReducedMotion } from "motion/react";
 import {
-  ArrowUp,
   Check,
   Info,
   LoaderCircle,
@@ -26,7 +26,11 @@ import {
   type MessageVisibility,
   type SubmitPlanningMessage,
 } from "../../shared/planning-message";
-import { virtualKeyboardInset, type QuickReply } from "./composer-model";
+import {
+  composerInputHeight,
+  virtualKeyboardInset,
+  type QuickReply,
+} from "./composer-model";
 
 export interface MessageComposerHandle {
   focus(): void;
@@ -76,6 +80,8 @@ export const MessageComposer = forwardRef<
 ) {
   const id = useId();
   const textarea = useRef<HTMLTextAreaElement>(null);
+  const growth = useRef<Animation | null>(null);
+  const reducedMotion = useReducedMotion();
   const dock = useRef<HTMLElement>(null);
   const active = useRef<AbortController | null>(null);
   const draft = useRef("");
@@ -93,6 +99,7 @@ export const MessageComposer = forwardRef<
     inset: 0,
     keyboard: false,
     height: null as number | null,
+    width: null as number | null,
   });
   const busy = sending || pending;
   const privateQuestion = answering && question?.visibility === "private";
@@ -116,7 +123,13 @@ export const MessageComposer = forwardRef<
     }),
     [],
   );
-  useEffect(() => () => active.current?.abort(), []);
+  useEffect(
+    () => () => {
+      active.current?.abort();
+      growth.current?.cancel();
+    },
+    [],
+  );
   useEffect(() => {
     setSelectedReply(null);
     setAnswering(Boolean(question) && !draft.current.trim());
@@ -125,9 +138,42 @@ export const MessageComposer = forwardRef<
   useLayoutEffect(() => {
     const input = textarea.current;
     if (!input) return;
+    const previous = input.getBoundingClientRect().height;
+    const chrome = Math.max(
+      0,
+      (dock.current?.getBoundingClientRect().height ?? 160) - previous,
+    );
+    growth.current?.cancel();
     input.style.height = "0px";
-    input.style.height = Math.min(Math.max(input.scrollHeight, 44), 132) + "px";
-  }, [text]);
+    const contentHeight = input.scrollHeight;
+    const next = composerInputHeight(
+      contentHeight,
+      chrome,
+      viewport.height ?? window.innerHeight,
+    );
+    input.style.height = next + "px";
+    input.style.overflowY = contentHeight > next ? "auto" : "hidden";
+    input.dataset.overflow = String(contentHeight > next);
+    if (!reducedMotion && Math.abs(previous - next) > 1 && input.animate) {
+      growth.current = input.animate(
+        [{ height: previous + "px" }, { height: next + "px" }],
+        {
+          duration: 180,
+          easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+        },
+      );
+    }
+  }, [
+    text,
+    viewport.height,
+    viewport.width,
+    reducedMotion,
+    privacyOpen,
+    error,
+    question?.text,
+    answering,
+    selectedReply,
+  ]);
   useLayoutEffect(() => {
     if (!dock.current || !onHeightChange) return;
     const observer = new ResizeObserver(([entry]) =>
@@ -140,6 +186,7 @@ export const MessageComposer = forwardRef<
     const visual = window.visualViewport;
     const update = () => {
       const height = visual?.height ?? window.innerHeight;
+      const width = window.innerWidth;
       const inset = virtualKeyboardInset(
         window.innerHeight,
         height,
@@ -151,9 +198,10 @@ export const MessageComposer = forwardRef<
       setViewport((old) =>
         old.inset === inset &&
         old.keyboard === keyboard &&
-        old.height === height
+        old.height === height &&
+        old.width === width
           ? old
-          : { inset, keyboard, height },
+          : { inset, keyboard, height, width },
       );
     };
     visual?.addEventListener("resize", update);
@@ -370,30 +418,6 @@ export const MessageComposer = forwardRef<
               }
             }}
           />
-          <button
-            className="sv-send"
-            type="submit"
-            disabled={disabled || busy || !text.trim() || !choices.length}
-            aria-label={
-              busy
-                ? mode === "preview"
-                  ? "Recording preview response"
-                  : "Sending response"
-                : mode === "preview"
-                  ? "Send preview message"
-                  : "Send message"
-            }
-          >
-            {busy ? (
-              <LoaderCircle
-                size={20}
-                className="sv-sending-icon"
-                aria-hidden="true"
-              />
-            ) : (
-              <ArrowUp size={21} aria-hidden="true" />
-            )}
-          </button>
         </div>
         <div className="sv-composer-footer">
           <div className="sv-visibility-control">
@@ -438,6 +462,33 @@ export const MessageComposer = forwardRef<
           <span className="sv-keyboard-hint" id={`${id}-help`}>
             Ctrl / ⌘ Enter to send
           </span>
+          <motion.button
+            className="sv-send"
+            whileHover={reducedMotion ? undefined : { scale: 1.04 }}
+            whileTap={reducedMotion ? { opacity: 0.8 } : { scale: 0.94 }}
+            transition={{ type: "spring", bounce: 0, visualDuration: 0.22 }}
+            type="submit"
+            disabled={disabled || busy || !text.trim() || !choices.length}
+            aria-label={
+              busy
+                ? mode === "preview"
+                  ? "Recording preview response"
+                  : "Sending response"
+                : mode === "preview"
+                  ? "Send preview message"
+                  : "Send message"
+            }
+          >
+            {busy ? (
+              <LoaderCircle
+                size={20}
+                className="sv-sending-icon"
+                aria-hidden="true"
+              />
+            ) : (
+              <span>Send</span>
+            )}
+          </motion.button>
         </div>
         <p
           className="sv-privacy-copy"

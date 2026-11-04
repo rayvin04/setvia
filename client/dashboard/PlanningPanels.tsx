@@ -7,7 +7,6 @@ import {
   CarFront,
   Backpack,
   ListChecks,
-  ArrowRight,
   Check,
   UserPlus,
   LockKeyhole,
@@ -90,8 +89,8 @@ export function ParticipantsPanel({
                 }
                 aria-label={
                   person.approved
-                    ? `Approved proposal v${room.proposalVersion}`
-                    : `Has not approved proposal v${room.proposalVersion}`
+                    ? "Approved the current plan"
+                    : "Has not approved the current plan"
                 }
               >
                 {person.approved ? (
@@ -142,19 +141,20 @@ export function ResponsesPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
       {count !== null ? (
         <>
           <div className="response-progress-label">
+            <span>Response rate</span>
             <span>{Math.round((count / Math.max(total, 1)) * 100)}%</span>
           </div>
           <progress
             max={Math.max(total, 1)}
             value={count}
-            aria-label={`${count} of ${total} responded to proposal v${snapshot.room.proposalVersion}`}
+            aria-label={`${count} of ${total} people responded`}
           />
         </>
       ) : null}
       <div className="response-approval">
         <ThumbsUp size={14} aria-hidden="true" />
         <span>
-          {snapshot.room.approvalCount}/{total} approved this version
+          {snapshot.room.approvalCount}/{total} approved
         </span>
       </div>
     </section>
@@ -223,7 +223,7 @@ export function ActivityPanel({
           {!full && events.length > 3 ? (
             <details className="earlier-activity">
               <summary>
-                Earlier activity <ChevronRight size={14} aria-hidden="true" />
+                Earlier activity
               </summary>
               <ol className="activity-list">
                 {events.slice(3).map((event) => (
@@ -394,7 +394,6 @@ export function DecisionCards({
             <summary>
               <span className="decision-number">{index + 1}</span>
               <span>{option.label}</span>
-              <ChevronRight size={16} aria-hidden="true" />
             </summary>
             <div className="decision-body">
               <dl>
@@ -431,7 +430,6 @@ export function DecisionCards({
                 {snapshot.source === "synthetic"
                   ? "Preview this revision"
                   : "Propose this revision"}
-                <ArrowRight size={15} aria-hidden="true" />
               </button>
             </div>
           </details>
@@ -468,8 +466,7 @@ export function ProgressPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
               <div>
                 <p>{entry.explanation}</p>
                 <time dateTime={entry.occurredAt}>
-                  {formatTime(entry.occurredAt)} · proposal v
-                  {entry.proposalVersion}
+                  {formatTime(entry.occurredAt)}
                   {entry.readiness.status === "blocked" ? " · Blocked" : ""}
                 </time>
               </div>

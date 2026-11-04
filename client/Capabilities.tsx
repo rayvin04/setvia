@@ -47,9 +47,9 @@ export function Capabilities() {
           },
           {
             icon: Files,
-            title: "Leave with one shared version.",
+            title: "Leave with one shared plan.",
             text: "Review the exact proposal together. The final dashboard, Decision Receipt, checklist, and download bundle give the agreement somewhere to live.",
-            items: ["Versioned approval", "Decision Receipt", "PDF + ZIP"],
+            items: ["Plan approvals", "Decision Receipt", "PDF + ZIP"],
           },
         ].map(({ icon: Icon, title, text, items }) => (
           <article key={title}>
@@ -72,7 +72,7 @@ export function Capabilities() {
           "Gather preferences",
           "Compare trade-offs",
           "Run Reality Check",
-          "Review one version",
+          "Review the plan",
         ].map((s, i) => (
           <span key={s}>
             {s}

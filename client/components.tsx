@@ -8,7 +8,6 @@ import {
 import { Attribution } from "./Attribution";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowUpRight } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { initialHeaderState, nextHeaderState } from "./header-state";
@@ -31,7 +30,7 @@ export function ButtonLink({
     <MotionLink
       whileTap={reduced ? { opacity: 0.8 } : { scale: 0.96 }}
       whileHover={reduced ? { opacity: 0.9 } : { y: -2 }}
-      transition={{ type: "spring", bounce: 0, duration: 0.2 }}
+      transition={{ type: "spring", bounce: 0, visualDuration: 0.24 }}
       className={cn(
         "button",
         secondary ? "button-secondary" : "button-primary",
@@ -50,7 +49,7 @@ export function Wordmark() {
         <i />
         <i />
       </span>
-      setvia<span className="brand-period">.</span>
+      <span className="brand-name">Setvia</span>
     </Link>
   );
 }
@@ -110,10 +109,11 @@ export function Header() {
           aria-label="Main navigation"
         >
           <a href="/#how-it-works">How it works</a>
-          <Link to="/demos">Explore demos</Link>
+          <Link to="/demos">
+            <span className="nav-explore-prefix">Explore&nbsp;</span>demos
+          </Link>
           <Link to="/join" className="join-link">
             Join a Room
-            <ArrowUpRight size={15} aria-hidden="true" />
           </Link>
           <a
             className="github-link"
@@ -137,9 +137,16 @@ export function Header() {
 }
 export function Footer() {
   const { pathname } = useLocation();
-  const status = pathname === "/start" ? "Muse Spark extraction · local draft" : pathname === "/join" ? "Room joining preview" : "Fictional demo data";
+  const status =
+    pathname === "/start"
+      ? "Local planning draft"
+      : pathname === "/join"
+        ? "Room joining preview"
+        : "Fictional demo data";
   return (
-    <footer className="footer">
+    <footer
+      className={cn("footer", pathname === "/start" && "planning-footer")}
+    >
       <Wordmark />
       <Attribution />
       <span>{status}</span>

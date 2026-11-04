@@ -5,7 +5,6 @@ import {
   Route,
   Backpack,
   ShieldCheck,
-  ChevronRight,
   Check,
   AlertTriangle,
   Clock3,
@@ -88,11 +87,6 @@ export function RealityChecks({ room }: { room: DashboardRoom }) {
                     ? "—"
                     : `${state.score.percentage}%`}
                 </span>
-                <ChevronRight
-                  size={14}
-                  className="detail-chevron"
-                  aria-hidden="true"
-                />
               </summary>
               <div className="category-details">
                 <span className="category-severity">

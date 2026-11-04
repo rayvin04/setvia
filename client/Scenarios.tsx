@@ -3,8 +3,6 @@ import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Reveal } from "./MotionUI";
 import { Link, useSearchParams } from "react-router-dom";
 import {
-  ArrowRight,
-  ArrowLeft,
   TreePalm,
   House,
   BriefcaseBusiness,
@@ -77,7 +75,6 @@ export function ScenarioLinks() {
             <CoverArt index={i} />
             <div>
               <span>{s.title}</span>
-              <ArrowRight size={18} aria-hidden="true" />
             </div>
             <small>{s.audience}</small>
           </MotionLink>
@@ -104,10 +101,6 @@ export function Demos() {
   }
   return (
     <section className="demo-page section-shell">
-      <Link className="back-link" to="/">
-        <ArrowLeft size={17} aria-hidden="true" />
-        Back to Setvia
-      </Link>
       <div className="demo-heading">
         <div>
           <h1>Find your starting point.</h1>
@@ -121,8 +114,7 @@ export function Demos() {
                 : "safety")
             }
           >
-            Explore the planning dashboard{" "}
-            <ArrowRight size={15} aria-hidden="true" />
+            Explore the planning dashboard
           </Link>
         </div>
         <span className="demo-mode">
@@ -205,14 +197,13 @@ export function Demos() {
               to={"/start?title=" + encodeURIComponent(selected.idea)}
             >
               Use this starting point
-              <ArrowRight size={18} aria-hidden="true" />
             </ButtonLink>
           </div>
         </div>
         <section className="sample-plan">
           <div className="sample-heading">
             <h3>Your plan, coming together.</h3>
-            <span>Illustrative output · Version 3</span>
+            <span>Illustrative output</span>
           </div>
           <div className="sample-deliverables">
             <div>
@@ -228,7 +219,7 @@ export function Demos() {
             <div>
               <CircleCheck size={20} aria-hidden="true" />
               <h4>Participant approval</h4>
-              <p>2 of 4 approved this version</p>
+              <p>2 of 4 approvals</p>
             </div>
           </div>
           <div className="sample-open">

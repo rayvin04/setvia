@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import {
@@ -15,6 +16,7 @@ import {
   currentQuestion,
   questionQuickReplies,
   virtualKeyboardInset,
+  composerInputHeight,
 } from "./composer-model.js";
 import {
   MessageComposer,
@@ -25,6 +27,7 @@ import { createPreviewFixture } from "../../server/src/dashboard/fixtures.js";
 import {
   DashboardSnapshotSchema,
   validateDashboardAction,
+  type DashboardSnapshot,
 } from "../../shared/dashboard.js";
 import {
   acceptDashboardUpdate,
@@ -34,7 +37,51 @@ import {
   speakerPresentation,
 } from "./model.js";
 
-const beach = createPreviewFixture("beach");
+type PreviewFixtureData = Record<
+  "initial" | "updated" | "revised" | "carpool",
+  Record<string, DashboardSnapshot>
+>;
+function loadPreviewFixture(scenario: string): PreviewFixtureData {
+  return JSON.parse(
+    readFileSync(
+      new URL(
+        "../../public/dashboard-preview/" + scenario + ".json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  ) as PreviewFixtureData;
+}
+const beach = loadPreviewFixture("beach");
+
+test("composer grows from real content, shrinks to one line, and leaves room above a mobile keyboard", () => {
+  assert.equal(composerInputHeight(44, 120, 900), 44);
+  assert.equal(composerInputHeight(110, 120, 900), 110);
+  assert.equal(composerInputHeight(900, 120, 900), 240);
+  assert.equal(composerInputHeight(12, 120, 900), 44);
+  assert.equal(composerInputHeight(900, 150, 360), 94);
+  assert.equal(composerInputHeight(900, 180, 240), 64);
+});
+
+test("published fixtures contain only schema-validated synthetic snapshots", () => {
+  for (const scenario of [
+    "hike",
+    "beach",
+    "family",
+    "kickoff",
+    "safety",
+    "blocked",
+    "empty",
+  ]) {
+    const fixture = loadPreviewFixture(scenario);
+    for (const frame of Object.values(fixture))
+      for (const snapshot of Object.values(frame))
+        assert.equal(
+          DashboardSnapshotSchema.parse(snapshot).source,
+          "synthetic",
+        );
+  }
+});
 function messageFor(
   snapshot: Awaited<typeof beach>["initial"]["alex"],
   overrides: Partial<PlanningMessage> = {},
@@ -95,7 +142,7 @@ test("group preview contributions are projected to room members without inventin
   assert.equal(alex.contributions[0].text, "We forgot transportation.");
   assert.equal(responseCount(alex.snapshot), 4);
   assert.deepEqual(alex.snapshot.room.readiness, mika.room.readiness);
-  assert.equal(alex.snapshot.room.approvalCount, 0);
+  assert.equal(alex.snapshot.room.approvalCount, mika.room.approvalCount);
   assert.deepEqual(mika, original);
 });
 test("private preview responses never enter another viewer's contribution or activity projection", async () => {
@@ -144,7 +191,10 @@ test("answering a group question acknowledges only this member and does not appr
     currentQuestion(adapter.project(frames.initial.sam!).snapshot.room)?.id,
     q.id,
   );
-  assert.equal(adapter.project(alex).snapshot.room.approvalCount, 0);
+  assert.equal(
+    adapter.project(alex).snapshot.room.approvalCount,
+    alex.room.approvalCount,
+  );
   assert.equal(adapter.project(alex).snapshot.room.readiness?.percentage, 72);
 });
 test("private targeted questions require the recipient and private audience", async () => {
@@ -368,7 +418,7 @@ test("event attendees remain separate from response and approval denominators", 
   assert.match(html, /separate from room members/);
   assert.equal(snapshot.room.participants.length, 4);
   assert.equal(responseCount(snapshot), 3);
-  assert.equal(snapshot.room.approvalCount, 0);
+  assert.equal(snapshot.room.approvalCount, 2);
 });
 test("visual viewport offsets keep a mobile composer above an overlay keyboard", () => {
   assert.equal(virtualKeyboardInset(780, 400, 0), 380);
@@ -507,7 +557,7 @@ test("validated choices accept only current structured options for this particip
   );
 });
 test("a private question cannot be submitted by a different participant", async () => {
-  const snapshot = (await createPreviewFixture("family")).initial.alex!;
+  const snapshot = loadPreviewFixture("family").initial.alex!;
   const other = snapshot.room.participants.find(
     (p) => p.id !== snapshot.room.viewerId,
   )!;

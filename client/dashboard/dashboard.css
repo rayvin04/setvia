@@ -712,7 +712,9 @@
   font-size: 11px;
   color: #add2e7;
   min-height: 38px;
+  list-style: none;
 }
+.earlier-activity summary::-webkit-details-marker { display: none; }
 .panel-empty {
   font-size: 12px;
   color: var(--dash-muted);
@@ -721,14 +723,6 @@
 }
 .plan-panel .panel-heading {
   margin-bottom: 5px;
-}
-.version-label {
-  font-size: 10px;
-  color: #94bcd3;
-  background: #142938;
-  border-radius: 5px;
-  padding: 4px 7px;
-  white-space: nowrap;
 }
 .plan-subtitle {
   color: var(--dash-muted);
@@ -808,16 +802,9 @@
   padding: 12px 0;
   cursor: pointer;
   font-size: 12px;
+  list-style: none;
 }
-.decision-option summary > svg {
-  margin-left: auto;
-  flex-shrink: 0;
-  color: #8fa8b8;
-  transition: transform 160ms ease-out;
-}
-.decision-option[open] summary > svg {
-  transform: rotate(90deg);
-}
+.decision-option summary::-webkit-details-marker { display: none; }
 .decision-number {
   color: #eeb290;
   font-size: 11px;
@@ -1064,7 +1051,9 @@
   align-items: center;
   gap: 10px;
   cursor: pointer;
+  list-style: none;
 }
+.reality-category summary::-webkit-details-marker { display: none; }
 .reality-category summary > svg:first-child {
   color: #98b3c3;
   flex-shrink: 0;
@@ -1090,14 +1079,6 @@
   font-size: 11px;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
-}
-.detail-chevron {
-  color: #819cab;
-  flex-shrink: 0;
-  transition: transform 160ms ease-out;
-}
-.reality-category[open] .detail-chevron {
-  transform: rotate(90deg);
 }
 .category-details {
   padding: 0 0 18px 27px;

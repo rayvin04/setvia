@@ -1,50 +1,36 @@
 import {
   ArrowRight,
-  ArrowUpRight,
   Backpack,
   CalendarDays,
   CarFront,
   Check,
-  ChevronDown,
-  CircleAlert,
+  RotateCcw,
   ShieldCheck,
-  Sparkles,
   UsersRound,
   Wallet,
 } from "lucide-react";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
+import { motion, useReducedMotion } from "motion/react";
 import { Link } from "react-router-dom";
 import { Avatar, Mascot } from "./Mascot";
 import { ButtonLink } from "./components";
 import { scenarios } from "./demoData";
 import { Reveal } from "./MotionUI";
+import { InteractivePlanPreview } from "./InteractivePlanPreview";
+import { approveVersion, initialVersion, revisePreview } from "./preview-state";
 import "./home-story.css";
 
-const realityChecks = [
-  { label: "Schedule Check", icon: CalendarDays },
-  { label: "Budget Check", icon: Wallet },
-  { label: "People Check", icon: UsersRound },
-  { label: "Logistics Check", icon: CarFront },
-  { label: "Preparation Check", icon: Backpack },
-  { label: "Safety Check", icon: ShieldCheck },
-];
-
 function StoryHeading({
-  label,
   title,
   children,
 }: {
-  label: string;
   title: string;
   children: ReactNode;
 }) {
   return (
     <div className="story-heading">
-      <div>
-        <p className="story-kicker">{label}</p>
-        <h2>{title}</h2>
-      </div>
-      <p className="story-heading-copy">{children}</p>
+      <h2>{title}</h2>
+      <p>{children}</p>
     </div>
   );
 }
@@ -56,17 +42,13 @@ function ConversationToPlan() {
       id="how-it-works"
       className="home-story-section story-conversation"
     >
-      <StoryHeading
-        label="From group chat to common ground"
-        title="Every “maybe” means something."
-      >
-        A tight budget. One early driver. Different schedules. Setvia keeps each
-        reason visible while the group shapes a plan.
+      <StoryHeading title="Every “maybe” means something.">
+        A tight budget. One early driver. Different schedules. Keep each reason
+        visible while the group shapes a plan.
       </StoryHeading>
-
       <div className="story-translation" data-visual-slot="chat-demo">
         <picture
-          className="story-demo-media story-chat-media"
+          className="story-demo-frame story-chat-media"
           data-visual-slot="animated-chat-demo"
         >
           <source
@@ -82,104 +64,168 @@ function ConversationToPlan() {
             decoding="async"
           />
         </picture>
-
-        <div className="story-bridge" aria-hidden="true">
-          <span>
-            <ArrowRight size={18} />
-          </span>
-          <small>find the overlap</small>
-        </div>
-
-        <picture className="story-demo-media story-plan-media">
-          <img
-            src="/story-media/sunday-planning-agenda-card.png"
-            width={1484}
-            height={1060}
-            alt="Fictional Sunday agenda: leave at 7 AM, agree on a per-person budget, and split fuel with Jamie driving. Budget and food are still open; two of four have approved."
-            decoding="async"
-          />
-        </picture>
+        <span className="story-bridge" aria-hidden="true">
+          <ArrowRight size={23} />
+        </span>
+        <InteractivePlanPreview />
       </div>
-      <p className="story-caption">
-        Setvia surfaces the trade-offs. The group makes the call.
-      </p>
     </Reveal>
   );
 }
 
+const realityChecks = [
+  {
+    label: "Schedule",
+    icon: CalendarDays,
+    finding: "Same trip. Different return times.",
+    question: "When could you head back?",
+    context: "Two prefer Sunday evening. Two need Monday morning.",
+    options: ["Sunday · 7 PM", "Monday · 9 AM", "Either works"],
+    answer:
+      "Your sample preference is recorded. The other people still need to agree on a return time.",
+  },
+  {
+    label: "Budget",
+    icon: Wallet,
+    finding: "The amount is set. The scope isn’t.",
+    question: "Does ₱2,500 include the ride?",
+    context: "A shared number can mean different things to different people.",
+    options: ["Include travel", "Food and stay only", "Not sure yet"],
+    answer:
+      "That makes the sample limit clearer. The group still needs a cost estimate before booking.",
+  },
+  {
+    label: "People",
+    icon: UsersRound,
+    finding: "Eight expected. Four planning.",
+    question: "Are the other guests confirmed?",
+    context: "Room participants and event attendees are different counts.",
+    options: ["Still checking", "Invited, not confirmed", "Confirmed directly"],
+    answer:
+      "The sample attendance note is updated. This doesn’t count as anyone’s approval of the plan.",
+  },
+  {
+    label: "Logistics",
+    icon: CarFront,
+    finding: "A driver helps. Seats still matter.",
+    question: "How will the rest get there?",
+    context: "Furina can drive, but one car may not fit everyone.",
+    options: ["Find a second car", "Meet at the venue", "Ask the group"],
+    answer:
+      "The example now has a next step for transport. Seat availability remains open until checked.",
+  },
+  {
+    label: "Preparation",
+    icon: Backpack,
+    finding: "A picnic needs more than a place.",
+    question: "Who will take care of food?",
+    context: "No one has taken this on yet.",
+    options: ["I can bring snacks", "Split a food order", "Decide together"],
+    answer:
+      "That sample idea is added for discussion. The food plan still needs the group’s agreement.",
+  },
+  {
+    label: "Safety",
+    icon: ShieldCheck,
+    finding: "Leave room for a safer option.",
+    question: "What if the weather turns?",
+    context: "The outdoor plan doesn’t have a fallback yet.",
+    options: [
+      "Pick an indoor backup",
+      "Reschedule if needed",
+      "Check closer to the day",
+    ],
+    answer:
+      "The example has a fallback to consider. Weather and venue conditions still need checking.",
+  },
+];
+
 function RealityCheckStory() {
+  const [selected, setSelected] = useState(0);
+  const [replies, setReplies] = useState<Record<number, string>>({});
+  const check = realityChecks[selected];
+  const reduced = useReducedMotion();
   return (
     <Reveal section className="home-story-section story-reality">
-      <StoryHeading
-        label="Reality Check"
-        title="A good plan shows what’s still a question."
-      >
-        Conflicts and missing details stay visible, so a suggestion never looks
-        like a decision the group hasn’t made.
+      <StoryHeading title="A good plan shows what’s still a question.">
+        Find the missing piece, ask a useful question, and leave the decision
+        with the group.
       </StoryHeading>
-
-      <div className="story-reality-layout">
-        <div className="story-checks-list">
-          <div className="story-checks-head">
-            <span>Six ways to check the plan</span>
-            <span>Fictional preview</span>
-          </div>
-          <div className="story-checks-grid">
-            {realityChecks.map(({ label, icon: Icon }) => (
-              <div className="story-check-row" key={label}>
-                <Icon size={19} aria-hidden="true" />
-                <span>{label}</span>
-                <ArrowUpRight size={15} aria-hidden="true" />
-              </div>
-            ))}
-          </div>
-          <p className="story-checks-note">
-            Missing information stays unknown until someone confirms it.
-          </p>
-        </div>
-
+      <div className="reality-demo" data-visual-slot="reality-check-demo">
         <div
-          className="story-issue-stage"
-          data-visual-slot="reality-check-demo"
+          className="reality-selector"
+          role="group"
+          aria-label="Reality Checks"
         >
-          <div className="story-issue-card">
-            <div className="story-issue-head">
-              <span className="story-issue-icon">
-                <CircleAlert size={19} aria-hidden="true" />
+          {realityChecks.map(({ label, icon: Icon }, index) => (
+            <button
+              type="button"
+              key={label}
+              aria-pressed={selected === index}
+              aria-controls="reality-finding"
+              onClick={() => setSelected(index)}
+            >
+              <Icon size={19} aria-hidden="true" />
+              <span>
+                {label}
+                <small>Check</small>
               </span>
-              <span>Schedule Check</span>
-              <span className="story-issue-state">Needs a decision</span>
+            </button>
+          ))}
+        </div>
+        <div className="reality-finding" id="reality-finding">
+          <div className="reality-finding-top">
+            <span>{check.label} Check</span>
+            <span className="needs-decision">
+              {replies[selected] ? "Sample reply added" : "Needs a decision"}
+            </span>
+          </div>
+          <motion.div
+            key={selected}
+            initial={{ opacity: reduced ? 1 : 0.7 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: reduced ? 0 : 0.22, ease: "easeInOut" }}
+          >
+            <h3>{check.finding}</h3>
+            <p>{check.context}</p>
+            <div className="reality-question">
+              <Mascot />
+              <strong>{check.question}</strong>
             </div>
-            <h3>When should the group head back?</h3>
-            <p>Two prefer Sunday evening. Two need Monday morning.</p>
-            <div className="story-time-options">
-              <div className="story-time-option">
-                <div className="story-mini-avatars" aria-hidden="true">
-                  <Avatar index={0} />
-                  <Avatar index={2} />
-                </div>
-                <div>
-                  <strong>Sunday · 7 PM</strong>
-                  <small>2 people prefer this</small>
-                </div>
-                <span>Option A</span>
-              </div>
-              <div className="story-time-option">
-                <div className="story-mini-avatars" aria-hidden="true">
-                  <Avatar index={1} />
-                  <Avatar index={3} />
-                </div>
-                <div>
-                  <strong>Monday · 9 AM</strong>
-                  <small>2 people prefer this</small>
-                </div>
-                <span>Option B</span>
-              </div>
+            <div
+              className="reality-replies"
+              role="group"
+              aria-label="Choose a fictional reply"
+            >
+              {check.options.map((option) => (
+                <motion.button
+                  type="button"
+                  key={option}
+                  aria-pressed={replies[selected] === option}
+                  whileTap={reduced ? undefined : { scale: 0.97 }}
+                  onClick={() =>
+                    setReplies((old) => ({ ...old, [selected]: option }))
+                  }
+                >
+                  {replies[selected] === option && (
+                    <Check size={15} aria-hidden="true" />
+                  )}
+                  {option}
+                </motion.button>
+              ))}
             </div>
-            <div className="story-issue-footer">
-              <Sparkles size={16} aria-hidden="true" />
-              <span>The group chooses what works.</span>
-            </div>
+          </motion.div>
+          <p className="reality-response" role="status">
+            {replies[selected]
+              ? check.answer
+              : "Choose a reply to explore the example."}
+          </p>
+          <div className="preview-footnote">
+            <span>Fictional example · no AI request</span>
+            <button type="button" onClick={() => setReplies({})}>
+              <RotateCcw size={12} aria-hidden="true" />
+              Reset
+            </button>
           </div>
         </div>
       </div>
@@ -188,21 +234,20 @@ function RealityCheckStory() {
 }
 
 function SharedVersionStory() {
+  const [state, setState] = useState(initialVersion);
+  const revised = state.version === 4;
   return (
     <Reveal section className="home-story-section story-version">
       <div className="story-version-copy">
-        <p className="story-kicker">One shared version</p>
         <h2>Agreement should be clear enough to keep.</h2>
         <p>
-          Every yes belongs to a specific plan. When the plan changes, people
-          can see what changed and decide again.
+          Every yes belongs to a specific plan. Change the proposal and see why
+          the group needs to decide again.
         </p>
         <ButtonLink to="/demos?scenario=beach" secondary>
           See a plan come together
-          <ArrowRight size={17} aria-hidden="true" />
         </ButtonLink>
       </div>
-
       <div
         className="story-receipt-stage"
         data-visual-slot="decision-receipt-demo"
@@ -210,45 +255,68 @@ function SharedVersionStory() {
         <article className="story-receipt">
           <div className="story-receipt-head">
             <div>
-              <span>Fictional plan · La Union</span>
               <h3>Beach weekend</h3>
-              <p>Saturday, Nov 14 · Version 3</p>
+              <p>La Union · Saturday, Nov 14</p>
             </div>
-            <span className="story-receipt-mark">v3</span>
-          </div>
-          <div className="story-receipt-rule" />
-          <div className="story-receipt-line">
-            <span>Shared plan</span>
-            <strong>Leave early · split the ride</strong>
           </div>
           <div className="story-receipt-line">
-            <span>Still to decide</span>
-            <strong>Per-person budget</strong>
+            <span>Departure</span>
+            <strong>{revised ? "8:30 AM" : "7:00 AM"}</strong>
           </div>
+          <div className="story-receipt-line">
+            <span>Travel</span>
+            <strong>Furina drives · split fuel</strong>
+          </div>
+          <details className="story-version-details">
+            <summary>
+              What changed in the plan?
+            </summary>
+            <p>
+              {revised
+                ? "Departure moved from 7:00 AM to 8:30 AM. Earlier approvals no longer apply after a plan change, so everyone needs to decide again."
+                : "Furina was added as the driver. The early departure is part of the proposal; the per-person budget is still open."}
+            </p>
+          </details>
           <div className="story-receipt-approval">
             <div className="story-avatar-stack" aria-hidden="true">
               {[0, 1, 2, 3].map((index) => (
                 <Avatar key={index} index={index} />
               ))}
             </div>
-            <div>
-              <strong>2 of 4 approved</strong>
-              <small>Two people are still reviewing</small>
-            </div>
-            <span className="story-receipt-check">
-              <Check size={16} aria-hidden="true" />
-            </span>
+            <strong role="status">
+              {state.approvals.length} of 4 approved
+            </strong>
           </div>
-          <details className="story-version-details">
-            <summary>
-              What changed in version 3?
-              <ChevronDown size={16} aria-hidden="true" />
-            </summary>
-            <p>
-              The departure moved earlier and a driver was added. The budget
-              stays open until the group agrees.
-            </p>
-          </details>
+          <div className="version-actions">
+            <button
+              type="button"
+              className="receipt-button"
+              disabled={revised}
+              onClick={() => setState(revisePreview)}
+            >
+              Move departure to 8:30 AM
+            </button>
+            {revised && (
+              <button
+                type="button"
+                className="receipt-button receipt-approve"
+                disabled={state.approvals.includes("Selena")}
+                onClick={() => setState((old) => approveVersion(old, "Selena"))}
+              >
+                {state.approvals.includes("Selena")
+                  ? "Selena approved this plan"
+                  : "Add Selena’s sample approval"}
+                <Check size={15} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+          <div className="preview-footnote">
+            <span>Fictional approvals</span>
+            <button type="button" onClick={() => setState(initialVersion())}>
+              <RotateCcw size={12} aria-hidden="true" />
+              Reset
+            </button>
+          </div>
         </article>
       </div>
     </Reveal>
@@ -256,54 +324,63 @@ function SharedVersionStory() {
 }
 
 function ScenarioStory() {
-  const [featured, ...more] = scenarios;
+  const [selected, setSelected] = useState(scenarios[0].id);
+  const featured = scenarios.find((scenario) => scenario.id === selected)!;
+  const reduced = useReducedMotion();
   return (
     <Reveal
       section
       id="explore-demos"
       className="home-story-section story-scenarios"
     >
-      <StoryHeading
-        label="Made for real-life plans"
-        title="Different groups. Different ways forward."
-      >
+      <StoryHeading title="Different groups. Different ways forward.">
         Start with a situation you know. Explore a fictional example, then make
         the plan your own.
       </StoryHeading>
-
       <div className="story-scenario-wall">
-        <Link
-          to={`/demos?scenario=${featured.id}`}
-          className="story-scenario-featured"
-        >
-          <div className="story-scenario-featured-art">
+        <div className="story-scenario-featured" id="scenario-preview">
+          <motion.div
+            className="story-scenario-featured-art"
+            key={selected}
+            initial={{ opacity: reduced ? 1 : 0.65 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: reduced ? 0 : 0.24, ease: "easeInOut" }}
+          >
             <img
               src={`/covers/${featured.id}-2.svg`}
-              alt=""
+              alt={`Setvia cats planning a ${featured.title.toLowerCase()}`}
               width={600}
               height={450}
               loading="lazy"
             />
-            <span>Featured example</span>
-          </div>
+          </motion.div>
           <div className="story-scenario-featured-copy">
             <div>
-              <small>{featured.audience} · Fictional demo</small>
               <h3>{featured.title}</h3>
               <p>{featured.question}</p>
             </div>
-            <span className="story-scenario-arrow">
-              <ArrowUpRight size={18} aria-hidden="true" />
-            </span>
-          </div>
-        </Link>
-
-        <div className="story-scenario-rail">
-          {more.map((scenario) => (
             <Link
-              to={`/demos?scenario=${scenario.id}`}
+              to={`/demos?scenario=${featured.id}`}
+              aria-label={`Explore ${featured.title} demo`}
+              className="story-scenario-action"
+            >
+              Explore
+            </Link>
+          </div>
+        </div>
+        <div
+          className="story-scenario-rail"
+          role="group"
+          aria-label="Choose a scenario"
+        >
+          {scenarios.map((scenario) => (
+            <button
+              type="button"
               className="story-scenario-link"
               key={scenario.id}
+              aria-pressed={selected === scenario.id}
+              aria-controls="scenario-preview"
+              onClick={() => setSelected(scenario.id)}
             >
               <img
                 src={`/covers/${scenario.id}-1.svg`}
@@ -316,8 +393,7 @@ function ScenarioStory() {
                 <strong>{scenario.title}</strong>
                 <small>{scenario.audience}</small>
               </span>
-              <ArrowRight size={17} aria-hidden="true" />
-            </Link>
+            </button>
           ))}
         </div>
       </div>
@@ -330,27 +406,21 @@ function ClosingStory() {
     <Reveal section className="home-story-section story-closing">
       <div className="story-closing-panel">
         <div className="story-closing-copy">
-          <p className="story-kicker">Bring the group together</p>
           <h2>Make the next message move things forward.</h2>
           <p>
-            Start with what your group knows. Setvia helps you find what still
-            needs a conversation.
+            Start with what your group knows. Find what still needs a
+            conversation.
           </p>
           <div className="story-closing-actions">
             <ButtonLink to="/start">
               Start Planning
-              <ArrowRight size={18} aria-hidden="true" />
             </ButtonLink>
             <ButtonLink to="/demos" secondary>
               Explore demos
-              <ArrowUpRight size={17} aria-hidden="true" />
             </ButtonLink>
           </div>
-          <small>UI preview · Example plans use fictional groups.</small>
         </div>
         <div className="story-closing-mascot" aria-hidden="true">
-          <span className="story-mascot-orbit story-mascot-orbit-blue" />
-          <span className="story-mascot-orbit story-mascot-orbit-orange" />
           <Mascot />
         </div>
       </div>

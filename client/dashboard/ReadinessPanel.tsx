@@ -84,8 +84,7 @@ export function ReadinessPanel({
           <div>
             <h1>{room.proposal.label}</h1>
             <p>
-              {room.eventType} · Proposal v{room.proposalVersion} ·{" "}
-              {room.participants.length} members
+              {room.eventType} · {room.participants.length} members
             </p>
           </div>
         </div>
@@ -267,8 +266,8 @@ export function ReadinessPanel({
             </p>
           ) : null}
           <p>
-            Readiness checks available information. Approval belongs to this
-            exact proposal version.
+            Readiness checks available information. Approval belongs to the plan
+            people reviewed.
           </p>
         </details>
       </div>

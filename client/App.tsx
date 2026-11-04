@@ -2,7 +2,6 @@ import { PageTransition } from "./MotionUI";
 import { lazy, Suspense, useState } from "react";
 import type { FormEvent } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
-import { ArrowRight, ArrowLeft } from "lucide-react";
 import { ButtonLink, Header, Footer } from "./components";
 
 import { Demos } from "./Scenarios";
@@ -30,7 +29,6 @@ function FormPage({ join = false }: { join?: boolean }) {
   return (
     <section className="form-page section-shell">
       <Link className="back-link" to="/">
-        <ArrowLeft size={17} aria-hidden="true" />
         Back to Setvia
       </Link>
 
@@ -92,7 +90,6 @@ function FormPage({ join = false }: { join?: boolean }) {
         )}
         <button className="button button-primary" type="submit">
           {join ? "Preview joining" : "Preview next step"}
-          <ArrowRight size={18} aria-hidden="true" />
         </button>
         <p role="status" className="form-feedback">
           {message}

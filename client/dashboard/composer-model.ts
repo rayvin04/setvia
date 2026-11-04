@@ -46,3 +46,15 @@ export function virtualKeyboardInset(
     Math.round(layoutHeight - viewportHeight - viewportOffsetTop),
   );
 }
+
+export function composerInputHeight(
+  contentHeight: number,
+  chromeHeight: number,
+  viewportHeight: number,
+): number {
+  const maximum = Math.max(
+    64,
+    Math.min(240, Math.floor(viewportHeight * 0.68) - chromeHeight),
+  );
+  return Math.min(maximum, Math.max(44, contentHeight));
+}
