@@ -119,11 +119,29 @@ export const PlaygroundRequestSchema = z
   });
 export type PlaygroundRequest = z.infer<typeof PlaygroundRequestSchema>;
 
+export const PLAYGROUND_CONTRACT_VERSION = 2;
+export const PlaygroundFailureCodeSchema = z.enum([
+  "inference_disabled",
+  "busy",
+  "authentication",
+  "rate_limit",
+  "timeout",
+  "connection",
+  "provider_request",
+  "provider_unavailable",
+  "validation",
+  "accounting",
+  "request_limit",
+  "unavailable",
+]);
+export type PlaygroundFailureCode = z.infer<typeof PlaygroundFailureCodeSchema>;
+
 export const PlaygroundResultSchema = z
   .object({
     agent: z.enum(PlaygroundAgents),
     scenarioId: z.string(),
     source: z.enum(["live", "cached"]),
+    fallbackCode: PlaygroundFailureCodeSchema.optional(),
     model: z.literal("muse-spark-1.3"),
     generatedAt: z.iso.datetime(),
     roles: z

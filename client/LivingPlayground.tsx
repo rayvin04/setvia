@@ -1,5 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import {
+  AnimatePresence,
+  motion,
+  useInView,
+  useReducedMotion,
+} from "motion/react";
 import { useLocation } from "react-router-dom";
 import {
   Archive,
@@ -13,6 +18,7 @@ import {
 import {
   playgroundScenarios,
   type PlaygroundAgent,
+  type PlaygroundFailureCode,
   type PlaygroundResult,
 } from "../shared/playground";
 import { AgentCat } from "./AgentCats";
@@ -58,12 +64,30 @@ const agents = [
 }[];
 type AgentInfo = (typeof agents)[number];
 
+const fallbackMessages: Record<PlaygroundFailureCode, string> = {
+  inference_disabled: "Live AI is temporarily paused.",
+  busy: "Both live slots are busy.",
+  authentication: "The live service could not authenticate with Meta.",
+  rate_limit: "Meta is busy right now.",
+  timeout: "The live request took too long.",
+  connection: "The live service could not reach Meta.",
+  provider_request: "Meta could not accept this live request.",
+  provider_unavailable: "Meta is temporarily unavailable.",
+  validation: "The new answer did not pass Setvia’s checks.",
+  accounting: "Live request recording is temporarily unavailable.",
+  request_limit: "The live request reached its attempt limit.",
+  unavailable: "Live AI is temporarily unavailable.",
+};
+
 function Source({ result }: { result: PlaygroundResult }) {
   const Icon = result.source === "cached" ? Archive : Zap;
   return (
-    <span className={`playground-source source-${result.source}`}>
+    <span
+      className={`playground-source source-${result.source}`}
+      title={`${result.source === "cached" ? "Previously generated" : "Generated"} ${new Date(result.generatedAt).toLocaleString()}`}
+    >
       <Icon size={12} aria-hidden="true" />
-      {result.source === "cached" ? "Cached response" : "Live response"}
+      {result.source === "cached" ? "Cached fallback" : "Live response"}
     </span>
   );
 }
@@ -75,12 +99,20 @@ function visibleOutput(agent: PlaygroundAgent, result: PlaygroundResult) {
   );
 }
 
-function AgentCard({ agent }: { agent: AgentInfo }) {
+function AgentCard({
+  agent,
+  pageVisible,
+}: {
+  agent: AgentInfo;
+  pageVisible: boolean;
+}) {
   const [scenarioIndex, setScenarioIndex] = useState(0);
   const [result, setResult] = useState<PlaygroundResult>();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const pending = useRef<AbortController | null>(null);
+  const card = useRef<HTMLElement>(null);
+  const inView = useInView(card, { amount: 0.1 });
   const reduced = useReducedMotion();
   const scenarios = playgroundScenarios[agent.id];
   const scenario = scenarios[scenarioIndex];
@@ -135,23 +167,22 @@ function AgentCard({ agent }: { agent: AgentInfo }) {
 
   return (
     <article
-      className={`playground-card playground-${agent.id}${loading ? " is-working" : ""}`}
+      ref={card}
+      className={`playground-card playground-${agent.id}${loading ? " is-working" : ""}${inView && pageVisible && !reduced ? " is-animated" : ""}`}
       aria-labelledby={`${agent.id}-role`}
     >
       <span className="playground-role" id={`${agent.id}-role`}>
         {agent.name}
       </span>
-      <motion.div
+      <div
         className={`playground-cat-stage playground-cat-${agent.id}`}
         aria-hidden="true"
-        animate={loading && !reduced ? { y: [0, -2, 0] } : { y: 0 }}
-        transition={{ duration: 1.4, repeat: loading && !reduced ? Infinity : 0 }}
       >
         <div className="playground-cat-platform" />
         <div className="playground-cat-wrap">
           <AgentCat agent={agent.id} />
         </div>
-      </motion.div>
+      </div>
 
       <div
         className="playground-card-content"
@@ -172,9 +203,6 @@ function AgentCard({ agent }: { agent: AgentInfo }) {
               <div className="playground-scenario">
                 <div className="playground-scenario-heading">
                   <span>{scenario.title}</span>
-                  <span className="playground-example-count">
-                    {scenarioIndex + 1} / {scenarios.length}
-                  </span>
                 </div>
                 <p>{scenario.text}</p>
               </div>
@@ -187,12 +215,6 @@ function AgentCard({ agent }: { agent: AgentInfo }) {
               transition={{ duration: reduced ? 0.12 : 0.2, ease: "easeOut" }}
             >
               <div className="playground-input-block">
-                <div className="playground-message-heading">
-                  <span>Example input</span>
-                  <span className="playground-example-count">
-                    {scenarioIndex + 1} / {scenarios.length}
-                  </span>
-                </div>
                 <p className="playground-input-copy">{scenario.text}</p>
               </div>
 
@@ -208,6 +230,18 @@ function AgentCard({ agent }: { agent: AgentInfo }) {
                       ? "Muse Spark 1.3 · Question Strategist → Speaker"
                       : `Muse Spark 1.3 · ${agent.name}`}
                 </span>
+                {result?.source === "cached" && (
+                  <p className="playground-fallback-note">
+                    {fallbackMessages[result.fallbackCode ?? "unavailable"]}{" "}
+                    Showing a saved response.
+                    {result.fallbackCode && (
+                      <span className="playground-failure-code">
+                        {" "}
+                        ({result.fallbackCode})
+                      </span>
+                    )}
+                  </p>
+                )}
 
                 <AnimatePresence mode="wait" initial={false}>
                   {loading ? (
@@ -216,11 +250,17 @@ function AgentCard({ agent }: { agent: AgentInfo }) {
                       className="playground-response-waiting"
                       role="status"
                       {...swapMotion}
-                      transition={{ duration: reduced ? 0.12 : 0.18, ease: "easeOut" }}
+                      transition={{
+                        duration: reduced ? 0.12 : 0.18,
+                        ease: "easeOut",
+                      }}
                     >
                       <LoaderCircle size={15} aria-hidden="true" />
                       <span>{agent.loading}</span>
-                      <span className="playground-thinking-dots" aria-hidden="true">
+                      <span
+                        className="playground-thinking-dots"
+                        aria-hidden="true"
+                      >
                         <i />
                         <i />
                         <i />
@@ -232,7 +272,10 @@ function AgentCard({ agent }: { agent: AgentInfo }) {
                       className="playground-error"
                       role="alert"
                       {...swapMotion}
-                      transition={{ duration: reduced ? 0.12 : 0.18, ease: "easeOut" }}
+                      transition={{
+                        duration: reduced ? 0.12 : 0.18,
+                        ease: "easeOut",
+                      }}
                     >
                       <CircleAlert size={16} aria-hidden="true" />
                       <p>{error}</p>
@@ -242,12 +285,24 @@ function AgentCard({ agent }: { agent: AgentInfo }) {
                       key="result"
                       className="playground-output-copy"
                       {...swapMotion}
-                      transition={{ duration: reduced ? 0.12 : 0.22, ease: "easeOut" }}
+                      transition={{
+                        duration: reduced ? 0.12 : 0.22,
+                        ease: "easeOut",
+                      }}
                     >
-                      {visibleOutput(agent.id, result).map((section) => (
-                        <p className="playground-output-line" key={section.label}>
+                      {visibleOutput(agent.id, result).map((section, index) => (
+                        <motion.p
+                          className="playground-output-line"
+                          key={section.label}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          transition={{
+                            duration: reduced ? 0.12 : 0.2,
+                            delay: reduced ? 0 : index * 0.07,
+                          }}
+                        >
                           <strong>{section.label}:</strong> {section.text}
-                        </p>
+                        </motion.p>
                       ))}
                     </motion.div>
                   ) : null}
@@ -291,6 +346,12 @@ function AgentCard({ agent }: { agent: AgentInfo }) {
 
 export function LivingPlayground() {
   const { hash, pathname } = useLocation();
+  const [pageVisible, setPageVisible] = useState(() => !document.hidden);
+  useEffect(() => {
+    const changed = () => setPageVisible(!document.hidden);
+    document.addEventListener("visibilitychange", changed);
+    return () => document.removeEventListener("visibilitychange", changed);
+  }, []);
   useLayoutEffect(() => {
     if (pathname !== "/" || hash !== "#meet-the-minds") return;
     document
@@ -307,9 +368,9 @@ export function LivingPlayground() {
       <div className="playground-heading">
         <div>
           <h2>
-            Meet the minds
-            <br className="playground-heading-break" /> behind Setvia
-            <span>.</span>
+            Meet the minds behind{" "}
+            <span className="brand-name playground-brand">Setvia</span>
+            <span className="playground-period">.</span>
           </h2>
           <p>Four little challenges. Real Meta AI. No room required.</p>
         </div>
@@ -320,7 +381,7 @@ export function LivingPlayground() {
       </div>
       <div className="playground-grid">
         {agents.map((agent) => (
-          <AgentCard key={agent.id} agent={agent} />
+          <AgentCard key={agent.id} agent={agent} pageVisible={pageVisible} />
         ))}
       </div>
     </Reveal>

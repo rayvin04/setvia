@@ -10,11 +10,13 @@ import { validateJudge, validateSpeaker } from "../agents/engine.js";
 import { sharedContext } from "../agents/rooms.js";
 import { StateError } from "../agents/store.js";
 import { assertPlanningScope } from "../ai/planning-scope.js";
+import { InvalidModelOutputError, MetaApiError } from "../ai/errors.js";
 import {
   PlaygroundResultSchema,
   playgroundScenarios,
   type PlaygroundRequest,
   type PlaygroundResult,
+  type PlaygroundFailureCode,
 } from "../../../shared/playground.js";
 import { demoContext } from "./scenarios.js";
 
@@ -23,9 +25,46 @@ export class PlaygroundError extends Error {
     readonly status: number,
     message: string,
     readonly retryAfter?: number,
+    readonly code: PlaygroundFailureCode = "unavailable",
   ) {
     super(message);
   }
+}
+
+export function playgroundFailureCode(error: unknown): PlaygroundFailureCode {
+  if (error instanceof PlaygroundError) return error.code;
+  if (error instanceof MetaApiError) {
+    switch (error.code) {
+      case "authentication":
+      case "forbidden":
+        return "authentication";
+      case "timeout":
+      case "connection":
+      case "rate_limit":
+      case "accounting":
+      case "request_limit":
+        return error.code;
+      case "invalid_response":
+        return "validation";
+      case "request":
+      case "not_found":
+      case "unexpected_model":
+        return "provider_request";
+      case "server":
+        return "provider_unavailable";
+    }
+  }
+  if (error instanceof StateError)
+    return error.code === "CALL_ALLOWANCE_REQUIRED"
+      ? "accounting"
+      : "validation";
+  if (
+    error instanceof InvalidModelOutputError ||
+    (error instanceof Error && error.name === "ZodError")
+  )
+    return "validation";
+  if (error instanceof Error && error.name === "AbortError") return "timeout";
+  return "unavailable";
 }
 
 export interface PlaygroundOptions {
@@ -76,6 +115,7 @@ export function createPlaygroundService(options: PlaygroundOptions) {
         429,
         "A few too many tries. Give the playground a minute, then try again.",
         Math.max(1, Math.ceil((window.until - current) / 1000)),
+        "rate_limit",
       );
     window.count++;
     windows.set(key, window);
@@ -92,6 +132,8 @@ export function createPlaygroundService(options: PlaygroundOptions) {
         throw new PlaygroundError(
           503,
           "The AI playground is resting. Please try again later.",
+          undefined,
+          "inference_disabled",
         );
       const result = await options.gateway.call(role, input, {
         signal: controller.signal,
@@ -101,6 +143,8 @@ export function createPlaygroundService(options: PlaygroundOptions) {
             throw new PlaygroundError(
               503,
               "The AI playground is resting. Please try again later.",
+              undefined,
+              "inference_disabled",
             );
           await options.reserveAttempt(allowance);
         },
@@ -207,11 +251,12 @@ export function createPlaygroundService(options: PlaygroundOptions) {
           }),
         );
         const option = output.options[0];
-        const overlap = request.scenarioId === "negotiator-sunday"
-          ? { day: "Sunday", earliestStart: 10, latestEnd: 12 }
-          : request.scenarioId === "negotiator-saturday"
-            ? { day: "Saturday", earliestStart: 15, latestEnd: 17 }
-            : { day: "Friday", earliestStart: 17, latestEnd: 19 };
+        const overlap =
+          request.scenarioId === "negotiator-sunday"
+            ? { day: "Sunday", earliestStart: 10, latestEnd: 12 }
+            : request.scenarioId === "negotiator-saturday"
+              ? { day: "Saturday", earliestStart: 15, latestEnd: 17 }
+              : { day: "Friday", earliestStart: 17, latestEnd: 19 };
         const values = option.values;
         if (
           values.day !== overlap.day ||
@@ -289,6 +334,9 @@ export function createPlaygroundService(options: PlaygroundOptions) {
   }
 
   return {
+    status() {
+      return { inferenceEnabled: options.inferenceEnabled() };
+    },
     async run(
       request: PlaygroundRequest,
       ip: string,
@@ -316,45 +364,85 @@ export function createPlaygroundService(options: PlaygroundOptions) {
       const memory = cache.get(key);
       if (memory && now() - Date.parse(memory.generatedAt) > 7 * 24 * 3_600_000)
         cache.delete(key);
-      const cached =
-        !request.text && (cache.get(key) ?? (await readCache(key)));
-      if (cached) return { ...cached, source: "cached" };
-      if (!request.text && inflight.has(key))
-        return { ...(await inflight.get(key)!), source: "cached" };
+      if (!request.text && inflight.has(key)) return inflight.get(key)!;
       if (!options.inferenceEnabled())
-        throw new PlaygroundError(
-          503,
-          "The AI playground is resting. Please try again later.",
+        return fallback(
+          request,
+          key,
+          new PlaygroundError(
+            503,
+            "Live AI is temporarily paused. Please try again later.",
+            undefined,
+            "inference_disabled",
+          ),
         );
       if (active >= 2)
-        throw new PlaygroundError(
-          429,
-          "Two minds are working right now. Try again in a few seconds.",
-          10,
+        return fallback(
+          request,
+          key,
+          new PlaygroundError(
+            429,
+            "Two minds are working right now. Try again in a few seconds.",
+            10,
+            "busy",
+          ),
         );
       active++;
-      const promise = execute(request);
-      if (!request.text) inflight.set(key, promise);
-      try {
-        const result = await promise;
-        if (!request.text) {
-          cache.set(key, result);
-          if (options.cacheRoot) {
-            await mkdir(options.cacheRoot, { recursive: true, mode: 0o700 });
-            const target = resolve(options.cacheRoot, key + ".json");
-            await writeFile(target + ".tmp", JSON.stringify(result), {
-              mode: 0o600,
-            });
-            await rename(target + ".tmp", target);
+      const promise = (async () => {
+        try {
+          const result = await execute(request);
+          if (!request.text) {
+            cache.set(key, result);
+            if (options.cacheRoot) {
+              try {
+                await mkdir(options.cacheRoot, {
+                  recursive: true,
+                  mode: 0o700,
+                });
+                const target = resolve(options.cacheRoot, key + ".json");
+                await writeFile(target + ".tmp", JSON.stringify(result), {
+                  mode: 0o600,
+                });
+                await rename(target + ".tmp", target);
+              } catch {
+                console.warn(
+                  "The public playground response could not be saved for fallback.",
+                );
+              }
+            }
           }
+          return result;
+        } catch (error) {
+          return await fallback(request, key, error);
+        } finally {
+          active--;
+          if (!request.text) inflight.delete(key);
         }
-        return result;
-      } finally {
-        active--;
-        if (!request.text) inflight.delete(key);
-      }
+      })();
+      if (!request.text) inflight.set(key, promise);
+      return promise;
     },
   };
+
+  async function fallback(
+    request: PlaygroundRequest,
+    key: string,
+    error: unknown,
+  ): Promise<PlaygroundResult> {
+    const saved = !request.text && (cache.get(key) ?? (await readCache(key)));
+    if (
+      saved &&
+      saved.agent === request.agent &&
+      saved.scenarioId === request.scenarioId &&
+      now() - Date.parse(saved.generatedAt) <= 7 * 24 * 3_600_000
+    )
+      return {
+        ...saved,
+        source: "cached",
+        fallbackCode: playgroundFailureCode(error),
+      };
+    throw error;
+  }
 
   async function readCache(key: string) {
     if (!options.cacheRoot) return undefined;
