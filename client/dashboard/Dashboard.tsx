@@ -12,10 +12,8 @@ import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useReducedMotion } from "motion/react";
 import {
   Activity,
-  ArrowRight,
   CalendarDays,
   ChevronDown,
-  ChevronRight,
   CircleAlert,
   ClipboardList,
   FlaskConical,
@@ -199,7 +197,6 @@ function RealityOverview({
                 ? "Review the six checks"
                 : "Not evaluated"}
         </span>
-        <ChevronRight size={15} aria-hidden="true" />
       </span>
       <span className="reality-overview-categories">
         {states.map((state) => (
@@ -341,7 +338,6 @@ export function PlanningDashboard({
                     ? `${snapshot.room.options.length} options`
                     : "History"}
                 </span>
-                <ChevronDown size={15} aria-hidden="true" />
               </summary>
               <PlanningDetails
                 snapshot={snapshot}
@@ -389,7 +385,6 @@ function DashboardLoading({ intentional = false }: { intentional?: boolean }) {
           to="/dashboard?scenario=beach"
         >
           Open beach preview
-          <ArrowRight size={15} aria-hidden="true" />
         </Link>
       ) : null}
     </div>
@@ -406,7 +401,6 @@ function RoomNotConnected() {
       </p>
       <Link to="/dashboard" className="dashboard-button primary">
         Explore the synthetic dashboard
-        <ArrowRight size={16} aria-hidden="true" />
       </Link>
     </div>
   );
@@ -635,7 +629,6 @@ export default function DashboardRoute() {
         <div>
           <Link to="/demos">
             Demos
-            <ArrowRight size={13} aria-hidden="true" />
           </Link>
           <span
             className="dashboard-viewer-avatar"
@@ -668,7 +661,6 @@ export default function DashboardRoute() {
             >
               <Settings2 size={16} aria-hidden="true" />
               {viewer[0].toUpperCase() + viewer.slice(1)}
-              <ChevronDown size={13} aria-hidden="true" />
             </button>
             <div className="preview-control-fields" id="preview-control-fields">
               <div className="preview-select">

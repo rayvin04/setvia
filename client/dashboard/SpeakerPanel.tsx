@@ -1,6 +1,5 @@
 import { motion, useReducedMotion } from "motion/react";
 import {
-  CornerDownRight,
   LockKeyhole,
   MessageCircle,
   Users,
@@ -90,7 +89,6 @@ export function SpeakerPanel({
         disabled={!onRespond}
         onClick={onRespond}
       >
-        <CornerDownRight size={14} aria-hidden="true" />
         {question ? "Answer Setvia below" : "Share a thought"}
       </button>
     </section>

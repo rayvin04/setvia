@@ -2,9 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent, DragEvent, FormEvent } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import {
-  ArrowRight,
   Check,
-  ChevronDown,
   ImagePlus,
   LockKeyhole,
   Plus,
@@ -846,7 +844,6 @@ export function StartPlanning() {
               <details className="more-fields simple-more" ref={detailsRef}>
                 <summary>
                   More details
-                  <ChevronDown size={16} aria-hidden="true" />
                 </summary>
                 <fieldset className="category-fieldset">
                   <legend>Category</legend>
@@ -878,12 +875,10 @@ export function StartPlanning() {
               <details className="simple-utilities">
                 <summary>
                   Draft settings
-                  <ChevronDown size={16} aria-hidden="true" />
                 </summary>
                 <details className="simple-storage">
                   <summary>
                     Save on this device
-                    <ChevronDown size={16} aria-hidden="true" />
                   </summary>
                   <label className="draft-toggle">
                     <input
@@ -1072,7 +1067,6 @@ export function StartPlanning() {
                 whileTap={reducedMotion ? undefined : { scale: 0.97 }}
               >
                 Start Planning
-                <ArrowRight size={17} aria-hidden="true" />
               </motion.button>
             </div>
 
@@ -1277,7 +1271,6 @@ export function StartPlanning() {
               </p>
               <Link className="text-button" to="/demos">
                 Explore a fictional planning room
-                <ArrowRight size={15} aria-hidden="true" />
               </Link>
             </motion.div>
           )}

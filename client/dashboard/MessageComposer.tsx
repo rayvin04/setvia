@@ -10,7 +10,6 @@ import {
 import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "motion/react";
 import {
-  ArrowUp,
   Check,
   Info,
   LoaderCircle,
@@ -477,7 +476,7 @@ export const MessageComposer = forwardRef<
                 aria-hidden="true"
               />
             ) : (
-              <ArrowUp size={21} aria-hidden="true" />
+              <span>Send</span>
             )}
           </motion.button>
         </div>

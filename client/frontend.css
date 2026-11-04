@@ -201,12 +201,14 @@
   cursor: pointer;
 }
 .plan-option-row > details > summary::-webkit-details-marker,
-.simple-storage > summary::-webkit-details-marker {
+.simple-storage > summary::-webkit-details-marker,
+.simple-utilities > summary::-webkit-details-marker,
+.simple-more > summary::-webkit-details-marker {
   display: none;
 }
-.plan-option-row > details[open] > summary > svg,
-.simple-storage[open] > summary > svg {
-  transform: rotate(180deg);
+.simple-utilities > summary,
+.simple-more > summary {
+  list-style: none;
 }
 .planning-simple .simple-more {
   margin: 0;

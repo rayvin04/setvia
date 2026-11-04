@@ -1,11 +1,9 @@
 import { useId, useReducer, useRef } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import {
-  ArrowUpRight,
   CalendarDays,
   CarFront,
   Check,
-  ChevronLeft,
   RotateCcw,
   Wallet,
 } from "lucide-react";
@@ -109,7 +107,6 @@ export function InteractivePlanPreview() {
                   dispatch({ type: "inspect", detail: state.detail! })
                 }
               >
-                <ChevronLeft size={15} aria-hidden="true" />
                 Back to plan
               </button>
               <h4>{details[state.detail].title}</h4>
@@ -146,7 +143,6 @@ export function InteractivePlanPreview() {
                   <Icon size={19} aria-hidden="true" />
                   <span>{label}</span>
                   <strong>{value}</strong>
-                  <ArrowUpRight size={14} aria-hidden="true" />
                 </button>
               ))}
               <button
@@ -161,7 +157,6 @@ export function InteractivePlanPreview() {
                   <small>Still open</small>
                   <strong>Budget and who brings food</strong>
                 </span>
-                <ArrowUpRight size={18} aria-hidden="true" />
               </button>
             </motion.div>
           )}

@@ -1,11 +1,9 @@
 import {
   ArrowRight,
-  ArrowUpRight,
   Backpack,
   CalendarDays,
   CarFront,
   Check,
-  ChevronDown,
   RotateCcw,
   ShieldCheck,
   UsersRound,
@@ -172,7 +170,6 @@ function RealityCheckStory() {
                 {label}
                 <small>Check</small>
               </span>
-              <ArrowUpRight size={15} aria-hidden="true" />
             </button>
           ))}
         </div>
@@ -249,7 +246,6 @@ function SharedVersionStory() {
         </p>
         <ButtonLink to="/demos?scenario=beach" secondary>
           See a plan come together
-          <ArrowRight size={17} aria-hidden="true" />
         </ButtonLink>
       </div>
       <div
@@ -274,7 +270,6 @@ function SharedVersionStory() {
           <details className="story-version-details">
             <summary>
               What changed in the plan?
-              <ChevronDown size={16} aria-hidden="true" />
             </summary>
             <p>
               {revised
@@ -300,7 +295,6 @@ function SharedVersionStory() {
               onClick={() => setState(revisePreview)}
             >
               Move departure to 8:30 AM
-              <ArrowRight size={15} aria-hidden="true" />
             </button>
             {revised && (
               <button
@@ -368,9 +362,9 @@ function ScenarioStory() {
             <Link
               to={`/demos?scenario=${featured.id}`}
               aria-label={`Explore ${featured.title} demo`}
-              className="story-scenario-arrow"
+              className="story-scenario-action"
             >
-              <ArrowUpRight size={21} aria-hidden="true" />
+              Explore
             </Link>
           </div>
         </div>
@@ -399,7 +393,6 @@ function ScenarioStory() {
                 <strong>{scenario.title}</strong>
                 <small>{scenario.audience}</small>
               </span>
-              <ArrowRight size={17} aria-hidden="true" />
             </button>
           ))}
         </div>
@@ -421,11 +414,9 @@ function ClosingStory() {
           <div className="story-closing-actions">
             <ButtonLink to="/start">
               Start Planning
-              <ArrowRight size={18} aria-hidden="true" />
             </ButtonLink>
             <ButtonLink to="/demos" secondary>
               Explore demos
-              <ArrowUpRight size={17} aria-hidden="true" />
             </ButtonLink>
           </div>
         </div>

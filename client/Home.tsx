@@ -1,6 +1,5 @@
 import { HomeStory } from "./HomeStory";
 import { Reveal } from "./MotionUI";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { ButtonLink } from "./components";
 import { Waves } from "./Waves";
 import { Mascot } from "./Mascot";
@@ -26,12 +25,10 @@ export function Home() {
               <Mascot />
               <ButtonLink to="/start">
                 Start Planning
-                <ArrowRight size={19} aria-hidden="true" />
               </ButtonLink>
             </div>
             <ButtonLink to="/demos" secondary>
               Try Demo
-              <ArrowUpRight size={18} aria-hidden="true" />
             </ButtonLink>
           </div>
         </Reveal>

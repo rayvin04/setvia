@@ -8,7 +8,6 @@ import {
 import { Attribution } from "./Attribution";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ArrowUpRight } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { initialHeaderState, nextHeaderState } from "./header-state";
@@ -50,7 +49,7 @@ export function Wordmark() {
         <i />
         <i />
       </span>
-      setvia<span className="brand-period">.</span>
+      <span className="brand-name">Setvia</span>
     </Link>
   );
 }
@@ -115,7 +114,6 @@ export function Header() {
           </Link>
           <Link to="/join" className="join-link">
             Join a Room
-            <ArrowUpRight size={15} aria-hidden="true" />
           </Link>
           <a
             className="github-link"

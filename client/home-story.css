@@ -113,7 +113,7 @@
 }
 .plan-preview-row {
   display: grid;
-  grid-template-columns: 20px 54px 1fr 14px;
+  grid-template-columns: 20px 54px minmax(0, 1fr);
   gap: 10px;
   align-items: center;
   text-align: left;
@@ -132,9 +132,6 @@
   color: #eff5f7;
   font-size: 12px;
   font-weight: 450;
-}
-.plan-preview-row > svg:last-child {
-  opacity: 0.6;
 }
 .plan-open-issue {
   display: flex;
@@ -308,10 +305,6 @@
 .reality-selector button > svg:first-child {
   color: #77b6d4;
 }
-.reality-selector button > svg:last-child {
-  margin-left: auto;
-  opacity: 0.45;
-}
 .reality-selector button > span {
   font-size: 13px;
   font-weight: 450;
@@ -481,9 +474,6 @@
 .story-version-details summary::-webkit-details-marker {
   display: none;
 }
-.story-version-details[open] summary svg {
-  transform: rotate(180deg);
-}
 .story-version-details p {
   margin-top: 14px;
   color: #50636c;
@@ -589,15 +579,20 @@
   font-size: 13px;
   line-height: 1.6;
 }
-.story-scenario-arrow {
-  display: grid;
-  place-items: center;
-  width: 44px;
+.story-scenario-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 76px;
+  min-height: 42px;
+  padding-inline: 14px;
   height: 44px;
   border: 1px solid #36505f;
   color: #97d5f3;
-  border-radius: 50%;
+  border-radius: 999px;
   flex-shrink: 0;
+  font-size: 12px;
+  text-decoration: none;
 }
 .story-scenario-rail {
   display: flex;
@@ -641,10 +636,6 @@
   color: #a9bac4;
   font-size: 11px;
   margin-top: 5px;
-}
-.story-scenario-link > svg {
-  opacity: 0.65;
-  flex-shrink: 0;
 }
 .story-closing {
   padding-bottom: 100px;
@@ -704,7 +695,7 @@
   .receipt-button:not(:disabled):hover {
     border-color: #1a475b;
   }
-  .story-scenario-arrow:hover {
+  .story-scenario-action:hover {
     color: #f3f9fc;
     background: #1a3f53;
   }
@@ -811,7 +802,7 @@
   }
   .plan-preview-row {
     padding-block: 11px;
-    grid-template-columns: 18px 48px 1fr 12px;
+    grid-template-columns: 18px 48px minmax(0, 1fr);
     gap: 7px;
     font-size: 11px;
   }
@@ -870,9 +861,6 @@
     gap: 8px;
     padding: 13px;
     min-height: 92px;
-  }
-  .reality-selector button > svg:last-child {
-    display: none;
   }
   .reality-selector button > span {
     font-size: 11px;
@@ -958,9 +946,6 @@
   .plan-preview-row {
     grid-template-columns: 16px 43px 1fr;
     gap: 6px;
-  }
-  .plan-preview-row > svg:last-child {
-    display: none;
   }
   .plan-preview-row strong {
     font-size: 11px;

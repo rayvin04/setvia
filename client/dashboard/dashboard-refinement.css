@@ -404,8 +404,10 @@
   cursor: pointer;
   color: #c0d6e4;
   font-size: 12px;
+  list-style: none;
 }
-.advanced-plan > summary > span:nth-last-child(2) {
+.advanced-plan > summary::-webkit-details-marker { display: none; }
+.advanced-plan > summary > span:last-child {
   margin-left: auto;
   color: #9eb7c8;
   font-size: 11px;
@@ -796,14 +798,18 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 44px;
+  width: auto;
+  min-width: 64px;
   height: 44px;
   min-height: 44px;
-  padding: 0;
+  padding: 0 12px;
   border: 0;
-  border-radius: 50%;
+  border-radius: 999px;
   background: #0297de;
   color: #02070a;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
   transition: background-color 160ms ease-in-out;
 }
 .sv-composer-footer {
@@ -1580,12 +1586,13 @@
     padding: 12px 1px;
   }
   .sv-send {
-    width: 44px;
+    width: auto;
+    min-width: 64px;
     min-height: 44px;
   }
   .sv-composer-footer {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) 44px;
+    grid-template-columns: minmax(0, 1fr) 64px;
     gap: 2px 12px;
     margin-top: 4px;
   }

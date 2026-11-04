@@ -7,7 +7,6 @@ import {
   CarFront,
   Backpack,
   ListChecks,
-  ArrowRight,
   Check,
   UserPlus,
   LockKeyhole,
@@ -18,7 +17,6 @@ import {
   ThumbsUp,
   GitBranch,
   Activity,
-  ChevronRight,
 } from "lucide-react";
 import { Avatar } from "../Mascot";
 import type {
@@ -218,7 +216,7 @@ export function ActivityPanel({
           {!full && events.length > 3 ? (
             <details className="earlier-activity">
               <summary>
-                Earlier activity <ChevronRight size={14} aria-hidden="true" />
+                Earlier activity
               </summary>
               <ol className="activity-list">
                 {events.slice(3).map((event) => (
@@ -389,7 +387,6 @@ export function DecisionCards({
             <summary>
               <span className="decision-number">{index + 1}</span>
               <span>{option.label}</span>
-              <ChevronRight size={16} aria-hidden="true" />
             </summary>
             <div className="decision-body">
               <dl>
@@ -426,7 +423,6 @@ export function DecisionCards({
                 {snapshot.source === "synthetic"
                   ? "Preview this revision"
                   : "Propose this revision"}
-                <ArrowRight size={15} aria-hidden="true" />
               </button>
             </div>
           </details>
