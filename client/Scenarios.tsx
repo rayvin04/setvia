@@ -101,9 +101,6 @@ export function Demos() {
   }
   return (
     <section className="demo-page section-shell">
-      <Link className="back-link" to="/">
-        Back to Setvia
-      </Link>
       <div className="demo-heading">
         <div>
           <h1>Find your starting point.</h1>
