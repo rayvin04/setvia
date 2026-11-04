@@ -8,7 +8,10 @@ import { MessageComposer, type MessageComposerHandle } from "./MessageComposer";
 import { PlanningDashboard, type SectionId } from "./Dashboard";
 import { DecisionReceipt } from "./DecisionReceipt";
 import { ReceiptEditor } from "./ReceiptEditor";
-import { projectDecisionReceipt } from "./decision-receipt";
+import {
+  projectDecisionReceipt,
+  projectReceiptEvidence,
+} from "./decision-receipt";
 import { currentQuestion, questionQuickReplies } from "./composer-model";
 import { acceptDashboardUpdate } from "./model";
 import { validateDashboardAction, type DashboardAction, type DashboardSnapshot } from "../../shared/dashboard";
@@ -376,9 +379,7 @@ export default function LiveRoom() {
               <summary>Decision Receipt</summary>
               <DecisionReceipt
                 receipt={projectDecisionReceipt(snapshot)}
-                evidence={new Map(snapshot.contributions
-                  .filter((entry) => entry.visibility === "group" && entry.proposalVersion === snapshot.room.proposalVersion)
-                  .map((entry) => [entry.id, entry.text]))}
+                evidence={projectReceiptEvidence(snapshot)}
               />
               <ReceiptEditor
                 key={snapshot.room.roomId}

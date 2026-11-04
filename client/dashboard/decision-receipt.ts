@@ -17,6 +17,20 @@ type ReceiptSnapshot = Pick<DashboardSnapshot, "source"> & {
   };
 };
 
+export function projectReceiptEvidence(
+  snapshot: Pick<DashboardSnapshot, "room" | "contributions">,
+) {
+  return new Map(
+    snapshot.contributions
+      .filter(
+        (entry) =>
+          entry.visibility === "group" &&
+          entry.proposalVersion === snapshot.room.proposalVersion,
+      )
+      .map((entry) => [entry.id, entry.text]),
+  );
+}
+
 export function projectDecisionReceipt(snapshot: ReceiptSnapshot) {
   const { room } = snapshot;
   const { values } = room.proposal;
