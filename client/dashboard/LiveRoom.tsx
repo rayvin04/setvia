@@ -73,6 +73,13 @@ export default function LiveRoom() {
   const { enabled: soundsEnabled, toggle: toggleSounds, unlockFromGesture, play } = useSetviaSounds();
   const previousStreamStatus = useRef<StreamStatus | "loading" | "offline">("loading");
 
+  useEffect(() => {
+    document.title = snapshot?.room.proposal.label.trim() || "Setvia";
+    return () => {
+      document.title = "Setvia";
+    };
+  }, [snapshot?.room.proposal.label]);
+
   const acceptSnapshot = useCallback((input: DashboardSnapshot) => {
     setSnapshot((current) => current ? acceptDashboardUpdate(current, input) : input);
   }, []);
