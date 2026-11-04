@@ -262,7 +262,6 @@ function SharedVersionStory() {
               <h3>Beach weekend</h3>
               <p>La Union · Saturday, Nov 14</p>
             </div>
-            <span className="story-receipt-mark">v{state.version}</span>
           </div>
           <div className="story-receipt-line">
             <span>Departure</span>
@@ -274,13 +273,13 @@ function SharedVersionStory() {
           </div>
           <details className="story-version-details">
             <summary>
-              What changed in version {state.version}?
+              What changed in the plan?
               <ChevronDown size={16} aria-hidden="true" />
             </summary>
             <p>
               {revised
-                ? "Departure moved from 7:00 AM to 8:30 AM. The earlier approvals apply to version 3, so version 4 starts with zero approvals."
-                : "Furina was added as the driver. The early departure is part of this version; the per-person budget is still open."}
+                ? "Departure moved from 7:00 AM to 8:30 AM. Earlier approvals no longer apply after a plan change, so everyone needs to decide again."
+                : "Furina was added as the driver. The early departure is part of the proposal; the per-person budget is still open."}
             </p>
           </details>
           <div className="story-receipt-approval">
@@ -290,7 +289,7 @@ function SharedVersionStory() {
               ))}
             </div>
             <strong role="status">
-              {state.approvals.length} of 4 approved · v{state.version}
+              {state.approvals.length} of 4 approved
             </strong>
           </div>
           <div className="version-actions">
@@ -311,14 +310,14 @@ function SharedVersionStory() {
                 onClick={() => setState((old) => approveVersion(old, "Selena"))}
               >
                 {state.approvals.includes("Selena")
-                  ? "Selena approved v4"
+                  ? "Selena approved this plan"
                   : "Add Selena’s sample approval"}
                 <Check size={15} aria-hidden="true" />
               </button>
             )}
           </div>
           <div className="preview-footnote">
-            <span>Fictional versioned approvals</span>
+            <span>Fictional approvals</span>
             <button type="button" onClick={() => setState(initialVersion())}>
               <RotateCcw size={12} aria-hidden="true" />
               Reset

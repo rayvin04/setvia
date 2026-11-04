@@ -44,8 +44,7 @@ export function PreviewContributions({
             <p>{entry.text}</p>
             <time dateTime={entry.recordedAt}>
               <MessageCircle size={11} aria-hidden="true" />
-              Recorded in preview · {formatTime(entry.recordedAt)} · v
-              {entry.proposalVersion}
+              Recorded in preview · {formatTime(entry.recordedAt)}
             </time>
           </li>
         ))}

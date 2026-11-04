@@ -450,17 +450,6 @@
   font-size: 11px;
   margin-top: 7px;
 }
-.story-receipt-mark {
-  display: grid;
-  place-items: center;
-  align-self: flex-start;
-  color: #f3fbff;
-  background: #06648c;
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  font-size: 13px;
-}
 .story-receipt-line {
   display: flex;
   align-items: center;

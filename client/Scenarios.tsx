@@ -212,7 +212,7 @@ export function Demos() {
         <section className="sample-plan">
           <div className="sample-heading">
             <h3>Your plan, coming together.</h3>
-            <span>Illustrative output · Version 3</span>
+            <span>Illustrative output</span>
           </div>
           <div className="sample-deliverables">
             <div>
@@ -228,7 +228,7 @@ export function Demos() {
             <div>
               <CircleCheck size={20} aria-hidden="true" />
               <h4>Participant approval</h4>
-              <p>2 of 4 approved this version</p>
+              <p>2 of 4 approvals</p>
             </div>
           </div>
           <div className="sample-open">

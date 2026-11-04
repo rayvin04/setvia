@@ -89,8 +89,8 @@ export function ParticipantsPanel({
                 }
                 aria-label={
                   person.approved
-                    ? `Approved proposal v${room.proposalVersion}`
-                    : `Has not approved proposal v${room.proposalVersion}`
+                    ? "Approved the current plan"
+                    : "Has not approved the current plan"
                 }
               >
                 {person.approved ? (
@@ -141,20 +141,20 @@ export function ResponsesPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
       {count !== null ? (
         <>
           <div className="response-progress-label">
-            <span>Proposal v{snapshot.room.proposalVersion}</span>
+            <span>Response rate</span>
             <span>{Math.round((count / Math.max(total, 1)) * 100)}%</span>
           </div>
           <progress
             max={Math.max(total, 1)}
             value={count}
-            aria-label={`${count} of ${total} responded to proposal v${snapshot.room.proposalVersion}`}
+            aria-label={`${count} of ${total} people responded`}
           />
         </>
       ) : null}
       <div className="response-approval">
         <ThumbsUp size={14} aria-hidden="true" />
         <span>
-          {snapshot.room.approvalCount}/{total} approved this version
+          {snapshot.room.approvalCount}/{total} approved
         </span>
       </div>
     </section>
@@ -181,9 +181,7 @@ function ActivityRow({ event }: { event: DashboardActivity }) {
       </span>
       <div>
         <p>{event.summary}</p>
-        <time dateTime={event.occurredAt}>
-          {formatTime(event.occurredAt)} · v{event.proposalVersion}
-        </time>
+        <time dateTime={event.occurredAt}>{formatTime(event.occurredAt)}</time>
       </div>
     </li>
   );
@@ -279,7 +277,6 @@ export function PlanPanel({
     >
       <div className="panel-heading">
         <h2 id={heading}>{compact ? "Evolving plan" : "The plan, so far"}</h2>
-        <span className="version-label">v{room.proposalVersion}</span>
       </div>
       {!compact ? <p className="plan-subtitle">{room.proposal.label}</p> : null}
       <dl className="plan-details">
@@ -308,8 +305,7 @@ export function PlanPanel({
           className={room.approved ? "approval-complete" : "approval-pending"}
         >
           <ThumbsUp size={15} aria-hidden="true" />
-          {room.approvalCount} of {room.participants.length} approved this
-          version
+          {room.approvalCount} of {room.participants.length} approved
         </span>
         {!compact ? (
           <span>
@@ -467,8 +463,7 @@ export function ProgressPanel({ snapshot }: { snapshot: DashboardSnapshot }) {
               <div>
                 <p>{entry.explanation}</p>
                 <time dateTime={entry.occurredAt}>
-                  {formatTime(entry.occurredAt)} · proposal v
-                  {entry.proposalVersion}
+                  {formatTime(entry.occurredAt)}
                   {entry.readiness.status === "blocked" ? " · Blocked" : ""}
                 </time>
               </div>

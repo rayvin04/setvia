@@ -159,8 +159,7 @@ function MobileIdentity({ snapshot }: { snapshot: DashboardSnapshot }) {
             : `${responses}/${snapshot.room.participants.length} responded`}
         </span>
         <span className="identity-approvals">
-          {snapshot.room.approvalCount} approved v
-          {snapshot.room.proposalVersion}
+          {snapshot.room.approvalCount} approved
         </span>
       </div>
     </div>
@@ -530,7 +529,7 @@ export default function DashboardRoute() {
       setLoad({ key: requestKey, snapshot: accepted, error: null });
       setFrame(nextFrame);
       setNotice(
-        `Synthetic update loaded. ${accepted.room.readiness?.percentage ?? "Unevaluated"}${accepted.room.readiness ? "% readiness." : "."} Proposal v${accepted.room.proposalVersion}. Earlier approvals were cleared.`,
+        `Synthetic update loaded. ${accepted.room.readiness?.percentage ?? "Unevaluated"}${accepted.room.readiness ? "% readiness." : "."} Earlier approvals were cleared after the plan changed.`,
       );
     } catch {
       if (!controller.signal.aborted)

@@ -722,14 +722,6 @@
 .plan-panel .panel-heading {
   margin-bottom: 5px;
 }
-.version-label {
-  font-size: 10px;
-  color: #94bcd3;
-  background: #142938;
-  border-radius: 5px;
-  padding: 4px 7px;
-  white-space: nowrap;
-}
 .plan-subtitle {
   color: var(--dash-muted);
   font-size: 12px;
