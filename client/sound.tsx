@@ -41,9 +41,10 @@ function readEnabledPreference(): boolean {
         return parsed.enabled;
       }
     }
-    return window.localStorage.getItem(LEGACY_ENABLED_KEY) === "true";
+    const legacy = window.localStorage.getItem(LEGACY_ENABLED_KEY);
+    return legacy === null ? true : legacy === "true";
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -70,7 +71,7 @@ export function SetviaSoundProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const unlockFromGesture = useCallback(() => {
-    if (!enabledRef.current) return;
+    if (!enabledRef.current || unlockedRef.current) return;
     unlockedRef.current = true;
     void player().unlock();
   }, [player]);
@@ -130,6 +131,16 @@ export function SetviaSoundProvider({ children }: { children: ReactNode }) {
     loopsRef.current.clear();
     // A route change must never leave a processing or connection loop behind.
   }, [pathname]);
+
+  useEffect(() => {
+    const unlock = () => unlockFromGesture();
+    document.addEventListener("pointerdown", unlock, { capture: true, once: true });
+    document.addEventListener("keydown", unlock, { capture: true, once: true });
+    return () => {
+      document.removeEventListener("pointerdown", unlock, { capture: true });
+      document.removeEventListener("keydown", unlock, { capture: true });
+    };
+  }, [unlockFromGesture]);
 
   useEffect(() => {
     const stopAudio = () => {

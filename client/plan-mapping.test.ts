@@ -8,7 +8,6 @@ import {
   mapExtractionToSuggestions,
   mergeSuggestions,
   resolveSuggestion,
-  safeSuggestionFields,
   editDraftField,
 } from "./plan-mapping.js";
 
@@ -141,7 +140,7 @@ test("approximate per-person budgets and headcounts remain labeled", () => {
   assert.equal(scope?.value, "per-person");
 });
 
-test("safe suggestion apply excludes uncertainty, approximation, and conflicts", () => {
+test("clear source-backed suggestions auto-apply while uncertain, approximate, and conflicting values stay out", () => {
   const candidates = mapExtractionToSuggestions(extraction({
     title: "Sunday Picnic",
     titleEvidence: "Sunday picnic at the park",
@@ -162,17 +161,21 @@ test("safe suggestion apply excludes uncertainty, approximation, and conflicts",
   }));
   const current = { ...EMPTY_PLAN_DRAFT, title: "My Sunday Plan" };
   const merged = mergeSuggestions(current, candidates, new Set(["title"]));
-  const safe = safeSuggestionFields(merged.reviews);
 
-  assert.ok(safe.includes("category"));
-  assert.ok(!safe.includes("title"));
-  assert.ok(!safe.includes("date"));
-  assert.ok(!safe.includes("participantRange"));
+  assert.equal(merged.draft.category, "other");
+  assert.equal(merged.reviews.category?.status, "accepted");
+  assert.equal(merged.draft.title, "My Sunday Plan");
+  assert.equal(merged.reviews.title?.status, "conflict");
+  assert.equal(merged.draft.date, "");
+  assert.equal(merged.reviews.date?.status, "needs-review");
+  assert.equal(merged.draft.participantRange, "");
+  assert.equal(merged.reviews.participantRange?.status, "needs-review");
 });
 
 test("autofill fills blank fields and preserves manual values as conflicts", () => {
   const candidate = extraction({
     title: "AI title",
+    titleEvidence: "The invitation title is AI title.",
     dateOrDateRange: {
       value: "Sunday",
       isRelative: true,
@@ -189,7 +192,7 @@ test("autofill fills blank fields and preserves manual values as conflicts", () 
 
   assert.equal(result.draft.title, "My title");
   assert.equal(result.reviews.title?.status, "conflict");
-  assert.equal(result.draft.date, "Sunday");
+  assert.equal(result.draft.date, "");
   assert.equal(result.reviews.date?.status, "needs-review");
   assert.equal(
     result.reviews.date?.uncertainty,
@@ -198,12 +201,12 @@ test("autofill fills blank fields and preserves manual values as conflicts", () 
 
   const accepted = acceptNonConflicting(result.reviews);
   assert.equal(accepted.title?.status, "conflict");
-  assert.equal(accepted.date?.status, "accepted");
+  assert.equal(accepted.date?.status, "needs-review");
 });
 
 test("rejection removes only an AI-filled value and explicit use resolves a conflict", () => {
   const suggestions = mapExtractionToSuggestions(
-    extraction({ title: "Suggested title" }),
+    extraction({ title: "Suggested title", titleEvidence: "Suggested title" }),
   );
   const filled = mergeSuggestions(EMPTY_PLAN_DRAFT, suggestions, new Set());
   const rejected = resolveSuggestion(
@@ -233,7 +236,7 @@ test("rejection removes only an AI-filled value and explicit use resolves a conf
   assert.equal(chosen.manuallyEdited.has("title"), true);
 });
 test("manual edits made after autofill become conflicts and are preserved", () => {
-  const suggestions = mapExtractionToSuggestions(extraction({ title: "From poster" }));
+  const suggestions = mapExtractionToSuggestions(extraction({ title: "From poster", titleEvidence: "From poster" }));
   const filled = mergeSuggestions(EMPTY_PLAN_DRAFT, suggestions, new Set());
   const edited = editDraftField(filled.draft, filled.reviews, new Set(), "title", "My title");
   assert.equal(edited.draft.title, "My title");
@@ -262,7 +265,7 @@ test("invited counts stay distinct from confirmed attendees", () => {
 });
 
 test("new extraction clears tracked unreviewed suggestions but preserves protected values", () => {
-  const old = mapExtractionToSuggestions(extraction({ title: "Old source value" }));
+  const old = mapExtractionToSuggestions(extraction({ title: "Old source value", titleEvidence: "Old source value" }));
   const filled = mergeSuggestions(EMPTY_PLAN_DRAFT, old, new Set());
   const nextBase = clearTrackedAutofill(
     filled.draft,

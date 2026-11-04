@@ -302,6 +302,7 @@ export const MessageComposer = forwardRef<
     <section
       ref={dock}
       className="sv-composer-dock"
+        data-mode={mode}
       data-keyboard={viewport.keyboard}
       aria-label="Planning room composer"
       style={{
@@ -398,7 +399,7 @@ export const MessageComposer = forwardRef<
             value={text}
             disabled={disabled || busy}
             aria-invalid={Boolean(validationError) || undefined}
-            aria-describedby={`${id}-privacy ${id}-error ${id}-help`}
+            aria-describedby={`${id}-privacy ${id}-error`}
             onChange={(event) => {
               setText(event.target.value);
               draft.current = event.target.value;
@@ -410,7 +411,7 @@ export const MessageComposer = forwardRef<
             onKeyDown={(event) => {
               if (
                 event.key === "Enter" &&
-                (event.ctrlKey || event.metaKey) &&
+                !event.shiftKey &&
                 !event.nativeEvent.isComposing
               ) {
                 event.preventDefault();
@@ -454,14 +455,9 @@ export const MessageComposer = forwardRef<
               <Info size={14} aria-hidden="true" />
             </button>
           </div>
-          <span className="sv-composer-mode">
-            {mode === "preview"
-              ? "Preview only · no live AI"
-              : `Sending as ${viewer.name}`}
-          </span>
-          <span className="sv-keyboard-hint" id={`${id}-help`}>
-            Ctrl / ⌘ Enter to send
-          </span>
+          {mode === "preview" ? (
+            <span className="sv-composer-mode">Preview only · no live AI</span>
+          ) : null}
           <motion.button
             className="sv-send"
             whileHover={reducedMotion ? undefined : { scale: 1.04 }}

@@ -239,6 +239,7 @@ export function PlanningDashboard({
   onFocusComposer,
   contributions,
   contributionMode = "preview",
+  speakerResponseKey = "",
 }: {
   snapshot: DashboardSnapshot;
   onAction?: (action: DashboardAction) => void;
@@ -249,6 +250,7 @@ export function PlanningDashboard({
   onFocusComposer: () => void;
   contributions: ContributionView[];
   contributionMode?: "preview" | "room";
+  speakerResponseKey?: string;
 }) {
   const compact = useSyncExternalStore(
     subscribeViewport,
@@ -280,7 +282,8 @@ export function PlanningDashboard({
                   <SpeakerPanel
                     snapshot={snapshot}
                     onRespond={onFocusComposer}
-                    reactionKey={ownLatest?.id}
+                    reactionKey={contributionMode === "room" ? "" : ownLatest?.id}
+                    speakerResponseKey={speakerResponseKey}
                   />
                   <RealityOverview
                     snapshot={snapshot}
@@ -302,8 +305,8 @@ export function PlanningDashboard({
             ) : null}
             {activeSection === "people" ? (
               <div className="people-section">
-                <ParticipantsPanel snapshot={snapshot} />
-                <ResponsesPanel snapshot={snapshot} />
+                <ParticipantsPanel snapshot={snapshot} compact={contributionMode === "room"} />
+                {contributionMode === "room" ? null : <ResponsesPanel snapshot={snapshot} />}
               </div>
             ) : null}
             {activeSection === "issues" ? (
@@ -322,8 +325,8 @@ export function PlanningDashboard({
         <div className="dashboard-grid" aria-busy={busy}>
           <div className="dashboard-column dashboard-left">
             <div className="people-section">
-              <ParticipantsPanel snapshot={snapshot} />
-              <ResponsesPanel snapshot={snapshot} />
+              <ParticipantsPanel snapshot={snapshot} compact={contributionMode === "room"} />
+              {contributionMode === "room" ? null : <ResponsesPanel snapshot={snapshot} />}
             </div>
             <div className="desktop-activity">
               <PreviewContributions contributions={contributions} mode={contributionMode} />
@@ -353,7 +356,8 @@ export function PlanningDashboard({
             <SpeakerPanel
               snapshot={snapshot}
               onRespond={onFocusComposer}
-              reactionKey={ownLatest?.id}
+              reactionKey={contributionMode === "room" ? "" : ownLatest?.id}
+              speakerResponseKey={speakerResponseKey}
             />
             <RealityChecks room={snapshot.room} />
           </div>

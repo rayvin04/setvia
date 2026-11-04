@@ -8,7 +8,7 @@ import {
 import { Attribution } from "./Attribution";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Volume2, VolumeX } from "lucide-react";
+import { Check, ChevronDown, Copy, LogOut, Volume2, VolumeX } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { initialHeaderState, nextHeaderState } from "./header-state";
@@ -55,7 +55,25 @@ export function Wordmark() {
     </Link>
   );
 }
-export function Header() {
+export type LiveRoomHeaderProps = {
+  title: string;
+  serviceLabel: string;
+  connectionLabel: string;
+  connectionState: string;
+  roomCode: string;
+  inviteLink?: string;
+  copied: boolean;
+  onCopyLink?: () => void;
+  onCopyCode?: () => void;
+  onLeave?: () => void;
+  leaving?: boolean;
+};
+
+export function Header({
+  room,
+}: {
+  room?: LiveRoomHeaderProps;
+} = {}) {
   const [view, setView] = useState({ compact: false, hidden: false });
   const [focused, setFocused] = useState(false);
   const tracker = useRef(initialHeaderState);
@@ -79,11 +97,16 @@ export function Header() {
   return (
     <motion.header
       initial={false}
-      className={cn("header", "site-header", view.compact && "is-scrolled")}
-      data-hidden={view.hidden && !focused}
+      className={cn(
+        "header",
+        "site-header",
+        room && "live-room-site-header",
+        view.compact && "is-scrolled",
+      )}
+      data-hidden={view.hidden && !focused && !room}
       animate={{
-        scale: reduced ? 1 : view.hidden && !focused ? 0.96 : 1,
-        opacity: view.hidden && !focused ? 0 : 1,
+        scale: reduced ? 1 : view.hidden && !focused && !room ? 0.96 : 1,
+        opacity: view.hidden && !focused && !room ? 0 : 1,
       }}
       transition={{
         scale: reduced
@@ -98,7 +121,7 @@ export function Header() {
       }}
     >
       <motion.div
-        className="header-inner"
+        className={cn("header-inner", room && "live-room-header-inner")}
         layout={reduced ? false : true}
         transition={{
           layout: { type: "spring", bounce: 0, visualDuration: 0.4 },
@@ -107,51 +130,116 @@ export function Header() {
         <motion.div layout={reduced ? false : "position"}>
           <Wordmark />
         </motion.div>
-        <motion.nav
-          layout={reduced ? false : "position"}
-          aria-label="Main navigation"
-        >
-          <a href="/#how-it-works">How it works</a>
-          <Link to="/demos">
-            <span className="nav-explore-prefix">Explore&nbsp;</span>demos
-          </Link>
-          <button
-            type="button"
-            className="sound-toggle"
-            aria-pressed={sounds.enabled}
-            aria-label={
-              sounds.enabled
-                ? "Turn interface sounds off"
-                : "Turn interface sounds on"
-            }
-            onClick={sounds.toggle}
+        {room ? (
+          <>
+            <div className="live-room-identity" aria-label="Current planning room">
+              <div>
+                <strong title={room.title}>{room.title}</strong>
+                <span>{room.serviceLabel}</span>
+              </div>
+              <span
+                className="live-connection"
+                data-status={room.connectionState}
+                role="status"
+              >
+                <i aria-hidden="true" />
+                {room.connectionLabel}
+              </span>
+            </div>
+            <motion.nav
+              className="live-room-nav"
+              layout={reduced ? false : "position"}
+              aria-label="Room controls"
+            >
+              {room.inviteLink ? (
+                <details className="room-invite-popover">
+                  <summary className="room-header-button room-invite-trigger">
+                    <Copy size={15} aria-hidden="true" />
+                    <span>Invite</span>
+                    <ChevronDown size={13} aria-hidden="true" />
+                  </summary>
+                  <div className="room-invite-menu" role="group" aria-label="Room invitation">
+                    <button type="button" onClick={room.onCopyLink}>
+                      {room.copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
+                      <span>{room.copied ? "Link copied" : "Copy link"}</span>
+                    </button>
+                    <div className="room-code-row">
+                      <span>Room code</span>
+                      <code>{room.roomCode}</code>
+                      {room.onCopyCode ? (
+                        <button
+                          type="button"
+                          className="room-code-copy"
+                          aria-label="Copy room code"
+                          onClick={room.onCopyCode}
+                        >
+                          <Copy size={14} aria-hidden="true" />
+                        </button>
+                      ) : null}
+                    </div>
+                  </div>
+                </details>
+              ) : null}
+              {room.onLeave ? (
+                <button
+                  type="button"
+                  className="room-header-button room-leave-button"
+                  disabled={room.leaving}
+                  onClick={room.onLeave}
+                >
+                  <LogOut size={15} aria-hidden="true" />
+                  <span>{room.leaving ? "Leaving…" : "Leave"}</span>
+                </button>
+              ) : null}
+            </motion.nav>
+          </>
+        ) : (
+          <motion.nav
+            layout={reduced ? false : "position"}
+            aria-label="Main navigation"
           >
-            {sounds.enabled ? (
-              <Volume2 size={16} aria-hidden="true" />
-            ) : (
-              <VolumeX size={16} aria-hidden="true" />
-            )}
-            <span>{sounds.enabled ? "Sound on" : "Sound off"}</span>
-          </button>
-          <Link to="/join" className="join-link">
-            Join a Room
-          </Link>
-          <a
-            className="github-link"
-            href="https://github.com/rayvin04/setvia"
-            target="_blank"
-            rel="noopener noreferrer"
-            aria-label="Setvia on GitHub (opens in a new tab)"
-          >
-            <img
-              src="/github-mark.svg"
-              width="19"
-              height="19"
-              alt=""
-              className="github-mark"
-            />
-          </a>
-        </motion.nav>
+            <a href="/#how-it-works">How it works</a>
+            <Link to="/demos">
+              <span className="nav-explore-prefix">Explore&nbsp;</span>demos
+            </Link>
+            <button
+              type="button"
+              className="sound-toggle"
+              aria-pressed={sounds.enabled}
+              aria-label={
+                sounds.enabled
+                  ? "Turn interface sounds off"
+                  : "Turn interface sounds on"
+              }
+              onClick={sounds.toggle}
+            >
+              {sounds.enabled ? (
+                <Volume2 size={16} aria-hidden="true" />
+              ) : (
+                <VolumeX size={16} aria-hidden="true" />
+              )}
+              <span>{sounds.enabled ? "Sound on" : "Sound off"}</span>
+            </button>
+            <Link to="/join" className="join-link">
+              Join a Room
+            </Link>
+            <a
+              className="github-link"
+              href="https://github.com/rayvin04/setvia"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Setvia on GitHub (opens in a new tab)"
+            >
+              <img
+                src="/github-mark.svg"
+                width="19"
+                height="19"
+                alt=""
+                className="github-mark"
+              />
+            </a>
+          </motion.nav>
+        )}
       </motion.div>
     </motion.header>
   );
