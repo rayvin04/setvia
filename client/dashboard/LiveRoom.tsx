@@ -195,7 +195,7 @@ export default function LiveRoom() {
 
   useEffect(() => {
     const previous = previousAnalysisState.current;
-    if (analysisActivityState === "running" && previous !== "running") play("processing");
+    if (analysisActivityState === "running" && previous !== "running") play("start");
     else if (analysisActivityState === "complete" && previous && previous !== "complete") play("complete");
     else if (analysisActivityState === "blocked" && previous && previous !== "blocked") play("warning");
     previousAnalysisState.current = analysisActivityState;
