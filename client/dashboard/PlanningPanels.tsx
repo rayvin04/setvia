@@ -38,10 +38,6 @@ export function ParticipantsPanel({
   const { room } = snapshot;
   const invitationId = useId();
   const [invitationOpen, setInvitationOpen] = useState(false);
-  const responseTotal = snapshot.responses.filter(
-    (response) =>
-      response.proposalVersion === room.proposalVersion && response.responded,
-  ).length;
   return (
     <section
       className={`people-panel dashboard-panel${compact ? " is-compact" : ""}`}
@@ -63,28 +59,13 @@ export function ParticipantsPanel({
         </button> : null}
       </div>
       {compact ? (
-        <>
           <ul className="participant-avatar-row" aria-label={`${room.participants.length} room members`}>
-            {room.participants.map((person, index) => {
-              const response = snapshot.responses.find(
-                (item) =>
-                  item.participantId === person.id &&
-                  item.proposalVersion === room.proposalVersion,
-              );
-              return (
-                <li key={person.id} aria-label={`${person.name}: ${response?.responded ? "responded" : "awaiting response"}`}>
+            {room.participants.map((person, index) => (
+                <li key={person.id} aria-label={person.name} title={person.name}>
                   <Avatar index={index} />
-                  <span className={response?.responded ? "response-dot is-responded" : "response-dot"} aria-hidden="true" />
                 </li>
-              );
-            })}
+            ))}
           </ul>
-          <p className="participant-response-summary">
-            {snapshot.responseTracking === "unavailable"
-              ? "Responses unavailable"
-              : `${responseTotal} of ${room.participants.length} responded`}
-          </p>
-        </>
       ) : <ul className="participant-list">
         {room.participants.map((person, index) => {
           const response = snapshot.responses.find(
@@ -235,10 +216,10 @@ export function ActivityPanel({
     >
       <div className="panel-heading">
         <h2 id="activity-title">The plan in motion</h2>
-        <span className="activity-indicator">
+        {snapshot.source === "synthetic" ? <span className="activity-indicator">
           <span />
-          {snapshot.source === "synthetic" ? "Preview" : "Recorded"}
-        </span>
+          Preview
+        </span> : null}
       </div>
       {!events.length ? (
         <p className="panel-empty">The story starts with your first detail.</p>

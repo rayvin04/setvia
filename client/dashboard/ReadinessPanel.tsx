@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import type { ReactNode } from "react";
 import { animate, motion, useReducedMotion } from "motion/react";
 import {
   ArrowUpRight,
@@ -51,9 +52,13 @@ function AnimatedScore({
 export function ReadinessPanel({
   snapshot,
   compact = false,
+  titleActions,
+  titleStatus,
 }: {
   snapshot: DashboardSnapshot;
   compact?: boolean;
+  titleActions?: ReactNode;
+  titleStatus?: ReactNode;
 }) {
   const { room } = snapshot;
   const state = readinessPresentation(room);
@@ -87,8 +92,10 @@ export function ReadinessPanel({
               {room.eventType} · {room.participants.length} members
             </p>
           </div>
+          {titleActions ? <div className="room-title-actions">{titleActions}</div> : null}
         </div>
       ) : null}
+      {titleStatus}
       <div className="readiness-and-plan">
         <div className="gauge-column">
           <div className="panel-heading">
