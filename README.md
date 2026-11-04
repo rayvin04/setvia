@@ -71,13 +71,56 @@ The local server uses Meta's Responses API at `https://api.meta.ai/v1/responses`
 
 ## How the agent system works
 
-The five roles are not a fixed five-call chain:
+Setvia uses five conditional roles, not a fixed five-call chain. The Judge selects the next useful action, and application code validates every handoff before it can affect the room.
 
-1. **Listener** runs for pending participant input. Its input contains that participant’s text and their own private facts, not the group roster or shared plan. It returns unconfirmed, owner-scoped candidates.
-2. **Judge** reviews authorized group context, evidence references, constraints, findings, and candidate options. Its typed decision determines the next step.
-3. **Negotiator** runs only when the Judge requests another option. The server parses the options and checks hard constraints during the Judge/readiness path before an option can be treated as acceptable.
-4. **Question Strategist** runs when participant input is needed. The application checks question schemas, finding references, targets, participant consent for public targeting, and repeated questions.
-5. **Speaker** runs when a message or question needs to be presented. It selects validated question/finding IDs and a bounded mascot state; the application renders text from those validated objects, then runs a final Judge pass before publication.
+```mermaid
+flowchart TD
+  Input["Pending input from one participant"] --> Listener["Listener<br/>only when input exists"]
+  Listener --> Candidate["Private, unconfirmed candidates"]
+  Candidate --> Owner["Owner reviews,<br/>edits, confirms, or shares"]
+  Owner --> Context["Authorized shared context"]
+  Context --> Judge["Judge reviews evidence,<br/>constraints, findings, and options"]
+  Judge --> Decision{"Next action"}
+
+  Decision -->|"another option"| Negotiator["Negotiator"]
+  Negotiator --> OptionGate["App parses alternatives<br/>and checks hard constraints"]
+  OptionGate --> Judge
+
+  Decision -->|"participant answers needed"| Strategist["Question Strategist"]
+  Strategist --> QuestionGate["App validates schema, evidence,<br/>target, consent, and duplicates"]
+  QuestionGate --> Speaker["Speaker selects validated<br/>question / finding IDs"]
+
+  Decision -->|"present findings"| Speaker
+  Speaker --> Render["App renders text<br/>from validated objects"]
+  Render --> FinalJudge["Final Judge review"]
+  FinalJudge -->|"accepted"| Publish["Publish to authorized views"]
+  FinalJudge -->|"another option needed"| Negotiator
+  FinalJudge -->|"questions published"| Wait["Wait for participant input"]
+  Wait -->|"new input"| Input
+
+  Decision -->|"complete or stop"| Outcome["Complete / stop<br/>readiness is deterministic"]
+  Decision -.->|"stale, malformed, cancelled,<br/>or budget limit"| Blocked["Blocked — fail closed"]
+  FinalJudge -.->|"rejected handoff"| Blocked
+
+  classDef role fill:#e6fffb,stroke:#0f766e,color:#0f172a,stroke-width:1.5px;
+  classDef human fill:#fff7ed,stroke:#c2410c,color:#431407,stroke-width:1.5px;
+  classDef gate fill:#eff6ff,stroke:#1d4ed8,color:#0f172a,stroke-width:1.5px;
+  classDef state fill:#f8fafc,stroke:#64748b,color:#0f172a;
+  class Listener,Judge,Negotiator,Strategist,Speaker role;
+  class Owner human;
+  class OptionGate,QuestionGate,Render,FinalJudge,Publish gate;
+  class Input,Candidate,Context,Decision,Wait,Outcome,Blocked state;
+```
+
+**Diagram key:** Teal nodes are model roles, blue nodes are application checks and rendering, orange is owner control, and gray nodes are room state. Solid arrows show conditional transitions; dashed arrows show fail-closed outcomes.
+
+| Role                    | When it runs and what it sees                                                                       | Output and application boundary                                                                                                                                                          |
+| ----------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Listener**            | When a participant has pending input. It sees that person’s text and their own private facts.       | Creates private, owner-scoped candidates. The owner must explicitly confirm or share a candidate before it enters group context.                                                         |
+| **Judge**               | When there is authorized context to review: evidence, constraints, findings, and candidate options. | Returns a typed next action. The application determines which role runs next.                                                                                                            |
+| **Negotiator**          | Only when the Judge requests another option.                                                        | Returns typed alternatives. The application parses them and checks hard constraints before an option can be accepted.                                                                    |
+| **Question Strategist** | When participant answers are needed.                                                                | Returns typed questions. The application checks schemas, finding references, targets, consent for public targeting, and repeated questions.                                              |
+| **Speaker**             | When validated findings or questions need to be presented.                                          | Selects validated question/finding IDs and a bounded mascot state. The application renders text from those objects, then a final Judge pass reviews the presentation before publication. |
 
 Role contracts use strict Zod schemas; the Meta gateway converts them to structured JSON Schema output. Findings reference known group facts or constraints. Application code, not model prose, enforces hard-constraint comparisons, deterministic readiness, privacy projections, request reservations, and versioned approvals.
 
@@ -89,18 +132,18 @@ The real multi-agent loop is not exposed through the deployed public site. The s
 
 The policy supports six categories. It decides which categories apply, which facts are required, how much weight each category has, and whether evidence is needed for each participant.
 
-| Check                 | What it evaluates                                                                              | Useful evidence                                                                                           |
-| --------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Schedule Check**    | Availability, timing conflicts, duration, and deadlines.                                       | Participant availability and the proposed date, start time, duration, or deadline.                        |
-| **Budget Check**      | Individual limits, shared costs, estimates, and unclear expenses.                              | Confirmed per-person caps and cost estimates with their scope identified.                                 |
-| **People Check**      | Responses, accessibility needs, attendance conflicts, responsibilities, and roles.             | Current room membership, confirmed attendance, accessibility details, and named owners for tasks.         |
-| **Logistics Check**   | Transport, location, venue, route, and practical coordination.                                 | A confirmed destination, transport plan, venue details, and route information from an appropriate source. |
-| **Preparation Check** | Supplies, equipment, materials, and preparation work.                                          | A preparation list and clear responsibility for each item or task.                                        |
-| **Safety Check**      | Hazards, precautions, emergency preparation, weather, route risk, and relevant local guidance. | Current, reliable evidence and a human review of the relevant conditions.                                 |
+The examples use one fictional Sunday beach trip; the outcomes are illustrative and do not use live venue, route, price, or weather data.
+
+| Check                 | What it checks                                    | Useful evidence                                 | Example (fictional trip)                                         |
+| --------------------- | ------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------- |
+| **Schedule Check**    | Availability, conflicts, duration, and deadlines. | Participant calendars and the proposed time.    | Return at 5 PM conflicts with a 4 PM hard limit → blocked.       |
+| **Budget Check**      | Individual caps, shared costs, and estimates.     | Confirmed caps and scoped cost estimates.       | Estimate is ₱1,250; hard cap is ₱1,000 → blocked.                |
+| **People Check**      | Responses, access needs, attendance, and roles.   | Attendees, access details, and task owners.     | A required attendee has not responded → incomplete.              |
+| **Logistics Check**   | Transport, venue, route, and coordination.        | Destination, transport plan, and sourced route. | Meeting point is set; route time lacks a source → incomplete.    |
+| **Preparation Check** | Supplies, equipment, and responsibilities.        | Checklist and a named owner for each item.      | Water and sunscreen are listed; nobody owns pickup → incomplete. |
+| **Safety Check**      | Hazards, precautions, and current local guidance. | Current reliable sources and human review.      | No current forecast or advisory has been reviewed → unresolved.  |
 
 Missing or uncertain information is represented as absent or null facts, unconfirmed candidates, and findings with `missing`, `estimated`, or `conflicting` uncertainty. Required missing values leave a category unknown or incomplete. A hard constraint that the proposal fails to satisfy, a conflict in shared facts, or an unresolved critical finding can block readiness.
-
-**Synthetic example:** A Sunday outing proposal returns at 5:00 PM. One participant has confirmed a hard 4:00 PM return limit, and the route duration has not been verified. The Schedule Check is blocked by the constraint; the Logistics Check still needs evidence. A model may suggest an earlier return or ask the group about another ride, but it cannot verify a route or waive the participant’s constraint.
 
 Readiness is a deterministic summary of the current policy and confirmed group-visible evidence. **It is not a safety guarantee, external fact check, or participant approval.** Real prices, routes, venues, accessibility, weather, and hazards are not independently verified by the released app.
 
