@@ -8,7 +8,7 @@ import {
 import { Attribution } from "./Attribution";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Check, ChevronDown, Copy, LogOut } from "lucide-react";
+import { Check, ChevronDown, Copy, LogOut, Mountain, TreePalm } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { initialHeaderState, nextHeaderState } from "./header-state";
@@ -56,6 +56,8 @@ export function Wordmark() {
 }
 export type LiveRoomHeaderProps = {
   roomCode: string;
+  roomTitle?: string;
+  eventType?: string;
   inviteLink?: string;
   copied: boolean;
   onCopyLink?: () => void;
@@ -122,7 +124,18 @@ export function Header({
         }}
       >
         <motion.div layout={reduced ? false : "position"}>
-          <Wordmark />
+          {room?.roomTitle ? (
+            <div className="room-event-identity" aria-label={room.roomTitle}>
+              <span className="room-event-mark" aria-hidden="true">
+                {room.eventType === "Mountain hike" || room.eventType === "Outdoor group project"
+                  ? <Mountain size={19} />
+                  : <TreePalm size={19} />}
+              </span>
+              <span className="room-event-copy">
+                <strong title={room.roomTitle}>{room.roomTitle}</strong>
+              </span>
+            </div>
+          ) : <Wordmark />}
         </motion.div>
         {room ? (
           <>

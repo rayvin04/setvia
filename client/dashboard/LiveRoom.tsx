@@ -438,6 +438,8 @@ export default function LiveRoom() {
     >
       <Header room={{
         roomCode: roomCodeFromId(roomId),
+        roomTitle: snapshot?.room.proposal.label,
+        eventType: snapshot?.room.eventType,
         inviteLink: inviteLink ?? undefined,
         copied,
         onCopyLink: () => void copyInvitation(),
@@ -474,6 +476,7 @@ export default function LiveRoom() {
             speakerResponseKey={speakerResponseKey}
             titleActions={approvalControl}
             titleStatus={analysisStatus}
+            agentActivity={streamStatus !== "connected" ? "idle" : snapshot.room.analysisStatus === "running" ? "active" : snapshot.room.analysisStatus === "queued" ? "queued" : "idle"}
           />
           {participant && snapshot.source === "room" ? (
             <section className="live-decision-receipt" aria-label="Decision Receipt">

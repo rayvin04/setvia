@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
   useId,
   useImperativeHandle,
@@ -19,6 +20,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { ComposerCat } from "../Mascot";
 import type { Question } from "../../server/src/agents/contracts";
 import {
   MAX_PLANNING_MESSAGE_LENGTH,
@@ -96,6 +98,10 @@ export const MessageComposer = forwardRef<
   const [submissionError, setSubmissionError] = useState("");
   const [acknowledgment, setAcknowledgment] = useState("");
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [focusWithin, setFocusWithin] = useState(false);
+  const idleTimer = useRef<number | null>(null);
+  const focusAfterReveal = useRef(false);
   const [viewport, setViewport] = useState({
     inset: 0,
     keyboard: false,
@@ -111,6 +117,16 @@ export const MessageComposer = forwardRef<
     ? visibility
     : (choices[0] ?? "private");
   const error = validationError || submissionError || externalError;
+  const canCollapse = mode === "room" && !focusWithin && !text.trim() && !busy && !privacyOpen && !selectedReply && !error && !viewport.keyboard;
+  const canCollapseRef = useRef(canCollapse);
+  canCollapseRef.current = canCollapse;
+  const scheduleIdleCollapse = useCallback(() => {
+    if (mode !== "room") return;
+    if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
+    idleTimer.current = window.setTimeout(() => {
+      if (canCollapseRef.current) setCollapsed(true);
+    }, 2_000);
+  }, [mode]);
   useEffect(() => {
     onBottomInsetChange?.(viewport.inset);
   }, [onBottomInsetChange, viewport.inset]);
@@ -119,18 +135,50 @@ export const MessageComposer = forwardRef<
     forwardedRef,
     () => ({
       focus() {
-        textarea.current?.focus();
+        if (mode === "room") {
+          focusAfterReveal.current = true;
+          setCollapsed(false);
+        } else {
+          textarea.current?.focus();
+        }
       },
     }),
-    [],
+    [mode],
   );
+  useLayoutEffect(() => {
+    if (mode !== "room" || collapsed || !focusAfterReveal.current) return;
+    focusAfterReveal.current = false;
+    textarea.current?.focus({ preventScroll: true });
+  }, [collapsed, mode]);
   useEffect(
     () => () => {
       active.current?.abort();
       growth.current?.cancel();
+      if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
     },
     [],
   );
+  useEffect(() => {
+    if (mode !== "room") return;
+    if (!canCollapse) {
+      if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
+      setCollapsed(false);
+      return;
+    }
+    scheduleIdleCollapse();
+    return () => {
+      if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
+    };
+  }, [canCollapse, mode, scheduleIdleCollapse]);
+  useEffect(() => {
+    if (mode !== "room") return;
+    const revealOnScroll = () => {
+      setCollapsed(false);
+      scheduleIdleCollapse();
+    };
+    document.addEventListener("scroll", revealOnScroll, { passive: true, capture: true });
+    return () => document.removeEventListener("scroll", revealOnScroll, true);
+  }, [mode, scheduleIdleCollapse]);
   useEffect(() => {
     setSelectedReply(null);
     setAnswering(Boolean(question) && !draft.current.trim());
@@ -326,6 +374,7 @@ export const MessageComposer = forwardRef<
       data-mode={mode}
       data-has-question={Boolean(question)}
       data-keyboard={viewport.keyboard}
+      data-collapsed={mode === "room" && collapsed}
       aria-label="Planning room composer"
       style={{
         bottom: `calc(${viewport.inset}px + max(8px, env(safe-area-inset-bottom)))`,
@@ -333,8 +382,28 @@ export const MessageComposer = forwardRef<
           ? `calc(${viewport.height}px - 16px - env(safe-area-inset-bottom))`
           : undefined,
       }}
+      onPointerDown={() => scheduleIdleCollapse()}
+      onFocusCapture={(event) => {
+        if (event.target instanceof Element && event.target.closest(".sv-composer-peek")) return;
+        setFocusWithin(true);
+        setCollapsed(false);
+        if (idleTimer.current !== null) window.clearTimeout(idleTimer.current);
+      }}
+      onBlurCapture={(event) => {
+        const next = event.relatedTarget;
+        setFocusWithin(next instanceof Node && event.currentTarget.contains(next));
+      }}
     >
+      <motion.div
+        className="sv-composer-content"
+        aria-hidden={mode === "room" && collapsed}
+        inert={mode === "room" && collapsed}
+        animate={{ opacity: mode === "room" && collapsed ? 0 : 1, y: mode === "room" && collapsed ? 12 : 0 }}
+        transition={{ duration: reducedMotion ? 0 : 0.2, ease: [0.2, 0.75, 0.25, 1] }}
+        style={{ position: mode === "room" && collapsed ? "absolute" : "relative", inset: mode === "room" && collapsed ? 0 : undefined }}
+      >
       <form
+        id={`${id}-composer`}
         className="sv-composer"
         aria-label="Share your thoughts with Setvia"
         aria-busy={busy}
@@ -514,6 +583,28 @@ export const MessageComposer = forwardRef<
         </p>
         </div>
       </form>
+      </motion.div>
+      {mode === "room" ? (
+        <motion.button
+          type="button"
+          className="sv-composer-peek"
+          aria-label="Open message composer"
+          aria-controls={`${id}-composer`}
+          aria-expanded={!collapsed}
+          aria-hidden={!collapsed}
+          inert={!collapsed}
+          onClick={() => {
+            focusAfterReveal.current = true;
+            setCollapsed(false);
+          }}
+          animate={{ opacity: collapsed ? 1 : 0, y: collapsed ? 0 : 10, scale: collapsed ? 1 : 0.96 }}
+          transition={{ duration: reducedMotion ? 0 : 0.18, ease: [0.2, 0.75, 0.25, 1] }}
+        >
+          <span className="sv-composer-peek-cat" aria-hidden="true"><ComposerCat /></span>
+          <span>Share a thought</span>
+          <span className="sr-only">with Setvia</span>
+        </motion.button>
+      ) : null}
     </section>
   );
   return typeof document === "undefined"
