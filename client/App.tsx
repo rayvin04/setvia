@@ -3,6 +3,7 @@ import { lazy, Suspense, useState } from "react";
 import type { FormEvent } from "react";
 import { Routes, Route, Link, useLocation } from "react-router-dom";
 import { ButtonLink, Header, Footer } from "./components";
+import { LandingFooter, PrivacyNotice } from "./LandingClosing";
 
 import { Demos } from "./Scenarios";
 import { Home } from "./Home";
@@ -156,6 +157,7 @@ export default function App() {
               }
             />
             <Route path="/" element={<Home />} />
+            <Route path="/privacy" element={<PrivacyNotice />} />
             <Route
               path="/start"
               element={
@@ -177,7 +179,7 @@ export default function App() {
           </Routes>
         </PageTransition>
       </main>
-      {showChrome ? <Footer /> : null}
+      {showChrome ? pathname === "/" ? <LandingFooter /> : pathname === "/privacy" ? null : <Footer /> : null}
     </>
   );
 }

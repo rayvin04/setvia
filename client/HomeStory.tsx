@@ -12,13 +12,12 @@ import {
 import { useState, type ReactNode } from "react";
 import { motion, useReducedMotion } from "motion/react";
 import { Link } from "react-router-dom";
-import { Avatar, Mascot } from "./Mascot";
-import { ButtonLink } from "./components";
+import { Mascot } from "./Mascot";
 import { scenarios } from "./demoData";
 import { Reveal } from "./MotionUI";
 import { InteractivePlanPreview } from "./InteractivePlanPreview";
 import { LivingPlayground } from "./LivingPlayground";
-import { approveVersion, initialVersion, revisePreview } from "./preview-state";
+import { ClosingInvitation, EventAgreement } from "./LandingClosing";
 import "./home-story.css";
 
 function StoryHeading({
@@ -235,96 +234,6 @@ function RealityCheckStory() {
   );
 }
 
-function SharedVersionStory() {
-  const [state, setState] = useState(initialVersion);
-  const revised = state.version === 4;
-  return (
-    <Reveal section className="home-story-section story-version">
-      <div className="story-version-copy">
-        <h2>Agreement should be clear enough to keep.</h2>
-        <p>
-          Every yes belongs to a specific plan. Change the proposal and see why
-          the group needs to decide again.
-        </p>
-        <ButtonLink to="/demos?scenario=beach" secondary>
-          See a plan come together
-        </ButtonLink>
-      </div>
-      <div
-        className="story-receipt-stage"
-        data-visual-slot="decision-receipt-demo"
-      >
-        <article className="story-receipt">
-          <div className="story-receipt-head">
-            <div>
-              <h3>Beach weekend</h3>
-              <p>La Union · Saturday, Nov 14</p>
-            </div>
-          </div>
-          <div className="story-receipt-line">
-            <span>Departure</span>
-            <strong>{revised ? "8:30 AM" : "7:00 AM"}</strong>
-          </div>
-          <div className="story-receipt-line">
-            <span>Travel</span>
-            <strong>Furina drives · split fuel</strong>
-          </div>
-          <details className="story-version-details">
-            <summary>
-              What changed in the plan?
-            </summary>
-            <p>
-              {revised
-                ? "Departure moved from 7:00 AM to 8:30 AM. Earlier approvals no longer apply after a plan change, so everyone needs to decide again."
-                : "Furina was added as the driver. The early departure is part of the proposal; the per-person budget is still open."}
-            </p>
-          </details>
-          <div className="story-receipt-approval">
-            <div className="story-avatar-stack" aria-hidden="true">
-              {[0, 1, 2, 3].map((index) => (
-                <Avatar key={index} index={index} />
-              ))}
-            </div>
-            <strong role="status">
-              {state.approvals.length} of 4 approved
-            </strong>
-          </div>
-          <div className="version-actions">
-            <button
-              type="button"
-              className="receipt-button"
-              disabled={revised}
-              onClick={() => setState(revisePreview)}
-            >
-              Move departure to 8:30 AM
-            </button>
-            {revised && (
-              <button
-                type="button"
-                className="receipt-button receipt-approve"
-                disabled={state.approvals.includes("Selena")}
-                onClick={() => setState((old) => approveVersion(old, "Selena"))}
-              >
-                {state.approvals.includes("Selena")
-                  ? "Selena approved this plan"
-                  : "Add Selena’s sample approval"}
-                <Check size={15} aria-hidden="true" />
-              </button>
-            )}
-          </div>
-          <div className="preview-footnote">
-            <span>Fictional approvals</span>
-            <button type="button" onClick={() => setState(initialVersion())}>
-              <RotateCcw size={12} aria-hidden="true" />
-              Reset
-            </button>
-          </div>
-        </article>
-      </div>
-    </Reveal>
-  );
-}
-
 function ScenarioStory() {
   const [selected, setSelected] = useState(scenarios[0].id);
   const featured = scenarios.find((scenario) => scenario.id === selected)!;
@@ -403,42 +312,15 @@ function ScenarioStory() {
   );
 }
 
-function ClosingStory() {
-  return (
-    <Reveal section className="home-story-section story-closing">
-      <div className="story-closing-panel">
-        <div className="story-closing-copy">
-          <h2>Make the next message move things forward.</h2>
-          <p>
-            Start with what your group knows. Find what still needs a
-            conversation.
-          </p>
-          <div className="story-closing-actions">
-            <ButtonLink to="/start">
-              Start Planning
-            </ButtonLink>
-            <ButtonLink to="/demos" secondary>
-              Explore demos
-            </ButtonLink>
-          </div>
-        </div>
-        <div className="story-closing-mascot" aria-hidden="true">
-          <Mascot />
-        </div>
-      </div>
-    </Reveal>
-  );
-}
-
 export function HomeStory() {
   return (
     <div className="home-story">
       <LivingPlayground />
       <ConversationToPlan />
       <RealityCheckStory />
-      <SharedVersionStory />
+      <EventAgreement />
       <ScenarioStory />
-      <ClosingStory />
+      <ClosingInvitation />
     </div>
   );
 }
