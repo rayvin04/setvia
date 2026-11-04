@@ -13,10 +13,12 @@ export function SpeakerPanel({
   snapshot,
   onRespond,
   reactionKey = "",
+  speakerResponseKey = "",
 }: {
   snapshot: DashboardSnapshot;
   onRespond?: () => void;
   reactionKey?: string;
+  speakerResponseKey?: string;
 }) {
   const { room } = snapshot;
   const speaker = speakerPresentation(room);
@@ -60,18 +62,19 @@ export function SpeakerPanel({
       </div>
       <div className="speaker-stage">
         <motion.div
-          className="speaker-cat"
-          key={`${question?.id ?? speaker.kind}-${reactionKey}`}
+          key={`${question?.id ?? speaker.kind}-${speakerResponseKey || reactionKey}`}
           initial={false}
+          className={speakerResponseKey ? "speaker-cat is-responding" : "speaker-cat"}
           animate={
-            reduced
+            reduced || (!speakerResponseKey && !reactionKey)
               ? { opacity: 1 }
               : {
                   rotate: [0, speaker.expression === "concerned" ? 2 : -3, 0],
-                  y: [0, -2, 0],
+                  y: [0, -3, 0],
+                  scale: [1, 1.035, 1],
                 }
           }
-          transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+          transition={{ duration: reduced ? 0 : 0.52, ease: [0.16, 1, 0.3, 1] }}
         >
           <Mascot />
         </motion.div>

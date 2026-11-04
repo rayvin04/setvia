@@ -111,6 +111,7 @@ export default function App() {
   const { pathname } = useLocation();
   const planningRoom =
     pathname === "/dashboard" || pathname.startsWith("/rooms/");
+  const liveRoomPage = pathname.startsWith("/rooms/");
   const localHost = ["127.0.0.1", "localhost", "[::1]"].includes(window.location.hostname);
   const studioEnabled = import.meta.env.DEV && localHost;
   const isStudio = studioEnabled && (pathname === "/demo-studio" || pathname.startsWith("/demo-studio/"));
@@ -122,8 +123,8 @@ export default function App() {
           Skip to content
         </a>
       ) : null}
-      <Header />
-      <main id="main" className={isStudio ? "demo-studio-main has-room-header" : planningRoom ? "has-room-header" : undefined}>
+      {!liveRoomPage ? <Header /> : null}
+      <main id="main" className={isStudio ? "demo-studio-main has-room-header" : planningRoom && !liveRoomPage ? "has-room-header" : undefined}>
         <PageTransition>
           <Routes>
             <Route

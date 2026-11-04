@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Check, CircleAlert, Copy, LogOut, Volume2, VolumeX, X } from "lucide-react";
+import { Check, CircleAlert, CircleCheck, CircleX, Sparkles, TriangleAlert, X } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { Wordmark } from "../components";
+import { Header } from "../components";
 import { useSetviaSounds } from "../sound";
-import { Avatar } from "../Mascot";
 import { MessageComposer, type MessageComposerHandle } from "./MessageComposer";
 import { PlanningDashboard, type SectionId } from "./Dashboard";
 import { DecisionReceipt } from "./DecisionReceipt";
@@ -40,14 +39,24 @@ import "./dashboard.css";
 import "./dashboard-refinement.css";
 import "./live-room.css";
 
-type Notice = { id: string; text: string; section: SectionId; tone: "neutral" | "warning" | "success" };
+type NoticeTone = "neutral" | "warning" | "success" | "failure" | "action";
+type NoticeCue = "warning" | "error" | "check" | "complete" | "receive" | "processing";
+type Notice = { id: string; text: string; section: SectionId; tone: NoticeTone };
 
 function liveStatusLabel(stream: StreamStatus | "loading" | "offline") {
-  if (stream === "connected") return "Live updates connected";
-  if (stream === "reconnecting") return "Reconnecting to the room…";
-  if (stream === "unauthorized") return "This tab’s room session expired";
-  if (stream === "offline") return "Room server unavailable";
-  return "Opening your room…";
+  if (stream === "connected") return "Connected";
+  if (stream === "reconnecting") return "Reconnecting";
+  if (stream === "unauthorized") return "Session expired";
+  if (stream === "offline") return "Server unavailable";
+  return "Connecting";
+}
+
+function roomServiceLabel(health: RoomHealth | null) {
+  if (health?.mode === "offline-mock") return "Offline mock · no Meta requests";
+  if (health?.mode === "synthetic-live-demo") return "Synthetic live test";
+  if (health?.enabled) return "Live Muse Spark room";
+  if (health) return "Room service unavailable";
+  return "Private planning room";
 }
 
 export default function LiveRoom() {
@@ -64,14 +73,34 @@ export default function LiveRoom() {
   const [inviteLink, setInviteLink] = useState(() => getInvitationLink(roomId));
   const [copied, setCopied] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [findingFlash, setFindingFlash] = useState(false);
+  const [speakerResponseKey, setSpeakerResponseKey] = useState("");
   const [composerHeight, setComposerHeight] = useState(0);
   const [composerInset, setComposerInset] = useState(0);
   const composer = useRef<MessageComposerHandle>(null);
   const lastActivityIds = useRef<Set<string> | null>(null);
   const noticeTimer = useRef<number | null>(null);
+  const findingTimer = useRef<number | null>(null);
+  const speakerTimer = useRef<number | null>(null);
+  const previousSpeakerMessages = useRef<string[] | null>(null);
   const reduced = useReducedMotion();
-  const { enabled: soundsEnabled, toggle: toggleSounds, unlockFromGesture, play } = useSetviaSounds();
+  const { unlockFromGesture, play } = useSetviaSounds();
   const previousStreamStatus = useRef<StreamStatus | "loading" | "offline">("loading");
+  const previousAnalysisState = useRef<string | null>(null);
+
+  const showNotice = useCallback((nextNotice: Notice, cue?: NoticeCue) => {
+    setNotice(nextNotice);
+    if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
+    noticeTimer.current = window.setTimeout(() => {
+      setNotice((current) => current?.id === nextNotice.id ? null : current);
+    }, 7_000);
+    const sound = cue ?? (
+      nextNotice.tone === "failure" ? "error"
+        : nextNotice.tone === "warning" || nextNotice.tone === "action" ? "warning"
+          : nextNotice.tone === "success" ? "check" : "receive"
+    );
+    play(sound);
+  }, [play]);
 
   useEffect(() => {
     document.title = snapshot?.room.proposal.label.trim() || "Setvia";
@@ -110,6 +139,8 @@ export default function LiveRoom() {
     return () => {
       controller.abort();
       if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
+      if (findingTimer.current !== null) window.clearTimeout(findingTimer.current);
+      if (speakerTimer.current !== null) window.clearTimeout(speakerTimer.current);
     };
   }, [session, acceptSnapshot]);
 
@@ -122,6 +153,11 @@ export default function LiveRoom() {
     }
     const newEntries = snapshot.activity.filter((entry) => !lastActivityIds.current!.has(entry.id));
     lastActivityIds.current = ids;
+    if (newEntries.some((entry) => entry.kind === "finding_detected")) {
+      setFindingFlash(true);
+      if (findingTimer.current !== null) window.clearTimeout(findingTimer.current);
+      findingTimer.current = window.setTimeout(() => setFindingFlash(false), 900);
+    }
     const meaningful = newEntries.filter((entry) => entry.kind !== "analysis_started");
     if (!meaningful.length) return;
     const priority = (kind: string) => kind === "analysis_blocked" || kind === "finding_detected" ? 4
@@ -129,7 +165,8 @@ export default function LiveRoom() {
         : kind === "question_asked" || kind === "participant_responded" || kind === "participant_joined" ? 2
           : kind === "analysis_completed" ? 1 : 0;
     const first = [...meaningful].sort((a, b) => priority(b.kind) - priority(a.kind))[0]!;
-    const tone: Notice["tone"] = first.kind === "analysis_blocked" || first.kind === "finding_detected" ? "warning"
+    const readyForReview = snapshot.room.readiness?.status === "ready_for_human_review";
+    const tone: NoticeTone = first.kind === "analysis_blocked" || first.kind === "finding_detected" || (first.kind === "readiness_changed" && readyForReview) ? "action"
       : first.kind === "issue_resolved" || first.kind === "participant_approved" || first.kind === "readiness_changed" || first.kind === "analysis_completed" ? "success"
         : "neutral";
     const sectionFor: SectionId = first.kind === "finding_detected" || first.kind === "issue_resolved" ? "issues"
@@ -140,14 +177,11 @@ export default function LiveRoom() {
       ? `${first.summary} · ${meaningful.length - 1} related update${meaningful.length > 2 ? "s" : ""}.`
       : first.summary;
     const nextNotice = { id: first.id, text, section: sectionFor, tone };
-    setNotice(nextNotice);
-    if (tone === "warning") play("warning");
-    else if (first.kind === "issue_resolved" || first.kind === "participant_approved") play("check");
-    else if (first.kind === "analysis_completed") play("complete");
-    else if (first.kind === "participant_responded" || first.kind === "question_asked") play("receive");
-    if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
-    noticeTimer.current = window.setTimeout(() => setNotice((current) => current?.id === nextNotice.id ? null : current), 6_000);
-  }, [snapshot, play]);
+    const cue: NoticeCue | undefined = first.kind === "analysis_completed" ? "complete"
+      : first.kind === "participant_responded" || first.kind === "question_asked" ? "receive"
+        : undefined;
+    showNotice(nextNotice, cue);
+  }, [snapshot, showNotice]);
 
   useEffect(() => {
     const previous = previousStreamStatus.current;
@@ -157,6 +191,58 @@ export default function LiveRoom() {
       previousStreamStatus.current = streamStatus;
     }
   }, [streamStatus, play]);
+
+  const analysisActivityState = snapshot && streamStatus === "connected"
+    ? [snapshot.room.analysisStatus, snapshot.room.privateAnalysisStatus].includes("running") ? "running"
+      : [snapshot.room.analysisStatus, snapshot.room.privateAnalysisStatus].includes("queued") ? "queued"
+        : [snapshot.room.analysisStatus, snapshot.room.privateAnalysisStatus].includes("blocked") ? "blocked"
+          : [snapshot.room.analysisStatus, snapshot.room.privateAnalysisStatus].includes("complete") ? "complete"
+            : "idle"
+    : null;
+
+  useEffect(() => {
+    const previous = previousAnalysisState.current;
+    if (analysisActivityState === "running" && previous !== "running") play("processing");
+    else if (analysisActivityState === "complete" && previous && previous !== "complete") play("complete");
+    else if (analysisActivityState === "blocked" && previous && previous !== "blocked") play("warning");
+    previousAnalysisState.current = analysisActivityState;
+  }, [analysisActivityState, play]);
+
+  useEffect(() => {
+    if (!snapshot) return;
+    const signatures = snapshot.room.messages.map((message) =>
+      JSON.stringify([
+        message.proposalVersion,
+        message.questionId,
+        message.targetId,
+        message.visibility,
+        message.text,
+      ]),
+    );
+    const previous = previousSpeakerMessages.current;
+    previousSpeakerMessages.current = signatures;
+    if (!previous || streamStatus !== "connected") return;
+    const counts = new Map<string, number>();
+    for (const signature of previous) counts.set(signature, (counts.get(signature) ?? 0) + 1);
+    const added = [...signatures].reverse().find((signature) => {
+      const count = counts.get(signature) ?? 0;
+      if (count > 0) {
+        counts.set(signature, count - 1);
+        return false;
+      }
+      return true;
+    });
+    if (!added) return;
+    setSpeakerResponseKey(`${snapshot.sequence}:${added}`);
+    if (speakerTimer.current !== null) window.clearTimeout(speakerTimer.current);
+    speakerTimer.current = window.setTimeout(() => setSpeakerResponseKey(""), 1_250);
+  }, [snapshot, streamStatus]);
+
+  useEffect(() => {
+    if (streamStatus === "connected") return;
+    setSpeakerResponseKey("");
+    if (speakerTimer.current !== null) window.clearTimeout(speakerTimer.current);
+  }, [streamStatus]);
 
   const onSubmit = useCallback<SubmitPlanningMessage>(async (input, signal) => {
     if (!session) throw new RoomApiError("This tab has no active room session.", 401);
@@ -169,10 +255,15 @@ export default function LiveRoom() {
       play("send");
       return result.receipt;
     } catch (failure) {
-      play("error");
+      showNotice({
+        id: `message-failed-${Date.now()}`,
+        text: failure instanceof Error ? failure.message : "Your message could not be sent.",
+        section: "activity",
+        tone: "failure",
+      }, "error");
       throw failure;
     }
-  }, [session, unlockFromGesture, play, acceptSnapshot]);
+  }, [session, unlockFromGesture, play, acceptSnapshot, showNotice]);
 
   async function action(input: DashboardAction) {
     if (!snapshot || !session || busy) return;
@@ -185,11 +276,9 @@ export default function LiveRoom() {
       setBusy(true);
       const next = await reviseRoomProposal(session, checked.expectedRevision, option);
       acceptSnapshot(next);
-      setNotice({ id: `revision-${next.sequence}`, text: "The room proposed a new version. Previous approvals are cleared while Setvia checks it.", section: "plan", tone: "neutral" });
-      play("receive");
+      showNotice({ id: `revision-${next.sequence}`, text: "The room proposed a new version. Previous approvals are cleared while Setvia checks it.", section: "plan", tone: "neutral" }, "receive");
     } catch (failure) {
-      play("error");
-      setError(failure instanceof RoomApiError ? failure.message : "The proposal changed. Review the latest version and try again.");
+      showNotice({ id: `proposal-failed-${Date.now()}`, text: failure instanceof RoomApiError ? failure.message : "The proposal changed. Review the latest version and try again.", section: "plan", tone: "failure" }, "error");
     } finally { setBusy(false); }
   }
 
@@ -200,11 +289,9 @@ export default function LiveRoom() {
     try {
       const next = await sharePrivateCandidate(session, candidateId, snapshot.room.revision);
       acceptSnapshot(next);
-      setNotice({ id: `share-${next.sequence}`, text: "You shared this confirmed detail with the planning room.", section: "people", tone: "success" });
-      play("check");
+      showNotice({ id: `share-${next.sequence}`, text: "You shared this confirmed detail with the planning room.", section: "people", tone: "success" }, "check");
     } catch (failure) {
-      play("error");
-      setError(failure instanceof RoomApiError ? failure.message : "This detail could not be shared. Review the latest room state.");
+      showNotice({ id: `share-failed-${Date.now()}`, text: failure instanceof RoomApiError ? failure.message : "This detail could not be shared. Review the latest room state.", section: "people", tone: "failure" }, "error");
     } finally { setBusy(false); }
   }
 
@@ -215,21 +302,30 @@ export default function LiveRoom() {
     try {
       const next = await approveRoomProposal(session, snapshot.room.proposalVersion);
       acceptSnapshot(next);
-      play("check");
+      showNotice({ id: `approved-${next.sequence}`, text: "Your approval was recorded for this proposal.", section: "overview", tone: "success" }, "check");
     } catch (failure) {
-      play("error");
-      setError(failure instanceof RoomApiError ? failure.message : "Approval could not be recorded. Review the current plan.");
+      showNotice({ id: `approval-failed-${Date.now()}`, text: failure instanceof RoomApiError ? failure.message : "Approval could not be recorded. Review the current plan.", section: "overview", tone: "failure" }, "error");
     } finally { setBusy(false); }
   }
 
   async function copyInvitation() {
     if (!inviteLink) return;
     try {
-      await navigator.clipboard.writeText(inviteLink);
+      await copyText(inviteLink);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2_000);
+      showNotice({ id: `invite-copied-${Date.now()}`, text: "Invitation link copied to your clipboard.", section: "people", tone: "success" }, "check");
     } catch {
-      setError("Clipboard access is unavailable. Select and copy the invitation link shown in this field.");
+      showNotice({ id: `invite-copy-failed-${Date.now()}`, text: "Clipboard access is unavailable. Check your browser’s clipboard permission and try again.", section: "people", tone: "failure" }, "error");
+    }
+  }
+
+  async function copyRoomCode() {
+    try {
+      await copyText(roomCodeFromId(roomId));
+      showNotice({ id: `room-code-copied-${Date.now()}`, text: "Room code copied to your clipboard.", section: "people", tone: "success" }, "check");
+    } catch {
+      showNotice({ id: `room-code-copy-failed-${Date.now()}`, text: "Clipboard access is unavailable. Check your browser’s clipboard permission and try again.", section: "people", tone: "failure" }, "error");
     }
   }
 
@@ -241,7 +337,7 @@ export default function LiveRoom() {
       await leaveRoom(session, snapshot.room.revision);
       window.location.assign("/start");
     } catch (failure) {
-      setError(failure instanceof RoomApiError ? failure.message : "You could not leave the room. Try again.");
+      showNotice({ id: `leave-failed-${Date.now()}`, text: failure instanceof RoomApiError ? failure.message : "You could not leave the room. Try again.", section: "overview", tone: "failure" }, "error");
       setLeaving(false);
     }
   }
@@ -258,7 +354,7 @@ export default function LiveRoom() {
 
   if (!session) return (
     <div className="dashboard-shell dashboard-refined room-access-shell">
-      <header className="dashboard-header"><Wordmark /><Link to="/join" className="dashboard-button primary">Join with an invitation</Link></header>
+      <Header room={{ title: "Planning room", serviceLabel: "Private room", connectionLabel: "Session required", connectionState: "unauthorized", roomCode: roomCodeFromId(roomId), copied: false }} />
       <div className="room-access-state"><CircleAlert size={30} aria-hidden="true" /><h1>This tab has no room session.</h1><p>Open the invitation link and join with your name. Participant sessions stay in this browser tab.</p><Link to="/join" className="dashboard-button primary">Open invitation</Link></div>
     </div>
   );
@@ -296,34 +392,71 @@ export default function LiveRoom() {
     }
   }
 
-  return (
-    <div className="dashboard-shell dashboard-refined live-room-shell"
-      style={participant ? { paddingBottom: composerHeight + composerInset + 24 } : undefined}>
-      <header className="dashboard-header live-room-header">
-        <Wordmark />
-        <div className="live-room-mode" data-demo={health?.mode === "synthetic-live-demo"}>
-          <span className="live-indicator" aria-hidden="true" />
-        <strong>{health?.mode === "offline-mock" ? "Offline mock test · no Meta requests" : health?.mode === "synthetic-live-demo" ? "Synthetic live test" : health?.enabled ? "Live Muse Spark room" : "Room service unavailable"}</strong>
-          {health?.enabled ? <span>· Muse Spark</span> : null}
-        </div>
-        <div className="live-room-header-actions">
-          <span className="live-connection" data-status={streamStatus} role="status">{liveStatusLabel(streamStatus)}</span>
-          <button type="button" className="dashboard-button subtle live-sound-toggle" aria-pressed={soundsEnabled} onClick={toggleSounds}>
-            {soundsEnabled ? <Volume2 size={15} aria-hidden="true" /> : <VolumeX size={15} aria-hidden="true" />}
-            <span>{soundsEnabled ? "Sound on" : "Sound off"}</span>
-          </button>
-          {inviteLink ? <button type="button" className="dashboard-button primary live-copy-invite" onClick={() => void copyInvitation()}>
-            {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
-            <span>{copied ? "Copied" : "Invite people"}</span>
-          </button> : null}
-          {participant ? <span className="dashboard-viewer-avatar" aria-label={`Signed in as ${participant.name}`}><Avatar index={snapshot!.room.participants.findIndex((p) => p.id === participant.id)} /></span> : null}
-          <button type="button" className="dashboard-button subtle live-leave" disabled={leaving} onClick={() => void leave()}><LogOut size={15} aria-hidden="true" /><span>Leave room</span></button>
-        </div>
-      </header>
+  const sharedRunning = snapshot?.room.analysisStatus === "running";
+  const privateRunning = snapshot?.room.privateAnalysisStatus === "running";
+  const analysisLabel = analysisActivityState === "running"
+    ? sharedRunning && privateRunning
+      ? "Setvia is analyzing shared and private details"
+      : privateRunning
+        ? "Setvia is analyzing your private response"
+        : "Setvia is analyzing the plan"
+    : analysisActivityState === "queued"
+      ? "Setvia analysis is queued"
+      : analysisActivityState === "blocked"
+        ? "Analysis is waiting for an update"
+        : "";
+  const analysisVisualState = analysisActivityState === "running" ? "active"
+    : analysisActivityState === "queued" ? "queued"
+      : analysisActivityState === "blocked" ? "blocked"
+        : "idle";
 
-      {inviteLink ? <div className="live-invite-field"><label htmlFor="live-invitation-url">Share invitation</label><input id="live-invitation-url" readOnly value={inviteLink} onFocus={(event) => event.currentTarget.select()} /><div className="live-room-code"><span>Room code</span><code>{roomCodeFromId(roomId)}</code></div><span>The code identifies this room. The invitation link verifies access and gives each person their own session.</span></div> : null}
+  return (
+    <div
+      className="dashboard-shell dashboard-refined live-room-shell"
+      data-finding-flash={findingFlash || undefined}
+      onPointerDownCapture={unlockFromGesture}
+      onKeyDownCapture={unlockFromGesture}
+      style={participant ? { paddingBottom: composerHeight + composerInset + 24 } : undefined}
+    >
+      <Header room={{
+        title: snapshot?.room.proposal.label ?? "Planning room",
+        serviceLabel: roomServiceLabel(health),
+        connectionLabel: liveStatusLabel(streamStatus),
+        connectionState: streamStatus,
+        roomCode: roomCodeFromId(roomId),
+        inviteLink: inviteLink ?? undefined,
+        copied,
+        onCopyLink: () => void copyInvitation(),
+        onCopyCode: () => void copyRoomCode(),
+        onLeave: participant ? () => void leave() : undefined,
+        leaving,
+      }} />
       {budget ? <p className="live-budget-note">Live test budget · {budget.attempts}/{budget.attempts + budget.remainingAttempts} HTTP attempts used · ${(budget.reservedCostMicros / 1_000_000).toFixed(2)} reserved</p> : null}
       {error ? <div className="live-error" role="alert"><CircleAlert size={16} aria-hidden="true" /><span>{error}</span></div> : null}
+      {snapshot ? <div className="live-room-status-row">
+        {analysisLabel ? (
+          <div className="live-analysis-status" data-state={analysisVisualState} role="status" aria-live="polite" aria-atomic="true">
+            <span className="live-analysis-orbit" aria-hidden="true"><i /><i /><b /></span>
+            <span className="live-analysis-copy"><strong>{analysisLabel}</strong><span>{analysisVisualState === "active" ? "Current room state" : analysisVisualState === "queued" ? "Waiting to start" : "No agent activity is being reported"}</span></span>
+          </div>
+        ) : null}
+        <div className="live-approval-control">
+          <span>{snapshot.room.approvalCount} of {snapshot.room.participants.length} approved</span>
+          {snapshot.room.participants.find((p) => p.id === snapshot.room.viewerId)?.approved ? (
+            <strong className="live-approved"><Check size={14} aria-hidden="true" /> You approved this version</strong>
+          ) : (
+            <button
+              type="button"
+              className="dashboard-button primary"
+              disabled={!readyToApprove || busy}
+              title={!readyToApprove ? "Approval is available after the current analysis is complete." : undefined}
+              onClick={() => void approve()}
+            >
+              Approve proposal
+            </button>
+          )}
+        </div>
+      </div> : null}
       {snapshot && participant && isBeachTripDemo ? <FictionalParticipantsDemo
         roomId={roomId}
         organizer={session}
@@ -341,21 +474,14 @@ export default function LiveRoom() {
             snapshot={snapshot}
             onAction={(input) => void action(input)}
             busy={busy}
-            notice={notice?.text ?? (snapshot.room.analysisStatus === "running" ? "Setvia is reviewing the shared plan with Muse Spark…" : "")}
+            notice={notice?.text ?? ""}
             activeSection={section}
             onSectionChange={setSection}
             onFocusComposer={() => composer.current?.focus()}
             contributions={contributions}
             contributionMode="room"
+            speakerResponseKey={speakerResponseKey}
           />
-          <div className="live-room-actions">
-            <span>{snapshot.room.approvalCount} of {snapshot.room.participants.length} approved</span>
-            {snapshot.room.approved ? <strong className="live-approved"><Check size={15} aria-hidden="true" /> Everyone approved the plan</strong> : null}
-            <button type="button" className="dashboard-button primary" disabled={!readyToApprove || busy || Boolean(snapshot.room.participants.find((p) => p.id === snapshot.room.viewerId)?.approved)} onClick={() => void approve()}>
-              {snapshot.room.participants.find((p) => p.id === snapshot.room.viewerId)?.approved ? "You approved this version" : "Approve this proposal"}
-            </button>
-            {!readyToApprove ? <small>Approval opens after a current analysis completes and readiness is cleared for human review.</small> : null}
-          </div>
           {participant && snapshot.source === "room" ? (
             <details className="live-decision-receipt">
               <summary>Decision Receipt</summary>
@@ -401,11 +527,40 @@ export default function LiveRoom() {
       )}
 
       <AnimatePresence initial={false}>
-        {notice ? <motion.div key={notice.id} className={`live-toast toast-${notice.tone}`} initial={{ opacity: 0, y: reduced ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reduced ? 0 : 6 }} transition={{ duration: reduced ? 0.12 : 0.2 }} role="status" aria-live="polite">
-          <button type="button" onClick={() => jumpTo(notice.section)}>{notice.text}<span>View update</span></button>
+        {notice ? <motion.div key={notice.id} className={`live-toast toast-${notice.tone}`} initial={{ opacity: 0, y: reduced ? 0 : 12, scale: reduced ? 1 : 0.985 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: reduced ? 0 : 7, scale: 0.99 }} transition={{ duration: reduced ? 0.12 : 0.24, ease: [0.16, 1, 0.3, 1] }} role={notice.tone === "failure" || notice.tone === "action" ? "alert" : "status"} aria-live={notice.tone === "failure" || notice.tone === "action" ? "assertive" : "polite"}>
+          <button type="button" className="live-toast-main" onClick={() => jumpTo(notice.section)}>
+            <span className="live-toast-icon" aria-hidden="true">
+              {notice.tone === "success" ? <CircleCheck size={19} />
+                : notice.tone === "failure" ? <CircleX size={19} />
+                  : notice.tone === "action" ? <Sparkles size={19} />
+                    : <TriangleAlert size={19} />}
+            </span>
+            <span className="live-toast-copy">
+              <strong>{notice.tone === "action" ? "Action needed" : notice.tone === "failure" ? "Couldn’t complete that" : notice.tone === "success" ? "Update complete" : notice.tone === "warning" ? "Needs attention" : "Room update"}</strong>
+              <span>{notice.text}</span>
+              <em>View update</em>
+            </span>
+          </button>
           <button type="button" aria-label="Dismiss notification" onClick={() => setNotice(null)}><X size={15} aria-hidden="true" /></button>
         </motion.div> : null}
       </AnimatePresence>
     </div>
   );
+}
+
+async function copyText(value: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+  const input = document.createElement("textarea");
+  input.value = value;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  document.body.append(input);
+  input.select();
+  const copied = document.execCommand("copy");
+  input.remove();
+  if (!copied) throw new Error("Clipboard access is unavailable.");
 }

@@ -353,13 +353,22 @@ export function mergeSuggestions(
   for (const candidate of candidates) {
     const currentValue = draft[candidate.field];
     const hasCurrentValue = currentValue.trim().length > 0;
+    const safeToApply =
+      !candidate.uncertainty &&
+      !candidate.isApproximate &&
+      Boolean(candidate.evidence?.trim());
 
     let status: ReviewStatus = "needs-review";
     if (manuallyEdited.has(candidate.field)) {
       status = currentValue === candidate.value ? "matched" : "conflict";
     } else if (!hasCurrentValue) {
-      draft[candidate.field] = candidate.value as never;
-    } else if (currentValue !== candidate.value) {
+      if (safeToApply) {
+        draft[candidate.field] = candidate.value as never;
+        status = "accepted";
+      }
+    } else if (currentValue === candidate.value) {
+      status = "matched";
+    } else {
       status = "conflict";
     }
 
@@ -375,7 +384,10 @@ export function acceptNonConflicting(
   return Object.fromEntries(
     Object.entries(reviews).map(([field, review]) => [
       field,
-      review?.status === "needs-review"
+      review?.status === "needs-review" &&
+      !review.uncertainty &&
+      !review.isApproximate &&
+      Boolean(review.evidence?.trim())
         ? { ...review, status: "accepted" as const }
         : review,
     ]),
@@ -385,7 +397,10 @@ export function acceptNonConflicting(
 export function safeSuggestionFields(reviews: ReviewMap): PlanField[] {
   return (Object.entries(reviews) as [PlanField, FieldReview][])
     .filter(([, review]) =>
-      review.status === "needs-review" && !review.uncertainty && !review.isApproximate,
+      review.status === "needs-review" &&
+      !review.uncertainty &&
+      !review.isApproximate &&
+      Boolean(review.evidence?.trim()),
     )
     .map(([field]) => field);
 }

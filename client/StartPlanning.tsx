@@ -23,7 +23,6 @@ import {
   mapExtractionToSuggestions,
   mergeSuggestions,
   resolveSuggestion,
-  safeSuggestionFields,
   type BudgetScope,
   type CategoryValue,
   type FieldReview,
@@ -44,6 +43,7 @@ import {
   type ProxyStatement,
 } from "../shared/plan-schema.js";
 import { RoomLaunch } from "./dashboard/RoomLaunch";
+import "./planning-phase1.css";
 import {
   coreFieldEdits,
   extractionIsReachable,
@@ -354,7 +354,10 @@ export function StartPlanning() {
       reviewsRef.current = merged.reviews;
       trackedAutofillFieldsRef.current.clear();
       for (const suggestion of suggestions) {
-        if (merged.reviews[suggestion.field]?.status === "needs-review")
+        if (
+          merged.reviews[suggestion.field]?.status === "accepted" &&
+          !manuallyEditedRef.current.has(suggestion.field)
+        )
           trackedAutofillFieldsRef.current.add(suggestion.field);
       }
       setDraft(merged.draft);
@@ -364,12 +367,18 @@ export function StartPlanning() {
         missingInformation: plan.missingInformation,
         suggestedQuestions: plan.suggestedQuestions,
       });
+      const appliedCount = Object.values(merged.reviews).filter(
+        (review) => review?.status === "accepted",
+      ).length;
+      const reviewCount = Object.values(merged.reviews).filter(
+        (review) => review?.status === "needs-review" || review?.status === "conflict",
+      ).length;
       setStatusMessage(
-        suggestions.length
-          ? "Muse Spark returned " +
-              suggestions.length +
-              " field suggestions. Review conflicts and apply the safe ones below."
-          : "Muse Spark did not find clear planning details. Add more source information and try again.",
+        appliedCount
+          ? `${appliedCount} clear detail${appliedCount === 1 ? "" : "s"} applied. ${reviewCount ? `${reviewCount} uncertain or conflicting value${reviewCount === 1 ? " needs" : "s need"} your review.` : "Your existing entries were kept."}`
+          : suggestions.length
+            ? "No source-backed, certain details were added automatically. Review the suggestions below; your existing entries were kept."
+            : "Muse Spark did not find clear planning details. Add more source information and try again.",
       );
       sounds.play(suggestions.length ? "complete" : "warning");
     } catch (error) {
@@ -437,22 +446,6 @@ export function StartPlanning() {
     trackedAutofillFieldsRef.current.delete(field);
     setDraft(next.draft);
     setReviews(next.reviews);
-  }
-  function applySafeSuggestions() {
-    const fields = safeSuggestionFields(reviewsRef.current);
-    if (!fields.length) return;
-    const next = { ...reviewsRef.current };
-    const manuallyEdited = new Set(manuallyEditedRef.current);
-    for (const field of fields) {
-      const review = next[field];
-      if (!review) continue;
-      next[field] = { ...review, status: "accepted" };
-      manuallyEdited.add(field);
-      trackedAutofillFieldsRef.current.delete(field);
-    }
-    manuallyEditedRef.current = manuallyEdited;
-    reviewsRef.current = next;
-    setReviews(next);
   }
   function focusField(field: PlanField) {
     const core: Partial<Record<PlanField, CoreField>> = {
@@ -561,10 +554,7 @@ export function StartPlanning() {
     const label = labelFor(field, draft.category);
     const value = draft[field] as string;
     const review = reviews[field];
-    const suggested =
-      Boolean(review) &&
-      review?.status !== "rejected" &&
-      review?.status !== "conflict";
+    const suggested = review?.status === "accepted";
     const className =
       "plan-control" + (suggested ? " plan-control-suggested" : "");
     const helper =
@@ -610,7 +600,7 @@ export function StartPlanning() {
               ];
       return (
         <div className="plan-field" key={field}>
-          <label htmlFor={id}>{label}</label>
+          <label htmlFor={id}>{label}{suggested ? <span className="ai-filled-badge">AI filled</span> : null}</label>
           <select
             id={id}
             className={className}
@@ -635,7 +625,7 @@ export function StartPlanning() {
     if (field === "participantExact") {
       return (
         <div className="plan-field" key={field}>
-          <label htmlFor={id}>{label}</label>
+          <label htmlFor={id}>{label}{suggested ? <span className="ai-filled-badge">AI filled</span> : null}</label>
           <input
             id={id}
             className={className}
@@ -689,7 +679,7 @@ export function StartPlanning() {
     };
     return (
       <div className="plan-field" key={field}>
-        <label htmlFor={id}>{label}</label>
+        <label htmlFor={id}>{label}{suggested ? <span className="ai-filled-badge">AI filled</span> : null}</label>
         {longText ? (
           <textarea
             id={id}
@@ -724,14 +714,10 @@ export function StartPlanning() {
   }
 
   const reviewEntries = Object.entries(reviews) as [PlanField, FieldReview][];
-  const filledCount = reviewEntries.filter(
-    ([field, item]) =>
-      item.status !== "rejected" && Boolean((draft[field] as string).trim()),
-  ).length;
+  const appliedCount = reviewEntries.filter(([, item]) => item.status === "accepted").length;
   const needsReviewCount = reviewEntries.filter(([, item]) =>
-    ["needs-review", "conflict", "matched"].includes(item.status),
+    ["needs-review", "conflict"].includes(item.status),
   ).length;
-  const safeFields = safeSuggestionFields(reviews);
   const conflictEntries = reviewEntries.filter(
     ([, item]) => item.status === "conflict",
   );
@@ -800,10 +786,11 @@ export function StartPlanning() {
           <div className="planning-basics" data-ai-busy={busy || undefined}>
             <div className="core-fields">
               <div className="plan-field">
-                <label htmlFor="core-title">Plan name</label>
+                <label htmlFor="core-title">Plan name{reviews.title?.status === "accepted" ? <span className="ai-filled-badge">AI filled</span> : null}</label>
                 <input
                   id="core-title"
                   name="title"
+                  className={reviews.title?.status === "accepted" ? "ai-filled-control" : undefined}
                   value={draft.title}
                   maxLength={120}
                   autoComplete="off"
@@ -824,10 +811,11 @@ export function StartPlanning() {
                 )}
               </div>
               <div className="plan-field">
-                <label htmlFor="core-location">Location</label>
+                <label htmlFor="core-location">Location{reviews.location?.status === "accepted" ? <span className="ai-filled-badge">AI filled</span> : null}</label>
                 <input
                   id="core-location"
                   name="location"
+                  className={reviews.location?.status === "accepted" ? "ai-filled-control" : undefined}
                   value={draft.location}
                   maxLength={240}
                   placeholder="Caramoan, Camarines Sur"
@@ -839,10 +827,11 @@ export function StartPlanning() {
               </div>
               <div className="core-field-pair">
                 <div className="plan-field">
-                  <label htmlFor="core-people">Number of people</label>
+                  <label htmlFor="core-people">Number of people{reviews.participantExact?.status === "accepted" || reviews.participantRange?.status === "accepted" ? <span className="ai-filled-badge">AI filled</span> : null}</label>
                   <input
                     id="core-people"
                     name="people"
+                    className={reviews.participantExact?.status === "accepted" || reviews.participantRange?.status === "accepted" ? "ai-filled-control" : undefined}
                     type="text"
                     inputMode="numeric"
                     value={peopleValue(draft)}
@@ -868,10 +857,11 @@ export function StartPlanning() {
                   )}
                 </div>
                 <div className="plan-field">
-                  <label htmlFor="core-schedule">Date and time</label>
+                  <label htmlFor="core-schedule">Date and time{reviews.date?.status === "accepted" || reviews.time?.status === "accepted" ? <span className="ai-filled-badge">AI filled</span> : null}</label>
                   <input
                     id="core-schedule"
                     name="schedule"
+                    className={reviews.date?.status === "accepted" || reviews.time?.status === "accepted" ? "ai-filled-control" : undefined}
                     value={scheduleValue(draft)}
                     maxLength={160}
                     placeholder="Not decided yet"
@@ -882,10 +872,11 @@ export function StartPlanning() {
                 </div>
               </div>
               <div className="plan-field">
-                <label htmlFor="core-description">Short description</label>
+                <label htmlFor="core-description">Short description{reviews.description?.status === "accepted" ? <span className="ai-filled-badge">AI filled</span> : null}</label>
                 <textarea
                   id="core-description"
                   name="description"
+                  className={reviews.description?.status === "accepted" ? "ai-filled-control" : undefined}
                   rows={3}
                   value={draft.description}
                   maxLength={2000}
@@ -901,11 +892,12 @@ export function StartPlanning() {
               <details className="more-fields simple-more" ref={detailsRef}>
                 <summary>More details</summary>
                 <fieldset className="category-fieldset">
-                  <legend>Category</legend>
+                  <legend>Category{reviews.category?.status === "accepted" ? <span className="ai-filled-badge">AI filled</span> : null}</legend>
                   <div className="category-grid">
                     {CATEGORY_OPTIONS.map((option) => (
                       <label
                         className="category-option"
+                        data-ai-filled={reviews.category?.status === "accepted" || undefined}
                         key={option.value}
                         htmlFor={"category-" + option.value}
                       >
@@ -1256,8 +1248,9 @@ export function StartPlanning() {
               <LockKeyhole size={15} aria-hidden="true" />
               <p>
                 Only when you extract: your source is sent to Meta through
-                Setvia’s server. Images stay in request memory. Review
-                suggestions before using them.
+                Setvia’s server. Images stay in request memory. Safe,
+                source-backed details fill blank fields automatically; review
+                uncertain or conflicting suggestions before using them.
               </p>
             </div>
             <button
@@ -1276,7 +1269,7 @@ export function StartPlanning() {
                 {availability === "checking"
                   ? "Checking AI connection…"
                   : availability === "available"
-                    ? "AI connection ready. Review any suggested details."
+                    ? "AI connection ready. Safe details fill automatically; review uncertain or conflicting values."
                     : "AI connection unavailable. You can still fill in the plan."}
               </p>
               {availability === "unavailable" && (
@@ -1348,24 +1341,14 @@ export function StartPlanning() {
             <div className="review-heading-row">
               <div className="card-heading">
                 <div>
-                  <h2 id="review-heading">AI autofill review</h2>
+                  <h2 id="review-heading">Autofilled details</h2>
                   <p>
-                    <strong>{filledCount} fields filled</strong>
+                    <strong>{appliedCount} applied automatically</strong>
                     <span aria-hidden="true"> · </span>
-                    {needsReviewCount} need review
+                    {needsReviewCount} need confirmation
                   </p>
                 </div>
               </div>
-              {safeFields.length > 0 && (
-                <button
-                  type="button"
-                  className="button button-secondary accept-all"
-                  onClick={applySafeSuggestions}
-                >
-                  <Check size={16} aria-hidden="true" />
-                  Apply safe suggestions
-                </button>
-              )}
             </div>
             {conflictEntries.length > 0 && (
               <div

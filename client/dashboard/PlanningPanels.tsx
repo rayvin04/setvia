@@ -30,22 +30,28 @@ import { formatTime, responseCount } from "./model";
 
 export function ParticipantsPanel({
   snapshot,
+  compact = false,
 }: {
   snapshot: DashboardSnapshot;
+  compact?: boolean;
 }) {
   const { room } = snapshot;
   const invitationId = useId();
   const [invitationOpen, setInvitationOpen] = useState(false);
+  const responseTotal = snapshot.responses.filter(
+    (response) =>
+      response.proposalVersion === room.proposalVersion && response.responded,
+  ).length;
   return (
     <section
-      className="people-panel dashboard-panel"
+      className={`people-panel dashboard-panel${compact ? " is-compact" : ""}`}
       aria-labelledby="people-title"
     >
       <div className="panel-heading">
         <h2 id="people-title">
           Participants <span>({room.participants.length})</span>
         </h2>
-        <button
+        {!compact ? <button
           className="people-invite-link"
           type="button"
           aria-expanded={invitationOpen}
@@ -54,9 +60,32 @@ export function ParticipantsPanel({
         >
           <UserPlus size={15} aria-hidden="true" />
           Invite
-        </button>
+        </button> : null}
       </div>
-      <ul className="participant-list">
+      {compact ? (
+        <>
+          <ul className="participant-avatar-row" aria-label={`${room.participants.length} room members`}>
+            {room.participants.map((person, index) => {
+              const response = snapshot.responses.find(
+                (item) =>
+                  item.participantId === person.id &&
+                  item.proposalVersion === room.proposalVersion,
+              );
+              return (
+                <li key={person.id} aria-label={`${person.name}: ${response?.responded ? "responded" : "awaiting response"}`}>
+                  <Avatar index={index} />
+                  <span className={response?.responded ? "response-dot is-responded" : "response-dot"} aria-hidden="true" />
+                </li>
+              );
+            })}
+          </ul>
+          <p className="participant-response-summary">
+            {snapshot.responseTracking === "unavailable"
+              ? "Responses unavailable"
+              : `${responseTotal} of ${room.participants.length} responded`}
+          </p>
+        </>
+      ) : <ul className="participant-list">
         {room.participants.map((person, index) => {
           const response = snapshot.responses.find(
             (r) =>
@@ -102,8 +131,8 @@ export function ParticipantsPanel({
             </li>
           );
         })}
-      </ul>
-      <div
+      </ul>}
+      {!compact ? <div
         className="invitation-preview"
         id={invitationId}
         hidden={!invitationOpen}
@@ -113,7 +142,7 @@ export function ParticipantsPanel({
           This synthetic room has no shareable invitation or recovery
           credentials.
         </p>
-      </div>
+      </div> : null}
     </section>
   );
 }
