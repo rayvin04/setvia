@@ -7,13 +7,16 @@ import "./styles.css";
 import "./planning.css";
 import "./waves.css";
 import "./scenarios.css";
+import { SetviaSoundProvider } from "./sound";
 import App from "./App";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <BrowserRouter>
-      <MotionConfig reducedMotion="user">
-        <App />
-      </MotionConfig>
+      <SetviaSoundProvider>
+        <MotionConfig reducedMotion="user">
+          <App />
+        </MotionConfig>
+      </SetviaSoundProvider>
     </BrowserRouter>
   </React.StrictMode>,
 );

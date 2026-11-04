@@ -8,9 +8,11 @@ import {
 import { Attribution } from "./Attribution";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { Volume2, VolumeX } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { initialHeaderState, nextHeaderState } from "./header-state";
+import { useSetviaSounds } from "./sound";
 export const cn = (...values: Parameters<typeof clsx>) =>
   twMerge(clsx(...values));
 const MotionLink = motion.create(Link);
@@ -58,6 +60,7 @@ export function Header() {
   const [focused, setFocused] = useState(false);
   const tracker = useRef(initialHeaderState);
   const location = useLocation();
+  const sounds = useSetviaSounds();
   const { scrollY } = useScroll();
   const reduced = useReducedMotion();
   useEffect(() => {
@@ -112,6 +115,24 @@ export function Header() {
           <Link to="/demos">
             <span className="nav-explore-prefix">Explore&nbsp;</span>demos
           </Link>
+          <button
+            type="button"
+            className="sound-toggle"
+            aria-pressed={sounds.enabled}
+            aria-label={
+              sounds.enabled
+                ? "Turn interface sounds off"
+                : "Turn interface sounds on"
+            }
+            onClick={sounds.toggle}
+          >
+            {sounds.enabled ? (
+              <Volume2 size={16} aria-hidden="true" />
+            ) : (
+              <VolumeX size={16} aria-hidden="true" />
+            )}
+            <span>{sounds.enabled ? "Sound on" : "Sound off"}</span>
+          </button>
           <Link to="/join" className="join-link">
             Join a Room
           </Link>

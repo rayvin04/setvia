@@ -12,9 +12,9 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Mascot } from "./Mascot";
+import { useSetviaSounds } from "./sound";
 import "./planning.css";
 import {
-  acceptNonConflicting,
   CATEGORY_LABELS,
   CATEGORY_OPTIONS,
   EMPTY_PLAN_DRAFT,
@@ -23,6 +23,7 @@ import {
   mapExtractionToSuggestions,
   mergeSuggestions,
   resolveSuggestion,
+  safeSuggestionFields,
   type BudgetScope,
   type CategoryValue,
   type FieldReview,
@@ -195,6 +196,7 @@ export function StartPlanning() {
   const [dragActive, setDragActive] = useState(false);
   const [imageError, setImageError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [autofillFailed, setAutofillFailed] = useState(false);
   const [statusMessage, setStatusMessage] = useState("");
   const [extractionMeta, setExtractionMeta] = useState<Pick<
     PlanExtraction,
@@ -225,9 +227,11 @@ export function StartPlanning() {
   const reviewsRef = useRef(reviews);
   const manuallyEditedRef = useRef(new Set<PlanField>());
   const trackedAutofillFieldsRef = useRef(new Set<PlanField>());
+  const busyRef = useRef(false);
   const detailsRef = useRef<HTMLDetailsElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const reducedMotion = useReducedMotion();
+  const sounds = useSetviaSounds();
   const resultRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -301,11 +305,13 @@ export function StartPlanning() {
       setSelectedImage(null);
       setImageError(error);
       setStatusMessage("");
+      setAutofillFailed(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
       return;
     }
     setImageError("");
     setStatusMessage("");
+    setAutofillFailed(false);
     setSelectedImage(file);
   }
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -318,12 +324,14 @@ export function StartPlanning() {
   }
 
   async function performAutofill() {
+    busyRef.current = true;
     setBusy(true);
     setStarted(false);
+    setAutofillFailed(false);
     setStatusMessage(
       sourceMode === "image"
-        ? "Sending the image to Muse Spark for analysis…"
-        : "Sending your description to Muse Spark…",
+        ? "Reading your selected image with Muse Spark…"
+        : "Reading your description with Muse Spark…",
     );
     setImageError("");
     try {
@@ -360,21 +368,26 @@ export function StartPlanning() {
         suggestions.length
           ? "Muse Spark returned " +
               suggestions.length +
-              " field suggestions. Review each suggestion before continuing."
+              " field suggestions. Review conflicts and apply the safe ones below."
           : "Muse Spark did not find clear planning details. Add more source information and try again.",
       );
+      sounds.play(suggestions.length ? "complete" : "warning");
     } catch (error) {
+      setAutofillFailed(true);
       setStatusMessage(
         error instanceof PlanApiError
           ? error.message
           : "Planning extraction failed. Your current form values are still here.",
       );
+      sounds.play("error");
     } finally {
+      busyRef.current = false;
       setBusy(false);
+      sounds.stopLoop("planner-autofill");
     }
   }
   function requestAutofill() {
-    if (busy) return;
+    if (busyRef.current) return;
     if (availability !== "available") return;
     if (sourceMode === "text" && !sourceText.trim()) {
       setStatusMessage(
@@ -390,6 +403,9 @@ export function StartPlanning() {
       setImageError("Choose an image before asking Setvia to autofill.");
       return;
     }
+    busyRef.current = true;
+    sounds.unlockFromGesture();
+    sounds.startLoop("planner-autofill", "processing");
     void performAutofill();
   }
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -399,19 +415,6 @@ export function StartPlanning() {
     const first = Object.keys(errors)[0];
     if (first) {
       document.getElementById("core-" + first)?.focus();
-      return;
-    }
-    if (
-      Object.values(reviewsRef.current).some(
-        (review) =>
-          review &&
-          ["needs-review", "conflict", "matched"].includes(review.status),
-      )
-    ) {
-      setStatusMessage(
-        "Review or reject the remaining suggestions before starting.",
-      );
-      document.getElementById("review-heading")?.focus();
       return;
     }
     setStatusMessage("");
@@ -435,17 +438,19 @@ export function StartPlanning() {
     setDraft(next.draft);
     setReviews(next.reviews);
   }
-  function acceptAll() {
-    for (const [field, review] of Object.entries(reviewsRef.current) as [
-      PlanField,
-      FieldReview,
-    ][]) {
-      if (review?.status === "needs-review") {
-        manuallyEditedRef.current.add(field);
-        trackedAutofillFieldsRef.current.delete(field);
-      }
+  function applySafeSuggestions() {
+    const fields = safeSuggestionFields(reviewsRef.current);
+    if (!fields.length) return;
+    const next = { ...reviewsRef.current };
+    const manuallyEdited = new Set(manuallyEditedRef.current);
+    for (const field of fields) {
+      const review = next[field];
+      if (!review) continue;
+      next[field] = { ...review, status: "accepted" };
+      manuallyEdited.add(field);
+      trackedAutofillFieldsRef.current.delete(field);
     }
-    const next = acceptNonConflicting(reviewsRef.current);
+    manuallyEditedRef.current = manuallyEdited;
     reviewsRef.current = next;
     setReviews(next);
   }
@@ -719,9 +724,17 @@ export function StartPlanning() {
   }
 
   const reviewEntries = Object.entries(reviews) as [PlanField, FieldReview][];
-  const pendingCount = reviewEntries.filter(
-    ([, item]) => item.status === "needs-review",
+  const filledCount = reviewEntries.filter(
+    ([field, item]) =>
+      item.status !== "rejected" && Boolean((draft[field] as string).trim()),
   ).length;
+  const needsReviewCount = reviewEntries.filter(([, item]) =>
+    ["needs-review", "conflict", "matched"].includes(item.status),
+  ).length;
+  const safeFields = safeSuggestionFields(reviews);
+  const conflictEntries = reviewEntries.filter(
+    ([, item]) => item.status === "conflict",
+  );
 
   return (
     <section className="planning-page planning-simple">
@@ -731,8 +744,50 @@ export function StartPlanning() {
             <h1>What are we planning?</h1>
             <p>Start with the basics. Leave the unknowns open.</p>
           </div>
-          <div className="simple-planning-mascot" aria-hidden="true">
-            <Mascot />
+          <div className={"planner-assistant" + (busy ? " is-busy" : "")}>
+            <motion.div
+              className="simple-planning-mascot"
+              aria-hidden="true"
+              animate={
+                busy && !reducedMotion
+                  ? { y: [0, -3, 0], rotate: [0, 1.5, 0], scale: [1, 1.035, 1] }
+                  : { y: 0, rotate: 0, scale: 1 }
+              }
+              transition={
+                busy && !reducedMotion
+                  ? { duration: 1.8, repeat: Infinity, ease: "easeInOut" }
+                  : { duration: reducedMotion ? 0 : 0.22, ease: "easeInOut" }
+              }
+            >
+              <Mascot />
+            </motion.div>
+            {(busy || statusMessage) && (
+              <div
+                className="planner-assistant-message"
+                data-error={autofillFailed || undefined}
+              >
+                <p role="status" aria-live="polite" aria-atomic="true">
+                  {busy
+                    ? sourceMode === "image"
+                      ? "Reading your selected image with Muse Spark…"
+                      : "Reading your description with Muse Spark…"
+                    : statusMessage}
+                </p>
+                {autofillFailed && (
+                  <button
+                    type="button"
+                    className="text-button"
+                    onClick={() =>
+                      availability === "available"
+                        ? requestAutofill()
+                        : setAvailabilityCheck((value) => value + 1)
+                    }
+                  >
+                    Retry autofill
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
         <form
@@ -740,8 +795,9 @@ export function StartPlanning() {
           onSubmit={handleSubmit}
           noValidate
           aria-busy={busy}
+          data-ai-busy={busy || undefined}
         >
-          <div className="planning-basics">
+          <div className="planning-basics" data-ai-busy={busy || undefined}>
             <div className="core-fields">
               <div className="plan-field">
                 <label htmlFor="core-title">Plan name</label>
@@ -843,9 +899,7 @@ export function StartPlanning() {
 
             <div className="plan-option-row">
               <details className="more-fields simple-more" ref={detailsRef}>
-                <summary>
-                  More details
-                </summary>
+                <summary>More details</summary>
                 <fieldset className="category-fieldset">
                   <legend>Category</legend>
                   <div className="category-grid">
@@ -874,13 +928,9 @@ export function StartPlanning() {
               </details>
 
               <details className="simple-utilities">
-                <summary>
-                  Draft settings
-                </summary>
+                <summary>Draft settings</summary>
                 <details className="simple-storage">
-                  <summary>
-                    Save on this device
-                  </summary>
+                  <summary>Save on this device</summary>
                   <label className="draft-toggle">
                     <input
                       type="checkbox"
@@ -1081,6 +1131,7 @@ export function StartPlanning() {
           <aside
             className="planning-autofill"
             aria-labelledby="autofill-heading"
+            data-ai-busy={busy || undefined}
           >
             <div className="autofill-heading">
               <Sparkles size={19} aria-hidden="true" />
@@ -1101,6 +1152,7 @@ export function StartPlanning() {
                 onClick={() => {
                   setSourceMode("text");
                   setStatusMessage("");
+                  setAutofillFailed(false);
                 }}
               >
                 Paste text
@@ -1112,6 +1164,7 @@ export function StartPlanning() {
                 onClick={() => {
                   setSourceMode("image");
                   setStatusMessage("");
+                  setAutofillFailed(false);
                 }}
               >
                 Upload an image
@@ -1126,7 +1179,11 @@ export function StartPlanning() {
                   maxLength={8000}
                   rows={4}
                   placeholder="Paste an invitation or what the group has discussed."
-                  onChange={(event) => setSourceText(event.currentTarget.value)}
+                  onChange={(event) => {
+                    setSourceText(event.currentTarget.value);
+                    setAutofillFailed(false);
+                    setStatusMessage("");
+                  }}
                 />
               </div>
             ) : (
@@ -1276,38 +1333,66 @@ export function StartPlanning() {
               </Link>
             </motion.div>
           )}
+        </form>
 
-          {reviewEntries.length > 0 && (
-            <motion.section
-              className="review-card"
-              aria-labelledby="review-heading"
-              initial={{ opacity: 0, y: reducedMotion ? 0 : 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: reducedMotion ? 0.12 : 0.22 }}
-            >
-              <div className="review-heading-row">
-                <div className="card-heading">
-                  <div>
-                    <h2 id="review-heading" tabIndex={-1}>
-                      Review suggestions
-                    </h2>
-                    <p>
-                      Check the filled fields, keep what fits, and resolve any
-                      conflicts.
-                    </p>
-                  </div>
+        <RoomLaunch draft={draft} />
+
+        {reviewEntries.length > 0 && (
+          <motion.section
+            className="review-card"
+            aria-labelledby="review-heading"
+            initial={{ opacity: 0, y: reducedMotion ? 0 : 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reducedMotion ? 0.12 : 0.22 }}
+          >
+            <div className="review-heading-row">
+              <div className="card-heading">
+                <div>
+                  <h2 id="review-heading">AI autofill review</h2>
+                  <p>
+                    <strong>{filledCount} fields filled</strong>
+                    <span aria-hidden="true"> · </span>
+                    {needsReviewCount} need review
+                  </p>
                 </div>
-                {pendingCount > 0 && (
-                  <button
-                    type="button"
-                    className="button button-secondary accept-all"
-                    onClick={acceptAll}
-                  >
-                    <Check size={16} aria-hidden="true" />
-                    Accept all non-conflicting ({pendingCount})
-                  </button>
-                )}
               </div>
+              {safeFields.length > 0 && (
+                <button
+                  type="button"
+                  className="button button-secondary accept-all"
+                  onClick={applySafeSuggestions}
+                >
+                  <Check size={16} aria-hidden="true" />
+                  Apply safe suggestions
+                </button>
+              )}
+            </div>
+            {conflictEntries.length > 0 && (
+              <div
+                className="review-conflicts"
+                aria-label="Unresolved field conflicts"
+              >
+                <strong>
+                  {conflictEntries.length} conflict
+                  {conflictEntries.length === 1 ? "" : "s"}
+                </strong>
+                {conflictEntries.map(([field, review]) => (
+                  <p key={field}>
+                    <b>{labelFor(field, draft.category)}</b>
+                    <span>
+                      Your entry: {displayValue(field, draft[field] as string)}
+                    </span>
+                    <span>
+                      Setvia suggests: {displayValue(field, review.value)}
+                    </span>
+                  </p>
+                ))}
+              </div>
+            )}
+            <details className="review-details">
+              <summary>
+                Review individual fields ({reviewEntries.length})
+              </summary>
               <div className="review-list">
                 {reviewEntries.map(([field, review]) => {
                   const current = draft[field] as string;
@@ -1456,20 +1541,22 @@ export function StartPlanning() {
                   );
                 })}
               </div>
-            </motion.section>
-          )}
+            </details>
+          </motion.section>
+        )}
 
-          {extractionMeta && (
-            <section
-              className="open-questions-card"
-              aria-labelledby="questions-heading"
-            >
-              <div className="card-heading">
-                <div>
-                  <h2 id="questions-heading">What still needs an answer?</h2>
-                  <p>Only details the source leaves open are listed here.</p>
-                </div>
-              </div>
+        {extractionMeta && (
+          <section
+            className="open-questions-card"
+            aria-labelledby="questions-heading"
+          >
+            <details className="questions-disclosure">
+              <summary id="questions-heading">
+                What still needs an answer?
+                <span>
+                  Only details the source leaves open are listed here.
+                </span>
+              </summary>
               {extractionMeta.uncertainties.length > 0 && (
                 <div className="question-group">
                   <h3>Needs confirmation</h3>
@@ -1508,18 +1595,9 @@ export function StartPlanning() {
                     returned.
                   </p>
                 )}
-            </section>
-          )}
-        </form>
-        <RoomLaunch draft={draft} />
-        <div
-          className="simple-live-status"
-          role="status"
-          aria-live="polite"
-          aria-atomic="true"
-        >
-          {statusMessage}
-        </div>
+            </details>
+          </section>
+        )}
       </div>
     </section>
   );

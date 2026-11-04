@@ -2,11 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { CircleAlert, LockKeyhole, Radio, ShieldCheck, Waves } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { PlanDraft } from "../plan-mapping";
+import { useSetviaSounds } from "../sound";
 import { createRoom, getRoomHealth, RoomApiError, type RoomHealth } from "./room-api";
 import { beachTripDemoRequest, BEACH_TRIP_DEMO_QUERY } from "./beach-trip-demo";
 
 export function RoomLaunch({ draft }: { draft: PlanDraft }) {
   const navigate = useNavigate();
+  const sounds = useSetviaSounds();
   const [health, setHealth] = useState<RoomHealth | null>(null);
   const [nickname, setNickname] = useState("");
   const [understandsMeta, setUnderstandsMeta] = useState(false);
@@ -47,6 +49,7 @@ export function RoomLaunch({ draft }: { draft: PlanDraft }) {
       setError("Confirm the Meta processing disclosure before starting a live room.");
       return;
     }
+    sounds.unlockFromGesture();
     const values: Record<string, string | number | boolean | null> = {};
     for (const [key, raw] of Object.entries(draft)) {
       if (typeof raw === "string" && raw.trim()) values[key] = raw.trim().slice(0, 500);
@@ -68,8 +71,10 @@ export function RoomLaunch({ draft }: { draft: PlanDraft }) {
         confirmedAttendeeCount: null,
       });
       setNotice("Your room is ready. Copy its invitation link from the room header.");
+      sounds.play("complete");
       navigate(`/rooms/${created.roomId}`);
     } catch (failure) {
+      sounds.play("error");
       setError(failure instanceof RoomApiError ? failure.message : "The room could not be created. Your draft is still here.");
     } finally {
       setBusy(false);
@@ -92,11 +97,14 @@ export function RoomLaunch({ draft }: { draft: PlanDraft }) {
       setError("Confirm the Meta processing disclosure before starting a live room.");
       return;
     }
+    sounds.unlockFromGesture();
     setBusy(true);
     try {
       const created = await createRoom(beachTripDemoRequest(nickname.trim()));
+      sounds.play("complete");
       navigate(`/rooms/${created.roomId}?demo=${BEACH_TRIP_DEMO_QUERY}`);
     } catch (failure) {
+      sounds.play("error");
       setError(failure instanceof RoomApiError ? failure.message : "The demo room could not be created. Try again.");
     } finally {
       setBusy(false);
@@ -132,7 +140,7 @@ export function RoomLaunch({ draft }: { draft: PlanDraft }) {
       <div className="room-launch-foot">
         <p><LockKeyhole size={14} aria-hidden="true" /> Room data stays in authorized server-side files. Meta credentials never enter the browser.</p>
         <span className="room-launch-mode">
-          {health?.mode === "offline-mock" ? "Offline mock test · no Meta requests" : health?.mode === "synthetic-live-demo" ? "Live Muse Spark · synthetic test" : "Live Muse Spark · secure server"}
+          {health?.mode === "offline-mock" ? "Offline mock test · no Meta requests" : health?.mode === "synthetic-live-demo" ? "Live Muse Spark · synthetic test" : health?.mode === "local-live" ? "Live Muse Spark · secure server" : health?.mode === "unavailable" ? "Room service unavailable" : "Checking room service…"}
         </span>
       </div>
       {health && !health.enabled ? (
@@ -141,7 +149,7 @@ export function RoomLaunch({ draft }: { draft: PlanDraft }) {
       {error ? <p className="room-launch-error" role="alert"><CircleAlert size={15} aria-hidden="true" />{error}</p> : null}
       {notice ? <p className="room-launch-notice" role="status"><ShieldCheck size={15} aria-hidden="true" />{notice}</p> : null}
       <button type="button" className="button button-primary room-launch-button" disabled={busy || !health?.enabled} onClick={() => void startRoom()}>
-        {busy ? "Opening room…" : "Create a live room"}
+        {busy ? "Opening room…" : "Create Live Room"}
       </button>
       <div className="room-launch-demo">
         <div><strong>Want to see it in action?</strong><span>A ready-made Beach Trip room starts with four fictional planners. Your chat and Setvia's analysis are live.</span></div>

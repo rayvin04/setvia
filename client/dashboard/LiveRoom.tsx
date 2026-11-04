@@ -3,6 +3,7 @@ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, CircleAlert, Copy, LogOut, Volume2, VolumeX, X } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Wordmark } from "../components";
+import { useSetviaSounds } from "../sound";
 import { Avatar } from "../Mascot";
 import { MessageComposer, type MessageComposerHandle } from "./MessageComposer";
 import { PlanningDashboard, type SectionId } from "./Dashboard";
@@ -39,58 +40,7 @@ import "./dashboard.css";
 import "./dashboard-refinement.css";
 import "./live-room.css";
 
-const SOUND_KEY = "setvia.sound.enabled.v1";
 type Notice = { id: string; text: string; section: SectionId; tone: "neutral" | "warning" | "success" };
-
-function useRoomSounds() {
-  const [enabled, setEnabled] = useState(() => {
-    try { return window.localStorage.getItem(SOUND_KEY) === "true"; }
-    catch { return false; }
-  });
-  const context = useRef<AudioContext | null>(null);
-  const lastPlayed = useRef(0);
-  const activate = useCallback(() => {
-    if (!enabled || !window.AudioContext) return;
-    try {
-      context.current ??= new AudioContext();
-      if (context.current.state === "suspended") void context.current.resume();
-    } catch { /* Visual notifications remain the accessible fallback. */ }
-  }, [enabled]);
-  const toggle = useCallback(() => {
-    const next = !enabled;
-    setEnabled(next);
-    try { window.localStorage.setItem(SOUND_KEY, String(next)); } catch { /* Preference is optional. */ }
-    if (next) {
-      try {
-        context.current ??= new AudioContext();
-        void context.current.resume();
-      } catch { /* Unsupported audio does not affect room controls. */ }
-    }
-  }, [enabled]);
-  const play = useCallback((kind: Notice["tone"]) => {
-    if (!enabled || !context.current) return;
-    const nowMs = performance.now();
-    if (nowMs - lastPlayed.current < 1_200) return;
-    lastPlayed.current = nowMs;
-    const audio = context.current;
-    const now = audio.currentTime;
-    try {
-      const oscillator = audio.createOscillator();
-      const gain = audio.createGain();
-      oscillator.type = "sine";
-      oscillator.frequency.setValueAtTime(kind === "warning" ? 392 : kind === "success" ? 660 : 523, now);
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.09, now + 0.018);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-      oscillator.connect(gain);
-      gain.connect(audio.destination);
-      oscillator.start(now);
-      oscillator.stop(now + 0.15);
-    } catch { /* Audio is always secondary to the visual update. */ }
-  }, [enabled]);
-  useEffect(() => () => { void context.current?.close(); }, []);
-  return { enabled, toggle, activate, play };
-}
 
 function liveStatusLabel(stream: StreamStatus | "loading" | "offline") {
   if (stream === "connected") return "Live updates connected";
@@ -120,7 +70,8 @@ export default function LiveRoom() {
   const lastActivityIds = useRef<Set<string> | null>(null);
   const noticeTimer = useRef<number | null>(null);
   const reduced = useReducedMotion();
-  const sounds = useRoomSounds();
+  const { enabled: soundsEnabled, toggle: toggleSounds, unlockFromGesture, play } = useSetviaSounds();
+  const previousStreamStatus = useRef<StreamStatus | "loading" | "offline">("loading");
 
   const acceptSnapshot = useCallback((input: DashboardSnapshot) => {
     setSnapshot((current) => current ? acceptDashboardUpdate(current, input) : input);
@@ -183,20 +134,38 @@ export default function LiveRoom() {
       : first.summary;
     const nextNotice = { id: first.id, text, section: sectionFor, tone };
     setNotice(nextNotice);
-    sounds.play(tone);
+    if (tone === "warning") play("warning");
+    else if (first.kind === "issue_resolved" || first.kind === "participant_approved") play("check");
+    else if (first.kind === "analysis_completed") play("complete");
+    else if (first.kind === "participant_responded" || first.kind === "question_asked") play("receive");
     if (noticeTimer.current !== null) window.clearTimeout(noticeTimer.current);
     noticeTimer.current = window.setTimeout(() => setNotice((current) => current?.id === nextNotice.id ? null : current), 6_000);
-  }, [snapshot, sounds]);
+  }, [snapshot, play]);
+
+  useEffect(() => {
+    const previous = previousStreamStatus.current;
+    if (streamStatus !== previous) {
+      if (streamStatus === "connected") play("connect");
+      else if (previous === "connected") play("disconnect");
+      previousStreamStatus.current = streamStatus;
+    }
+  }, [streamStatus, play]);
 
   const onSubmit = useCallback<SubmitPlanningMessage>(async (input, signal) => {
     if (!session) throw new RoomApiError("This tab has no active room session.", 401);
-    sounds.activate();
-    const result = await submitRoomMessage(session, input, signal);
-    acceptSnapshot(result.snapshot);
-    void getRoomHealth(signal).then(setHealth).catch(() => {});
-    setError("");
-    return result.receipt;
-  }, [session, sounds, acceptSnapshot]);
+    unlockFromGesture();
+    try {
+      const result = await submitRoomMessage(session, input, signal);
+      acceptSnapshot(result.snapshot);
+      void getRoomHealth(signal).then(setHealth).catch(() => {});
+      setError("");
+      play("send");
+      return result.receipt;
+    } catch (failure) {
+      play("error");
+      throw failure;
+    }
+  }, [session, unlockFromGesture, play, acceptSnapshot]);
 
   async function action(input: DashboardAction) {
     if (!snapshot || !session || busy) return;
@@ -210,7 +179,9 @@ export default function LiveRoom() {
       const next = await reviseRoomProposal(session, checked.expectedRevision, option);
       acceptSnapshot(next);
       setNotice({ id: `revision-${next.sequence}`, text: "The room proposed a new version. Previous approvals are cleared while Setvia checks it.", section: "plan", tone: "neutral" });
+      play("receive");
     } catch (failure) {
+      play("error");
       setError(failure instanceof RoomApiError ? failure.message : "The proposal changed. Review the latest version and try again.");
     } finally { setBusy(false); }
   }
@@ -223,7 +194,9 @@ export default function LiveRoom() {
       const next = await sharePrivateCandidate(session, candidateId, snapshot.room.revision);
       acceptSnapshot(next);
       setNotice({ id: `share-${next.sequence}`, text: "You shared this confirmed detail with the planning room.", section: "people", tone: "success" });
+      play("check");
     } catch (failure) {
+      play("error");
       setError(failure instanceof RoomApiError ? failure.message : "This detail could not be shared. Review the latest room state.");
     } finally { setBusy(false); }
   }
@@ -235,7 +208,9 @@ export default function LiveRoom() {
     try {
       const next = await approveRoomProposal(session, snapshot.room.proposalVersion);
       acceptSnapshot(next);
+      play("check");
     } catch (failure) {
+      play("error");
       setError(failure instanceof RoomApiError ? failure.message : "Approval could not be recorded. Review the current plan.");
     } finally { setBusy(false); }
   }
@@ -326,9 +301,9 @@ export default function LiveRoom() {
         </div>
         <div className="live-room-header-actions">
           <span className="live-connection" data-status={streamStatus} role="status">{liveStatusLabel(streamStatus)}</span>
-          <button type="button" className="dashboard-button subtle live-sound-toggle" aria-pressed={sounds.enabled} onClick={sounds.toggle}>
-            {sounds.enabled ? <Volume2 size={15} aria-hidden="true" /> : <VolumeX size={15} aria-hidden="true" />}
-            <span>{sounds.enabled ? "Sound on" : "Sound off"}</span>
+          <button type="button" className="dashboard-button subtle live-sound-toggle" aria-pressed={soundsEnabled} onClick={toggleSounds}>
+            {soundsEnabled ? <Volume2 size={15} aria-hidden="true" /> : <VolumeX size={15} aria-hidden="true" />}
+            <span>{soundsEnabled ? "Sound on" : "Sound off"}</span>
           </button>
           {inviteLink ? <button type="button" className="dashboard-button primary live-copy-invite" onClick={() => void copyInvitation()}>
             {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}

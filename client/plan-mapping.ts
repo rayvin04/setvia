@@ -382,6 +382,14 @@ export function acceptNonConflicting(
   ) as ReviewMap;
 }
 
+export function safeSuggestionFields(reviews: ReviewMap): PlanField[] {
+  return (Object.entries(reviews) as [PlanField, FieldReview][])
+    .filter(([, review]) =>
+      review.status === "needs-review" && !review.uncertainty && !review.isApproximate,
+    )
+    .map(([field]) => field);
+}
+
 export function resolveSuggestion(
   draft: PlanDraft,
   reviews: ReviewMap,

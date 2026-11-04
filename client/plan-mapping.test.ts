@@ -8,6 +8,7 @@ import {
   mapExtractionToSuggestions,
   mergeSuggestions,
   resolveSuggestion,
+  safeSuggestionFields,
   editDraftField,
 } from "./plan-mapping.js";
 
@@ -138,6 +139,35 @@ test("approximate per-person budgets and headcounts remain labeled", () => {
   assert.equal(budget?.value, "500");
   assert.equal(budget?.isApproximate, true);
   assert.equal(scope?.value, "per-person");
+});
+
+test("safe suggestion apply excludes uncertainty, approximation, and conflicts", () => {
+  const candidates = mapExtractionToSuggestions(extraction({
+    title: "Sunday Picnic",
+    titleEvidence: "Sunday picnic at the park",
+    eventType: "other",
+    eventTypeEvidence: "planning event",
+    dateOrDateRange: {
+      value: "sometime next week",
+      isRelative: true,
+      isAmbiguous: true,
+      evidence: "Maybe next week",
+    },
+    estimatedParticipants: {
+      value: 8,
+      isApproximate: true,
+      attendanceStatus: "estimated",
+      evidence: "Around eight people",
+    },
+  }));
+  const current = { ...EMPTY_PLAN_DRAFT, title: "My Sunday Plan" };
+  const merged = mergeSuggestions(current, candidates, new Set(["title"]));
+  const safe = safeSuggestionFields(merged.reviews);
+
+  assert.ok(safe.includes("category"));
+  assert.ok(!safe.includes("title"));
+  assert.ok(!safe.includes("date"));
+  assert.ok(!safe.includes("participantRange"));
 });
 
 test("autofill fills blank fields and preserves manual values as conflicts", () => {
