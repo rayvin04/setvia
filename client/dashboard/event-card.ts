@@ -1,5 +1,6 @@
 export interface EventCardDetails {
   title: string;
+  status: "Draft" | "Blocked" | "Final";
   date?: string;
   time?: string;
   location?: string;
@@ -59,6 +60,12 @@ export async function createEventCard(
   }
 
   add("Setvia", "650 34px Lexend, sans-serif", "#fff3df", 48);
+  add(
+    details.status,
+    "550 25px Lexend, sans-serif",
+    details.status === "Final" ? "#78d9ad" : "#ffc080",
+    34,
+  );
   add(details.title, "650 76px Lexend, sans-serif", "#fff3df", 92);
   add(
     [details.date, details.time].filter(Boolean).join(" · "),

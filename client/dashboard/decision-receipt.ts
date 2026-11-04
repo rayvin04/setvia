@@ -97,6 +97,7 @@ export function projectDecisionReceipt(snapshot: ReceiptSnapshot) {
     values.attendeeCount;
   const eventCard: EventCardDetails = {
     title: room.proposal.label,
+    status: blocked ? "Blocked" : finalized ? "Final" : "Draft",
     date: text("date"),
     time: text("time"),
     location: text("location"),
