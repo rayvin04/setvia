@@ -46,19 +46,11 @@ export function createPlaygroundRouter(
             error:
               "Keep your thought about a plan: a budget, a time, a ride, or something to bring.",
           });
-      if (
-        error instanceof StateError &&
-        /BUDGET|LIMIT|UNAVAILABLE/.test(error.code)
-      )
-        return response
-          .status(429)
-          .json({
-            error:
-              "The playground’s live allowance is used for now. Try a previously run example, or come back later.",
-          });
+      if (error instanceof StateError && error.code === "CALL_ALLOWANCE_REQUIRED")
+        return response.status(503).json({ error: "The AI playground is not ready to start a request." });
       if (
         error instanceof MetaApiError &&
-        ["forbidden", "authentication", "request_budget_exhausted"].includes(
+        ["forbidden", "authentication", "request_limit", "accounting"].includes(
           error.code,
         )
       )

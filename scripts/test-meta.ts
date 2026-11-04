@@ -63,20 +63,6 @@ function formatUsage(metadata: SafeUsageMetadata): string {
   return parts.join(", ");
 }
 
-function boundedTestSetting(
-  name: string,
-  fallback: number,
-  maximum: number,
-  minimum = 0,
-): number {
-  const configured = process.env[name];
-  const value = configured === undefined ? fallback : Number(configured);
-  if (!Number.isInteger(value) || value < minimum || value > maximum) {
-    throw new Error(name + " must be an integer from " + minimum + " to " + maximum + ".");
-  }
-  return value;
-}
-
 async function main(): Promise<void> {
   const config = readMetaConfig();
   if (process.env.META_TESTS_BILLING_CHECKED !== "1") {
@@ -86,12 +72,9 @@ async function main(): Promise<void> {
   }
 
   const usage: SafeUsageMetadata[] = [];
-  const maxRetries = boundedTestSetting("META_TESTS_MAX_RETRIES", 1, 1);
-  const maxTotalRequests = boundedTestSetting("META_TESTS_MAX_REQUESTS", 4, 4, 1);
   const client = createMetaClient({
     config,
-    maxRetries,
-    maxTotalRequests,
+    maxRetries: 1,
     onUsage: (metadata) => {
       usage.push(metadata);
       console.log(formatUsage(metadata));
@@ -121,11 +104,6 @@ async function main(): Promise<void> {
     console.log("Endpoint: " + config.baseUrl + "/responses");
     console.log("Model: " + smoke.model + " (Standard)");
     console.log(smoke.outputText);
-    if (client.getRequestCount() >= maxTotalRequests) {
-      console.log("Structured extraction skipped: no HTTP request budget remains.");
-      return;
-    }
-
     const plan = await extractPlanFromText(
       "Our friends want to go to the beach next weekend. Maybe 8 people are coming. Some have school on Saturday, and the budget is around 500 pesos each. We haven't decided on a location.",
       client,
@@ -171,10 +149,6 @@ async function main(): Promise<void> {
       },
     ]);
 
-    if (client.getRequestCount() >= maxTotalRequests) {
-      console.log("Screenshot extraction skipped: no HTTP request budget remains.");
-      return;
-    }
     const imageUrl = new URL(
       "../server/src/ai/fixtures/planning-screenshot.png",
       import.meta.url,
@@ -225,7 +199,7 @@ async function main(): Promise<void> {
     console.log(
       "Real Meta API HTTP request attempts: " +
         client.getRequestCount() +
-        " (maximum " + maxTotalRequests + " this run, including retries).",
+        " (including provider retries).",
     );
   }
 }

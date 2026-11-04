@@ -4,12 +4,11 @@ import { stdin, stdout } from "node:process";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { readMetaConfig } from "../server/src/ai/meta-client.js";
-import { Roles, type AgentGateway, type CallContext, type Role } from "../server/src/agents/contracts.js";
+import { Roles, type Role } from "../server/src/agents/contracts.js";
 import { createMetaGateway } from "../server/src/agents/meta-gateway.js";
 import { runScenarioWithGateway } from "../server/src/agents/scenario-runner.js";
 import { getScenario, SCENARIO_IDS, type ScenarioId } from "../server/src/agents/scenarios.js";
 import { saveLab, type LabRecord } from "../server/src/agents/lab.js";
-import { StateError } from "../server/src/agents/store.js";
 import type { Limits } from "../server/src/agents/engine.js";
 import { LIVE_ATTEMPT_RESERVATION_MICROS, LiveBudgetJournal } from "./live-budget-journal.js";
 
@@ -26,7 +25,6 @@ const INPUT_TOKEN_ALLOWANCE = 55_000;
 const CALL_TOKEN_ALLOWANCE = 64_000;
 const CALL_COST_MICROS = LIVE_ATTEMPT_RESERVATION_MICROS;
 const MAX_REQUEST_BYTES = 50_000;
-const MAX_SCENARIO_ATTEMPTS = 10;
 const PRICE_SNAPSHOT_DATE = "2026-11-03";
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const privateRoot = resolve(process.env.SETVIA_PRIVATE_ROOT ?? resolve(appRoot, "..", "setvia-local"));
@@ -62,52 +60,11 @@ function parseArgs(args: string[]) {
 
 function scenarioLimits(): Limits {
   return {
-    maxInvocations: MAX_SCENARIO_ATTEMPTS,
-    maxRequests: MAX_SCENARIO_ATTEMPTS,
     maxRevisions: 2,
-    // Allow several sequential agents to finish while each HTTP call remains capped at 30 seconds.
     timeoutMs: 120_000,
-    maxTokens: MAX_SCENARIO_ATTEMPTS * CALL_TOKEN_ALLOWANCE,
-    maxCostMicros: MAX_SCENARIO_ATTEMPTS * CALL_COST_MICROS,
     callTokens: CALL_TOKEN_ALLOWANCE,
     callCostMicros: CALL_COST_MICROS,
-    roomMaxRequests: MAX_SCENARIO_ATTEMPTS,
-    roomMaxTokens: MAX_SCENARIO_ATTEMPTS * CALL_TOKEN_ALLOWANCE,
-    roomMaxCostMicros: MAX_SCENARIO_ATTEMPTS * CALL_COST_MICROS,
   };
-}
-
-function suiteBoundedGateway(
-  base: AgentGateway,
-  scenarioCount: number,
-): { gateway: AgentGateway; usage: { attempts: number; tokens: number; costMicros: number } } {
-  const maxAttempts = MAX_SCENARIO_ATTEMPTS * scenarioCount;
-  const maxTokens = MAX_SCENARIO_ATTEMPTS * CALL_TOKEN_ALLOWANCE * scenarioCount;
-  const maxCostMicros = MAX_SCENARIO_ATTEMPTS * CALL_COST_MICROS * scenarioCount;
-  const usage = { attempts: 0, tokens: 0, costMicros: 0 };
-  const gateway: AgentGateway = {
-    mode: base.mode,
-    promptVersion: base.promptVersion,
-    promptHashes: base.promptHashes,
-    async call(role: Role, input: unknown, context: CallContext) {
-      return base.call(role, input, {
-        signal: context.signal,
-        reserveAttempt: async (allowance) => {
-          if (!allowance) throw new StateError("SUITE_ALLOWANCE_REQUIRED");
-          if (
-            usage.attempts + 1 > maxAttempts ||
-            usage.tokens + allowance.tokens > maxTokens ||
-            usage.costMicros + allowance.costMicros > maxCostMicros
-          ) throw new StateError("SUITE_BUDGET_LIMIT");
-          await context.reserveAttempt(allowance);
-          usage.attempts++;
-          usage.tokens += allowance.tokens;
-          usage.costMicros += allowance.costMicros;
-        },
-      });
-    },
-  };
-  return { gateway, usage };
 }
 
 async function loadPrompts(promptVersion: string): Promise<Record<Role, string>> {
@@ -128,10 +85,7 @@ async function main() {
   const fixtures = selected.map((id) => getScenario(id));
   if (fixtures.some((scenario) => !scenario.synthetic))
     throw new Error("Only fixed synthetic Setvia Lab fixtures may use this command.");
-  const maxAttempts = selected.length * MAX_SCENARIO_ATTEMPTS;
-  const maxTokens = selected.length * MAX_SCENARIO_ATTEMPTS * CALL_TOKEN_ALLOWANCE;
-  const maxCostMicros = selected.length * MAX_SCENARIO_ATTEMPTS * CALL_COST_MICROS;
-  const approvalPhrase = `RUN ${selected.length} LIVE SCENARIO${selected.length === 1 ? "" : "S"} WITH UP TO ${maxAttempts} HTTP ATTEMPTS`;
+  const approvalPhrase = `RUN ${selected.length} LIVE SCENARIO${selected.length === 1 ? "" : "S"} WITH LIVE META BILLING`;
 
   console.log("SETVIA LAB LIVE PREFLIGHT — NO REQUEST HAS BEEN SENT");
   console.log("Model: Muse Spark Standard; published pricing snapshot: " + PRICE_SNAPSHOT_DATE);
@@ -139,9 +93,9 @@ async function main() {
   console.log("Selected synthetic scenarios:");
   for (const scenario of fixtures)
     console.log(`  ${scenario.id}: ${scenario.title} (${scenario.participants.length} participants)`);
-  console.log(`Maximum HTTP attempts: ${maxAttempts} (${MAX_SCENARIO_ATTEMPTS} per scenario; retries disabled)`);
-  console.log(`Maximum reserved tokens: ${maxTokens.toLocaleString()}`);
-  console.log(`Maximum reserved cost: ${money(maxCostMicros)} (${CALL_TOKEN_ALLOWANCE.toLocaleString()} token and ${money(CALL_COST_MICROS)} reservation per attempt)`);
+  console.log("Application-level lifetime attempt, token, and spend ceilings: none.");
+  console.log("Retries are disabled; each HTTP attempt has a 30-second timeout, and analysis stops on invalid handoffs, cancellation, or no progress.");
+  console.log(`Accounting estimate per attempt: ${CALL_TOKEN_ALLOWANCE.toLocaleString()} tokens and ${money(CALL_COST_MICROS)}; actual usage is journaled.`);
   console.log(`Maximum serialized request size: ${MAX_REQUEST_BYTES.toLocaleString()} bytes per attempt.`);
   console.log("Per-role output caps: " + Object.entries(MAX_OUTPUT_TOKENS).map(([role, tokens]) => `${role} ${tokens.toLocaleString()}`).join(" · "));
   console.log("Cost assumptions: up to " + INPUT_TOKEN_ALLOWANCE.toLocaleString() + " input tokens and 8,192 output tokens per request; standard input/output rates; no cached-input discount.");
@@ -179,12 +133,11 @@ async function main() {
       outputPriceMicrosPerMillion: OUTPUT_PRICE_MICROS_PER_MILLION,
       onHttpEvent: (event) => journal.handle(event, activeScenario),
     });
-    const suite = suiteBoundedGateway(base, selected.length);
     const records: LabRecord[] = [];
     const limits = scenarioLimits();
     for (const id of selected) {
       activeScenario = id;
-      const { record } = await runScenarioWithGateway(id, suite.gateway, limits);
+      const { record } = await runScenarioWithGateway(id, base, limits);
       record.liveRunId = journal.runId;
       record.liveHttpAttempts = await journal.attemptsFor(id);
       record.liveBudgetSnapshot = await journal.snapshot();
@@ -205,7 +158,6 @@ async function main() {
         standardPriceEstimateMicros: record.cycle.traces.every((trace) => trace.estimatedCostMicros !== null)
           ? record.cycle.traces.reduce((sum, trace) => sum + trace.estimatedCostMicros!, 0)
           : null,
-        suiteReserved: { ...suite.usage },
         cumulativeLedger: await journal.snapshot(),
       }, null, 2));
       if (record.cycle.outcome === "BLOCKED")

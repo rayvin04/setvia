@@ -434,7 +434,7 @@ export default function LiveRoom() {
         leaving,
       }} />
       {snapshot && streamStatus !== "connected" ? <p className="live-connection-note" role="status"><CircleAlert size={15} aria-hidden="true" />{liveStatusLabel(streamStatus)}. Showing the last received room state.</p> : null}
-      {budget ? <p className="live-budget-note">Live test budget · {budget.attempts}/{budget.attempts + budget.remainingAttempts} HTTP attempts used · ${(budget.reservedCostMicros / 1_000_000).toFixed(2)} reserved</p> : null}
+      {budget ? <p className="live-budget-note">Meta request usage recorded · {budget.attempts} HTTP attempts · ${(budget.reservedCostMicros / 1_000_000).toFixed(2)} estimated or reserved</p> : null}
       {error ? <div className="live-error" role="alert"><CircleAlert size={16} aria-hidden="true" /><span>{error}</span></div> : null}
       {snapshot && participant && isBeachTripDemo ? <FictionalParticipantsDemo
         roomId={roomId}

@@ -271,12 +271,25 @@ test("Speaker runs Question Strategist then Speaker with validated handoff", asy
   );
 });
 
-test("rate limits repeated cached requests and personal calls independently", async () => {
+test("per-minute rate limits repeated cached requests while cache avoids duplicate model calls", async () => {
   const { service, calls } = fixture();
   const input = request();
   for (let index = 0; index < 16; index++) await service.run(input, "ip");
   await assert.rejects(service.run(input, "ip"), { status: 429 });
   assert.equal(calls.length, 1);
+});
+
+test("removed hourly call quotas do not block continued personalized inference", async () => {
+  let timestamp = 0;
+  const { service, calls } = fixture(
+    Array.from({ length: 25 }, () => ({ candidates: [] })),
+    { now: () => timestamp },
+  );
+  for (let index = 0; index < 25; index++) {
+    await service.run(request({ text: "I can meet Sunday at 10." }), "same-ip");
+    timestamp += 60_001;
+  }
+  assert.equal(calls.length, 25);
 });
 
 test("HTTP validation rejects arbitrary endpoints without invoking the gateway", async () => {

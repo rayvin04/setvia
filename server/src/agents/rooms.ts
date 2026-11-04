@@ -616,6 +616,11 @@ export class RoomService {
       authorize(room, auth);
     }
     const latest = room.lastCycle?.baseRevision === room.revision && room.activeCycleId === null;
+    const failedTrace = latest && room.lastCycle?.outcome === "BLOCKED"
+      ? [...(room.lastCycle.traces ?? [])]
+          .reverse()
+          .find((trace) => trace.failureCode || trace.status === "failed")
+      : undefined;
     const viewerRevision = room.revision + (room.privateRevisions[auth.participantId] ?? 0);
     return {
       ...sharedContext(room),
@@ -668,6 +673,13 @@ export class RoomService {
       mascot: latest ? (room.lastCycle?.mascot ?? null) : null,
       loopState: latest ? (room.lastCycle?.outcome ?? null) : null,
       analysisIncomplete: !latest || room.lastCycle?.outcome === "BLOCKED",
+      analysisError:
+        latest && room.lastCycle?.outcome === "BLOCKED"
+          ? {
+              code: failedTrace?.failureCode ?? room.lastCycle.reason,
+              role: failedTrace?.role ?? null,
+            }
+          : null,
       finalEvaluationAvailable:
         latest && room.lastCycle?.finalEvaluation !== null,
       approved:

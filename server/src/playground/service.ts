@@ -332,13 +332,6 @@ export function createPlaygroundService(options: PlaygroundOptions) {
           "Two minds are working right now. Try again in a few seconds.",
           10,
         );
-      limit("paid-ip:" + ipHash, 12, 3_600_000);
-      limit("paid-session:" + request.sessionId, 8, 3_600_000);
-      limit("paid-global", 24, 3_600_000);
-      if (request.text) {
-        limit("personal-ip:" + ipHash, 3, 3_600_000);
-        limit("personal-session:" + request.sessionId, 3, 3_600_000);
-      }
       active++;
       const promise = execute(request);
       if (!request.text) inflight.set(key, promise);

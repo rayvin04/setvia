@@ -1,15 +1,14 @@
 import { createHash, randomUUID } from "node:crypto";
 import type { Response } from "express";
-import { dirname, resolve } from "node:path";
-import { lstat, mkdir, open, readFile } from "node:fs/promises";
-import type { FileHandle } from "node:fs/promises";
-import { LiveBudgetJournal, LIVE_MAX_HTTP_ATTEMPTS, LIVE_ATTEMPT_RESERVATION_MICROS, LIVE_ATTEMPT_RESERVATION_TOKENS } from "../../../scripts/live-budget-journal.js";
+import { resolve } from "node:path";
+import { readFile } from "node:fs/promises";
+import { LiveBudgetJournal, LIVE_ATTEMPT_RESERVATION_MICROS, LIVE_ATTEMPT_RESERVATION_TOKENS } from "../../../scripts/live-budget-journal.js";
 import { readMetaConfig } from "../ai/meta-client.js";
 import { assertPlanningScope } from "../ai/planning-scope.js";
 import { createMetaGateway } from "../agents/meta-gateway.js";
 import type { MetaHttpEvent } from "../agents/meta-gateway.js";
 import { AgentEngine, type Limits } from "../agents/engine.js";
-import { Roles, type AgentGateway, type Auth, type CallContext, type Cycle, type Role } from "../agents/contracts.js";
+import { Roles, type AgentGateway, type Auth, type Cycle, type Role } from "../agents/contracts.js";
 import { policyForEvent } from "../agents/default-policy.js";
 import { JsonPersistence, RoomStore, StateError } from "../agents/store.js";
 import { digest } from "../agents/rooms.js";
@@ -21,22 +20,6 @@ import type { CreateRoomRequest } from "../../../shared/room-api.js";
 
 export const DEFAULT_ROOM_PROMPT_VERSION = "agents-v8";
 
-// Keep the committed Stage B integration ceiling; Studio and extraction share this ledger.
-export const LIVE_CAP = {
-  attempts: 31,
-  costMicros: 3_224_000,
-  tokens: 1_984_000,
-};
-export const LIVE_CYCLE_CAP = {
-  attempts: 10,
-  tokens: 640_000,
-  costMicros: 1_040_000,
-};
-const LIVE_ROOM_CAP = {
-  attempts: 21,
-  tokens: 1_344_000,
-  costMicros: 2_184_000,
-};
 const INPUT_PRICE_MICROS_PER_MILLION = 1_250_000;
 const OUTPUT_PRICE_MICROS_PER_MILLION = 4_250_000;
 const MAX_OUTPUT_TOKENS: Record<Role, number> = {
@@ -50,9 +33,6 @@ const INPUT_TOKEN_ALLOWANCE = 55_000;
 const CALL_TOKEN_ALLOWANCE = LIVE_ATTEMPT_RESERVATION_TOKENS;
 const CALL_COST_MICROS = LIVE_ATTEMPT_RESERVATION_MICROS;
 const MAX_REQUEST_BYTES = 50_000;
-type Allowance = { tokens: number; costMicros: number };
-type BudgetHold = Allowance & { attempts: number; released: boolean };
-
 function redactListenerTraces(cycle: Cycle, context: "group-response" | "owner-private") {
   for (const trace of cycle.traces) {
     if (trace.role === "Listener") {
@@ -61,154 +41,6 @@ function redactListenerTraces(cycle: Cycle, context: "group-response" | "owner-p
     }
   }
   return cycle;
-}
-
-export class IntegrationRunBudget {
-  attempts = 0;
-  tokens = 0;
-  costMicros = 0;
-  private tail: Promise<void> = Promise.resolve();
-  private persistenceFailed = false;
-  private closed = false;
-  private readonly holds = new Set<BudgetHold>();
-
-  private constructor(
-    private readonly ledger: FileHandle,
-    readonly cap = LIVE_CAP,
-  ) {}
-
-  static async open(path: string, cap = LIVE_CAP) {
-    await mkdir(dirname(path), { recursive: true, mode: 0o700 });
-    let content = "";
-    try {
-      const info = await lstat(path);
-      if (!info.isFile() || info.isSymbolicLink() || info.size > 1_048_576)
-        throw new StateError("INTEGRATION_BUDGET_CORRUPT");
-      content = await readFile(path, "utf8");
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
-    }
-    const ledger = await open(path, "a", 0o600);
-    try {
-      const openedInfo = await ledger.stat();
-      const pathInfo = await lstat(path);
-      if (!pathInfo.isFile() || pathInfo.isSymbolicLink() || openedInfo.dev !== pathInfo.dev || openedInfo.ino !== pathInfo.ino) {
-        throw new StateError("INTEGRATION_BUDGET_CORRUPT");
-      }
-    } catch (error) {
-      await ledger.close();
-      throw error;
-    }
-    const budget = new IntegrationRunBudget(ledger, cap);
-    if (content && !content.endsWith("\n")) {
-      await budget.ledger.close();
-      throw new StateError("INTEGRATION_BUDGET_CORRUPT");
-    }
-    try {
-      for (const line of content.split("\n").filter(Boolean)) {
-        const record = JSON.parse(line) as { tokens: number; costMicros: number };
-        if (!Number.isSafeInteger(record.tokens) || record.tokens < 0 || !Number.isSafeInteger(record.costMicros) || record.costMicros < 0)
-          throw new Error("invalid reservation");
-        budget.attempts++;
-        budget.tokens += record.tokens;
-        budget.costMicros += record.costMicros;
-      }
-    } catch {
-      await budget.ledger.close();
-      throw new StateError("INTEGRATION_BUDGET_CORRUPT");
-    }
-    if (budget.attempts > cap.attempts || budget.tokens > cap.tokens || budget.costMicros > cap.costMicros) {
-      await budget.ledger.close();
-      throw new StateError("INTEGRATION_BUDGET_CORRUPT");
-    }
-    return budget;
-  }
-
-  assertCapacity(attempts: number, allowance: Allowance) {
-    const held = [...this.holds].reduce((sum, hold) => ({
-      attempts: sum.attempts + hold.attempts,
-      tokens: sum.tokens + hold.tokens,
-      costMicros: sum.costMicros + hold.costMicros,
-    }), { attempts: 0, tokens: 0, costMicros: 0 });
-    if (this.closed || this.persistenceFailed) throw new StateError("INTEGRATION_BUDGET_UNAVAILABLE");
-    if (!Number.isSafeInteger(attempts) || attempts < 1 ||
-      !Number.isSafeInteger(allowance.tokens) || allowance.tokens < 0 ||
-      !Number.isSafeInteger(allowance.costMicros) || allowance.costMicros < 0 ||
-      this.attempts + held.attempts + attempts > this.cap.attempts ||
-      this.tokens + held.tokens + allowance.tokens * attempts > this.cap.tokens ||
-      this.costMicros + held.costMicros + allowance.costMicros * attempts > this.cap.costMicros)
-      throw new StateError("INTEGRATION_RUN_BUDGET_LIMIT");
-  }
-
-  async holdCycle(attempts: number, allowance: Allowance) {
-    const hold: BudgetHold = { attempts, tokens: allowance.tokens * attempts,
-      costMicros: allowance.costMicros * attempts, released: false };
-    const operation = this.tail.then(() => {
-      this.assertCapacity(attempts, allowance);
-      this.holds.add(hold);
-    });
-    this.tail = operation.catch(() => {});
-    await operation;
-    return {
-      reserve: (callAllowance: Allowance) => this.reserve(callAllowance, hold),
-      release: () => {
-        const release = this.tail.then(() => {
-          hold.released = true;
-          this.holds.delete(hold);
-        });
-        this.tail = release.catch(() => {});
-        return release;
-      },
-    };
-  }
-
-  reserve(allowance: Allowance, hold?: BudgetHold) {
-    const operation = this.tail.then(async () => {
-      if (hold) {
-        if (this.closed || this.persistenceFailed || hold.released || !this.holds.has(hold))
-          throw new StateError("INTEGRATION_BUDGET_UNAVAILABLE");
-        if (!Number.isSafeInteger(allowance.tokens) || allowance.tokens < 0 ||
-          !Number.isSafeInteger(allowance.costMicros) || allowance.costMicros < 0 ||
-          hold.attempts < 1 || hold.tokens < allowance.tokens || hold.costMicros < allowance.costMicros)
-          throw new StateError("INTEGRATION_RUN_BUDGET_LIMIT");
-      } else this.assertCapacity(1, allowance);
-      const record = JSON.stringify({ tokens: allowance.tokens, costMicros: allowance.costMicros }) + "\n";
-      try {
-        await this.ledger.writeFile(record, { encoding: "utf8" });
-        await this.ledger.sync();
-      } catch (error) {
-        this.persistenceFailed = true;
-        throw error;
-      }
-      this.attempts++;
-      this.tokens += allowance.tokens;
-      this.costMicros += allowance.costMicros;
-      if (hold) {
-        hold.attempts--;
-        hold.tokens -= allowance.tokens;
-        hold.costMicros -= allowance.costMicros;
-      }
-    });
-    this.tail = operation.catch(() => {});
-    return operation;
-  }
-
-  async close() {
-    if (this.closed) return;
-    this.closed = true;
-    await this.tail;
-    await this.ledger.close();
-  }
-  snapshot() {
-    return {
-      attempts: this.attempts,
-      remainingAttempts: this.cap.attempts - this.attempts,
-      reservedTokens: this.tokens,
-      remainingTokens: this.cap.tokens - this.tokens,
-      reservedCostMicros: this.costMicros,
-      remainingCostMicros: this.cap.costMicros - this.costMicros,
-    };
-  }
 }
 
 interface StreamClient {
@@ -307,13 +139,11 @@ export class RoomEventHub {
 interface RoomRuntimeOptions {
   engine: AgentEngine;
   journal: LiveBudgetJournal;
-  budget: IntegrationRunBudget;
   persistenceLock: () => Promise<void>;
   privateRoot: string;
   publicRoot: string;
   syntheticDemo: boolean;
   events?: RoomEventHub;
-  beforeGroup?(): Promise<void>;
   acquireAttempt?(): Promise<() => void>;
   beforeAttempt?(): void | Promise<void>;
   participantCooldownMs?: number;
@@ -342,14 +172,24 @@ export class RoomRuntime {
     this.events = options.events ?? new RoomEventHub(this.rooms);
   }
 
-  get budget() { return this.options.budget.snapshot(); }
+  get budget() {
+    return this.options.journal.snapshot().then((snapshot) => ({
+      attempts: snapshot.attempts,
+      remainingAttempts: null,
+      reservedTokens: snapshot.tokensAtRisk,
+      remainingTokens: null,
+      reservedCostMicros: snapshot.estimatedCostMicros,
+      remainingCostMicros: null,
+    }));
+  }
   get demoMode() { return this.options.syntheticDemo; }
   get inferenceMode() { return this.options.engine.gateway.mode; }
 
   getAuxiliaryInferenceHooks(): AuxiliaryInferenceHooks {
     if (this.closed) throw new StateError("RUNTIME_CLOSED");
     return {
-      reserveAttempt: (allowance) => this.options.budget.reserve(allowance),
+      // Actual attempts and usage are recorded by the private request journal.
+      reserveAttempt: async () => {},
       recordHttpEvent: (event) => this.options.journal.handle(event, "F"),
       acquireAttempt: () => this.options.acquireAttempt?.() ?? Promise.resolve(() => {}),
       beforeAttempt: () => this.options.beforeAttempt?.(),
@@ -402,7 +242,7 @@ export class RoomRuntime {
 
   async submit(roomId: string, auth: Auth, input: ReturnType<typeof SubmitRoomMessageSchema.parse>) {
     // The HTTP contract is always the idempotent object form.
-    // Authorize before exposing budget state. Duplicate receipts need no run.
+    // Authorize before exposing request-accounting state. Duplicate receipts need no run.
     await this.rooms.view(roomId, auth);
     assertPlanningScope(input.text);
     const state = await this.options.engine.store.read(roomId);
@@ -416,7 +256,6 @@ export class RoomRuntime {
     if (reservation) this.participantSubmissions.set(auth.participantId, reservation);
     try {
       if (!existing) await this.options.beforeAttempt?.();
-      if (input.visibility === "group" && !existing) await this.options.beforeGroup?.();
       const result = await this.rooms.submit(roomId, auth, input);
       if (!result.duplicate) {
         if (input.visibility === "group") this.scheduleGroup(roomId, auth);
@@ -442,7 +281,6 @@ export class RoomRuntime {
 
   async revise(roomId: string, auth: Auth, expectedRevision: number, proposal: CreateRoomRequest["proposal"]) {
     await this.rooms.view(roomId, auth);
-    await this.options.beforeGroup?.();
     await this.rooms.revise(roomId, auth, expectedRevision, proposal);
     this.scheduleGroup(roomId, auth);
     return this.snapshot(roomId, auth);
@@ -608,13 +446,9 @@ export class RoomRuntime {
     await Promise.allSettled([...this.activeTasks]);
     this.privateRuns.clear();
     try {
-      await this.options.budget.close();
+      await this.options.journal.release();
     } finally {
-      try {
-        await this.options.journal.release();
-      } finally {
-        await this.options.persistenceLock();
-      }
+      await this.options.persistenceLock();
     }
   }
 }
@@ -666,11 +500,8 @@ export async function createLocalRoomRuntime(options: {
   const persistence = new JsonPersistence(resolve(privateRoot, "room-state"), options.publicRoot);
   const persistenceLock = await persistence.acquireRuntimeLock();
   let journal: LiveBudgetJournal | undefined;
-  let budget: IntegrationRunBudget | undefined;
   try {
     journal = await LiveBudgetJournal.open(privateRoot, options.publicRoot, ["F"]);
-    const runBudget = await IntegrationRunBudget.open(resolve(privateRoot, "room-state", "integration-budget.ndjson"));
-    budget = runBudget;
     const promptVersion = options.promptVersion ?? DEFAULT_ROOM_PROMPT_VERSION;
     const base = await createRoomMetaGateway(
       privateRoot,
@@ -679,50 +510,12 @@ export async function createLocalRoomRuntime(options: {
       options.promptRoot,
       { acquireAttempt: options.acquireAttempt, beforeAttempt: options.beforeAttempt },
     );
-    const gateway: AgentGateway = {
-      mode: base.mode,
-      promptVersion: base.promptVersion,
-      promptHashes: base.promptHashes,
-      async openCycle(maxRequests) {
-        await checkGroupCapacity(maxRequests);
-        const hold = await runBudget.holdCycle(maxRequests, { tokens: CALL_TOKEN_ALLOWANCE, costMicros: CALL_COST_MICROS });
-        return {
-          call: (role, input, context) => meteredCall(role, input, context, hold.reserve),
-          release: hold.release,
-        };
-      },
-      async call(role, input, context) {
-        return meteredCall(role, input, context, (allowance) => runBudget.reserve(allowance));
-      },
-    };
-    async function meteredCall(role: Role, input: unknown, context: CallContext, reserve: (allowance: Allowance) => Promise<void>) {
-      return base.call(role, input, {
-          signal: context.signal,
-          reserveAttempt: async (allowance) => {
-            if (!allowance) throw new StateError("CALL_ALLOWANCE_REQUIRED");
-            await context.reserveAttempt(allowance);
-            await reserve(allowance);
-          },
-        });
-    }
-    async function checkGroupCapacity(maxRequests: number) {
-      runBudget.assertCapacity(maxRequests, { tokens: CALL_TOKEN_ALLOWANCE, costMicros: CALL_COST_MICROS });
-      const global = await journal!.snapshot();
-      if (global.attempts + maxRequests > LIVE_MAX_HTTP_ATTEMPTS)
-        throw new StateError("LIVE_HTTP_ATTEMPT_LIMIT");
-    }
+    const gateway: AgentGateway = base;
     const limits: Limits = {
-      maxInvocations: 16,
-      maxRequests: LIVE_CYCLE_CAP.attempts,
       maxRevisions: 2,
       timeoutMs: 120_000,
-      maxTokens: LIVE_CYCLE_CAP.tokens,
-      maxCostMicros: LIVE_CYCLE_CAP.costMicros,
       callTokens: CALL_TOKEN_ALLOWANCE,
       callCostMicros: CALL_COST_MICROS,
-      roomMaxRequests: LIVE_ROOM_CAP.attempts,
-      roomMaxTokens: LIVE_ROOM_CAP.tokens,
-      roomMaxCostMicros: LIVE_ROOM_CAP.costMicros,
     };
     let engine!: AgentEngine;
     let hub: RoomEventHub | undefined;
@@ -737,20 +530,17 @@ export async function createLocalRoomRuntime(options: {
     const runtime = new RoomRuntime({
       engine,
       journal,
-      budget: runBudget,
       persistenceLock,
       privateRoot,
       publicRoot: options.publicRoot,
       syntheticDemo: options.syntheticDemo ?? false,
       events: hub,
-      beforeGroup: () => checkGroupCapacity(limits.maxRequests),
       acquireAttempt: options.acquireAttempt,
       beforeAttempt: options.beforeAttempt,
       participantCooldownMs: options.participantCooldownMs,
     });
     return runtime;
   } catch (error) {
-    await budget?.close();
     await journal?.release();
     await persistenceLock();
     throw error;

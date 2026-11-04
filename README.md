@@ -119,7 +119,7 @@ flowchart TD
   Wait -->|"new input"| Input
 
   Decision -->|"complete or stop"| Outcome["Complete / stop<br/>readiness is deterministic"]
-  Decision -.->|"stale, malformed, cancelled,<br/>or budget limit"| Blocked["Blocked — fail closed"]
+  Decision -.->|"stale, malformed, cancelled,<br/>or provider failure"| Blocked["Blocked — fail closed"]
   FinalJudge -.->|"rejected handoff"| Blocked
 
   classDef role fill:#e6fffb,stroke:#0f766e,color:#0f172a,stroke-width:1.5px;
@@ -144,7 +144,7 @@ flowchart TD
 
 Role contracts use strict Zod schemas; the Meta gateway converts them to structured JSON Schema output. Findings reference known group facts or constraints. Application code, not model prose, enforces hard-constraint comparisons, deterministic readiness, privacy projections, request reservations, and versioned approvals.
 
-The engine can continue, wait for participant input, complete, or block. Role invocations, revisions, time, request attempts, token allowances, and estimated cost are bounded. Agent requests reserve an attempt before sending it and disable automatic retries. Cancellation, stale room revisions, malformed output, unsupported evidence, budget exhaustion, and interrupted work fail closed. A blocked or stale cycle cannot publish a new readiness result.
+The engine can continue, wait for participant input, complete, or block. Provider output/context limits, timeouts, and the no-progress/revision safeguards remain bounded, but the application does not impose a lifetime, per-cycle, token, or spending quota on normal Meta planning. Agent requests reserve an attempt for historical accounting before sending it and disable automatic retries. Cancellation, stale room revisions, malformed output, unsupported evidence, and interrupted work fail closed. A blocked or stale cycle cannot publish a new readiness result.
 
 The four homepage cards are focused demonstrations, not a full group-planning session: they do not create a room or collect participant approvals. The room engine separately manages multi-step cycles, privacy projections, proposal versions, and human approval.
 

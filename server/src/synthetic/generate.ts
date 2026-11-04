@@ -58,7 +58,7 @@ export class ScenarioGenerationError extends Error {
     message: string,
     readonly attempts: number,
     readonly usage: { inputTokens: number | null; outputTokens: number | null; estimatedCostMicros: number | null } | null = null,
-    readonly budgetRejected = false,
+    readonly accountingFailed = false,
   ) {
     super(message);
     this.name = "ScenarioGenerationError";
@@ -151,7 +151,7 @@ export async function generateScenario(
     if (error instanceof ScenarioGenerationError) throw error;
     const attempts = client.getRequestCount() - startingAttempts;
     throw new ScenarioGenerationError(
-      attempts > 0 ? "Muse Spark scenario generation failed after a bounded request attempt." : "Muse Spark scenario generation could not be started.",
+      attempts > 0 ? "Muse Spark scenario generation failed after the recorded HTTP attempt." : "Muse Spark scenario generation could not be started.",
       attempts,
     );
   }
@@ -211,14 +211,14 @@ export function createScenarioGenerationClient(options: {
     maxTotalRequests: SCENARIO_GENERATOR_MAX_ATTEMPTS_PER_REQUEST,
     acquireAttempt: options.hooks.acquireAttempt,
     beforeAttempt: async () => {
+      await options.hooks.beforeAttempt?.();
       try {
-        await options.hooks.beforeAttempt?.();
         await options.hooks.reserveAttempt({
           tokens: SCENARIO_GENERATOR_INPUT_TOKEN_ALLOWANCE + SCENARIO_GENERATOR_MAX_OUTPUT_TOKENS,
           costMicros: SCENARIO_GENERATOR_RESERVED_COST_MICROS,
         });
       } catch {
-        throw new ScenarioGenerationError("The shared Meta budget cannot reserve this scenario generation.", 0, null, true);
+        throw new ScenarioGenerationError("Request accounting failed before Meta inference.", 0, null, true);
       }
     },
     onHttpEvent: (event) => options.hooks.recordHttpEvent({

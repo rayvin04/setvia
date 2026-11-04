@@ -188,16 +188,16 @@ test("text route blocks out-of-scope requests and the inference kill switch befo
   });
 });
 
-test("standalone extraction cannot bypass the bounded room runtime's inference ledgers", async () => {
+test("standalone extraction requires request accounting when live rooms are enabled", async () => {
   const { client, requests } = mockClient();
   await withServer(createApp({ client, rooms: {} as never }), async (baseUrl) => {
     for (const path of ["text", "image"]) {
       const response = await fetch(`${baseUrl}/api/ai/extract/${path}`, {
         method: "POST", headers: { "content-type": "application/json" },
-        body: JSON.stringify({ description: "Do not bypass a room's exhausted budget." }),
+        body: JSON.stringify({ description: "A fictional group meeting next week." }),
       });
       assert.equal(response.status, 503);
-      assert.match(String((await responseBody(response)).error), /Enter the starting plan manually/);
+      assert.match(String((await responseBody(response)).error), /temporarily unavailable/);
     }
     assert.equal(requests.length, 0);
   });

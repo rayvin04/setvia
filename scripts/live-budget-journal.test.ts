@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promis
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
 import { randomUUID } from "node:crypto";
-import { LIVE_ATTEMPT_RESERVATION_MICROS, LIVE_ATTEMPT_RESERVATION_TOKENS, LIVE_COST_BUDGET_MICROS, LIVE_MAX_HTTP_ATTEMPTS, LIVE_TOKEN_BUDGET, LiveBudgetJournal } from "./live-budget-journal.js";
+import { LIVE_ATTEMPT_RESERVATION_MICROS, LIVE_ATTEMPT_RESERVATION_TOKENS, LiveBudgetJournal } from "./live-budget-journal.js";
 import type { MetaHttpEvent } from "../server/src/agents/meta-gateway.js";
 
 const event = (phase: MetaHttpEvent["phase"], requestNumber = 1): MetaHttpEvent => ({
@@ -69,35 +69,27 @@ test("live request journal persists reservations, HTTP status, usage, and privat
   assert.ok(root.length > 0);
 });
 
-test("unknown usage stops at the tighter cumulative spend or token ceiling", async (t) => {
+test("usage accounting continues beyond the former lifetime attempt and spend ceilings", async (t) => {
   const { privateRoot, publicRoot } = await tempRoots(t);
   const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A"]);
   try {
-    const maximumUnknownAttempts = Math.min(
-      Math.floor(LIVE_TOKEN_BUDGET / LIVE_ATTEMPT_RESERVATION_TOKENS),
-      Math.floor(LIVE_COST_BUDGET_MICROS / LIVE_ATTEMPT_RESERVATION_MICROS),
-    );
-    for (let index = 0; index < maximumUnknownAttempts; index++)
+    for (let index = 0; index < 80; index++)
       await journal.handle(event("started", index + 1), "A");
     const before = await journal.snapshot();
-    assert.equal(before.attempts, maximumUnknownAttempts);
-    assert.equal(before.tokensAtRisk, maximumUnknownAttempts * LIVE_ATTEMPT_RESERVATION_TOKENS);
-    assert.equal(before.remainingTokens, LIVE_TOKEN_BUDGET - before.tokensAtRisk);
-    assert.equal(before.remainingAttempts, LIVE_MAX_HTTP_ATTEMPTS - maximumUnknownAttempts);
-    const stopCode = LIVE_COST_BUDGET_MICROS / LIVE_ATTEMPT_RESERVATION_MICROS <=
-      LIVE_TOKEN_BUDGET / LIVE_ATTEMPT_RESERVATION_TOKENS
-      ? /LIVE_CUMULATIVE_BUDGET_LIMIT/
-      : /LIVE_CUMULATIVE_TOKEN_LIMIT/;
-    await assert.rejects(journal.handle(event("started", maximumUnknownAttempts + 1), "A"), stopCode);
-    assert.equal((await journal.snapshot()).attempts, maximumUnknownAttempts);
-    assert.ok(before.estimatedCostMicros <= LIVE_COST_BUDGET_MICROS);
-    assert.equal(before.estimatedCostMicros, maximumUnknownAttempts * LIVE_ATTEMPT_RESERVATION_MICROS);
+    assert.equal(before.attempts, 80);
+    assert.equal(before.tokensAtRisk, 80 * LIVE_ATTEMPT_RESERVATION_TOKENS);
+    assert.equal(before.remainingTokens, null);
+    assert.equal(before.remainingAttempts, null);
+    assert.equal(before.budgetMicros, null);
+    assert.equal(before.estimatedCostMicros, 80 * LIVE_ATTEMPT_RESERVATION_MICROS);
+    await journal.handle(event("started", 81), "A");
+    assert.equal((await journal.snapshot()).attempts, 81);
   } finally {
     await journal.release();
   }
 });
 
-test("an old $10 ledger retains the same enforced and persisted cap", async (t) => {
+test("legacy ledger budgets and usage remain readable but no longer gate new requests", async (t) => {
   const { privateRoot, publicRoot } = await tempRoots(t);
   const ledgerDirectory = join(privateRoot, "lab", "live");
   await mkdir(ledgerDirectory, { recursive: true });
@@ -109,53 +101,41 @@ test("an old $10 ledger retains the same enforced and persisted cap", async (t) 
   }) + "\n");
   const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A"]);
   try {
-    assert.equal((await journal.snapshot()).budgetMicros, 10_000_000);
+    assert.equal((await journal.snapshot()).budgetMicros, null);
     await journal.handle(event("started", 1), "A");
+    for (let index = 1; index < 80; index++)
+      await journal.handle(event("started", index + 1), "A");
     const snapshots = (await readFile(ledgerPath, "utf8")).trimEnd().split("\n").map((line) => JSON.parse(line));
     assert.equal(snapshots[0]?.budgetMicros, 10_000_000);
     assert.equal(snapshots.at(-1)?.budgetMicros, 10_000_000);
+    assert.equal((await journal.snapshot()).attempts, 80);
   } finally {
     await journal.release();
   }
 });
 
-test("the committed HTTP attempt ceiling remains enforced with observed usage", async (t) => {
+test("actual usage above an accounting estimate is recorded without blocking later requests", async (t) => {
   const { privateRoot, publicRoot } = await tempRoots(t);
-  const ledgerDirectory = join(privateRoot, "lab", "live");
-  await mkdir(ledgerDirectory, { recursive: true });
-  const ledgerPath = join(ledgerDirectory, "live-budget-ledger-v1.json");
-  const attempts = Array.from({ length: LIVE_MAX_HTTP_ATTEMPTS - 1 }, () => ({
-    id: randomUUID(),
-    runId: randomUUID(),
-    scenarioId: "A",
-    model: "muse-spark-1.3",
-    promptVersion: "agents-v1",
-    role: "Judge",
-    requestHash: "a".repeat(64),
-    status: "usage_recorded",
-    httpStatus: 200,
-    startedAt: new Date().toISOString(),
-    durationMs: 1,
-    reservedCostMicros: 0,
-    reservedTokens: 0,
-    estimatedCostMicros: 0,
-    inputTokens: 0,
-    cachedInputTokens: 0,
-    outputTokens: 0,
-    reasoningTokens: 0,
-    totalTokens: 0,
-    responseId: "synthetic",
-  }));
-  await writeFile(ledgerPath, JSON.stringify({
-    version: "live-budget-ledger-v1",
-    budgetMicros: LIVE_COST_BUDGET_MICROS,
-    attempts,
-  }) + "\n");
   const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A"]);
   try {
     await journal.handle(event("started", 1), "A");
-    assert.equal((await journal.snapshot()).attempts, LIVE_MAX_HTTP_ATTEMPTS);
-    await assert.rejects(journal.handle(event("started", 2), "A"), /LIVE_HTTP_ATTEMPT_LIMIT/);
+    await journal.handle({
+      ...event("usage", 1),
+      usage: {
+        model: "muse-spark-1.3",
+        responseId: "resp-over-reservation",
+        inputTokens: LIVE_ATTEMPT_RESERVATION_TOKENS + 1,
+        cachedInputTokens: 0,
+        outputTokens: 0,
+        totalTokens: LIVE_ATTEMPT_RESERVATION_TOKENS + 1,
+        reasoningTokens: 0,
+        durationMs: 480,
+      },
+    }, "A");
+    await journal.handle(event("started", 2), "A");
+    const snapshot = await journal.snapshot();
+    assert.equal(snapshot.attempts, 2);
+    assert.equal(snapshot.tokensAtRisk, LIVE_ATTEMPT_RESERVATION_TOKENS * 2 + 1);
   } finally { await journal.release(); }
 });
 
@@ -194,32 +174,6 @@ test("legacy callers fail closed instead of overlapping a reused provider reques
     await assert.rejects(journal.handle(event("started"), "A"), /LIVE_EVENT_ID_REQUIRED/);
     assert.equal((await journal.snapshot()).attempts, 1);
   } finally { await journal.release(); }
-});
-
-test("token usage above a call reservation is recorded and permanently stops further live requests", async (t) => {
-  const { privateRoot, publicRoot } = await tempRoots(t);
-  const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A", "B"]);
-  try {
-    await journal.handle(event("started", 1), "A");
-    await assert.rejects(journal.handle({
-      ...event("usage"),
-      usage: {
-        model: "muse-spark-1.3",
-        responseId: "resp-over-reservation",
-        inputTokens: LIVE_ATTEMPT_RESERVATION_TOKENS + 1,
-        cachedInputTokens: 0,
-        outputTokens: 0,
-        totalTokens: LIVE_ATTEMPT_RESERVATION_TOKENS + 1,
-        reasoningTokens: 0,
-        durationMs: 480,
-      },
-    }, "A"), /LIVE_ATTEMPT_TOKEN_RESERVATION_EXCEEDED/);
-    assert.equal((await journal.snapshot()).tokensAtRisk, LIVE_ATTEMPT_RESERVATION_TOKENS + 1);
-    await assert.rejects(journal.handle(event("started", 2), "B"), /LIVE_TOKEN_RESERVATION_BREACH/);
-    assert.equal((await journal.snapshot()).attempts, 1);
-  } finally {
-    await journal.release();
-  }
 });
 
 test("live ledger lock excludes concurrent writers and public storage", async (t) => {

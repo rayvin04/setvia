@@ -27,8 +27,8 @@ export function createMeteredExtractionClient(config: MetaConfig, hooks: Auxilia
         acquireAttempt: hooks.acquireAttempt,
         onHttpEvent: async (event) => {
           if (event.phase === "started") {
+            await hooks.beforeAttempt();
             try {
-              await hooks.beforeAttempt();
               await hooks.reserveAttempt({
                 tokens: LIVE_ATTEMPT_RESERVATION_TOKENS,
                 costMicros: LIVE_ATTEMPT_RESERVATION_MICROS,
@@ -36,15 +36,25 @@ export function createMeteredExtractionClient(config: MetaConfig, hooks: Auxilia
               await hooks.recordHttpEvent({ ...event, ...context });
               attempts++;
             } catch {
-              throw new MetaApiError("request_budget_exhausted", "The shared Meta budget cannot reserve this request.");
+              throw new MetaApiError("accounting", "The request could not be recorded before Meta inference.");
             }
             return;
           }
-          await hooks.recordHttpEvent({ ...event, ...context });
+          try {
+            await hooks.recordHttpEvent({ ...event, ...context });
+          } catch {
+            throw new MetaApiError("accounting", "The Meta request usage could not be recorded.");
+          }
         },
-        onUsage: (usage, requestNumber) => hooks.recordHttpEvent({
-          ...context, phase: "usage", usage, requestNumber, durationMs: usage.durationMs,
-        }),
+        onUsage: async (usage, requestNumber) => {
+          try {
+            await hooks.recordHttpEvent({
+              ...context, phase: "usage", usage, requestNumber, durationMs: usage.durationMs,
+            });
+          } catch {
+            throw new MetaApiError("accounting", "The Meta request usage could not be recorded.");
+          }
+        },
       });
       return client.createResponse(request, options);
     },

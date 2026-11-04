@@ -30,7 +30,8 @@ export type MetaApiErrorCode =
   | "connection"
   | "invalid_response"
   | "unexpected_model"
-  | "request_budget_exhausted";
+  | "request_limit"
+  | "accounting";
 
 export class MetaApiError extends Error {
   readonly code: MetaApiErrorCode;

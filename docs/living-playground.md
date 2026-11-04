@@ -1,6 +1,6 @@
 # Meet the minds: Setvia’s Meta AI playground
 
-The homepage’s **Meet the minds** section shows four focused examples of how Setvia’s planning roles work. Each card cycles through three fictional scenarios and starts a bounded request only after someone clicks Run. During the request, that card shows the example input and a thinking state; when it completes, the same card shows a compact model response in orange. Results identify whether they came from a live response or the scenario cache. The other cards stay in their preview state.
+The homepage’s **Meet the minds** section shows four focused examples of how Setvia’s planning roles work. Each card cycles through three fictional scenarios and starts a model request only after someone clicks Run. During the request, that card shows the example input and a thinking state; when it completes, the same card shows a compact model response in orange. Results identify whether they came from a live response or the scenario cache. The other cards stay in their preview state.
 
 ## The four cards
 
@@ -16,7 +16,7 @@ These cards are separate demonstrations, not a complete collaborative planning s
 ## Validation and privacy
 
 - Homepage cards use predefined scenarios only. The API also accepts an optional 10–240 character free-text input for Listener, limited to group-planning topics; it is private to that request.
-- The API validates request and response schemas. The server applies scope checks, evidence and feasibility checks where relevant, request limits, concurrency limits, and a separate bounded inference allowance.
+- The API validates request and response schemas. The server applies scope checks, evidence and feasibility checks where relevant, per-minute abuse throttles, and a small concurrency limit. It records every live request and reported usage; historical usage estimates do not act as a lifetime cap.
 - Model output is a proposal. It cannot confirm a participant’s facts, override a hard constraint, or approve a plan for someone.
 - Preset results may be cached. Personal Listener text and its response are not written to that cache.
 - Meta credentials and role prompts stay on the server. No request is made on page load or when changing scenarios.
@@ -25,7 +25,7 @@ The mascot characters represent application roles; they are not additional model
 
 ## Local setup and checks
 
-The playground endpoint is opt-in on the API server. Enable it with `SETVIA_PLAYGROUND_ENABLED=1` after configuring the live room runtime, private prompts, server-side `MODEL_API_KEY`, and the API origin allowlist. `SETVIA_PLAYGROUND_BUDGET_MICROS` sets a separate bounded allowance and defaults to `2000000` micro-dollars ($2). Do not put the Meta key in a `VITE_` variable.
+The playground endpoint is opt-in on the API server. Enable it with `SETVIA_PLAYGROUND_ENABLED=1` after configuring the live room runtime, private prompts, server-side `MODEL_API_KEY`, and the API origin allowlist. Provider billing and usage are controlled through the Meta account and recorded in the private request journal; the application does not impose an hourly inference-spend quota. Do not put the Meta key in a `VITE_` variable.
 
 Run the isolated, mock-only playground suite with:
 
@@ -33,4 +33,4 @@ Run the isolated, mock-only playground suite with:
 npm run test:playground
 ```
 
-The mock suite verifies request boundaries, role handoffs, validation, caching, limits, and error handling; it makes no live Meta requests.
+The mock suite verifies request boundaries, role handoffs, validation, caching, per-minute abuse throttles, and error handling; it makes no live Meta requests.

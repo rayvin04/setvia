@@ -6,13 +6,8 @@ import { Roles } from "../server/src/agents/contracts.js";
 import type { MetaHttpEvent } from "../server/src/agents/meta-gateway.js";
 import type { LiveAttemptRecord } from "../server/src/agents/lab.js";
 
-// Cumulative ceiling across all metered Setvia features.
-export const LIVE_COST_BUDGET_MICROS = 10_000_000;
 export const LIVE_ATTEMPT_RESERVATION_MICROS = 104_000;
-export const LIVE_MAX_HTTP_ATTEMPTS = 70;
 export const LIVE_ATTEMPT_RESERVATION_TOKENS = 64_000;
-export const LIVE_TOKEN_BUDGET = 3_200_000;
-const LEGACY_LIVE_COST_BUDGET_MICROS = 10_000_000;
 const LEDGER_NAME = "live-budget-ledger-v1.json";
 const LOCK_NAME = "live-budget-ledger-v1.lock";
 
@@ -30,7 +25,7 @@ const AttemptSchema = z.object({
   startedAt: z.string().datetime(),
   durationMs: z.number().int().nonnegative().nullable(),
   reservedCostMicros: z.number().int().nonnegative(),
-  reservedTokens: z.number().int().nonnegative().max(LIVE_ATTEMPT_RESERVATION_TOKENS).optional(),
+  reservedTokens: z.number().int().nonnegative().optional(),
   estimatedCostMicros: z.number().int().nonnegative().nullable(),
   inputTokens: z.number().int().nonnegative().nullable(),
   cachedInputTokens: z.number().int().nonnegative().nullable(),
@@ -43,11 +38,8 @@ type ValidatedLiveAttemptRecord = z.infer<typeof AttemptSchema>;
 
 const LedgerSchema = z.object({
   version: z.literal("live-budget-ledger-v1"),
-  budgetMicros: z.union([
-    z.literal(LEGACY_LIVE_COST_BUDGET_MICROS),
-    z.literal(10_537_504),
-    z.literal(LIVE_COST_BUDGET_MICROS),
-  ]),
+  // Retained as nullable historical metadata. It no longer gates requests.
+  budgetMicros: z.number().int().nonnegative().nullable(),
   attempts: z.array(AttemptSchema),
 }).strict();
 type Ledger = z.infer<typeof LedgerSchema>;
@@ -59,10 +51,6 @@ function tokensAtRisk(attempt: ValidatedLiveAttemptRecord) {
       : null
   );
   return reported ?? attempt.reservedTokens ?? LIVE_ATTEMPT_RESERVATION_TOKENS;
-}
-
-function tokenReservationExceeded(attempt: ValidatedLiveAttemptRecord) {
-  return tokensAtRisk(attempt) > (attempt.reservedTokens ?? LIVE_ATTEMPT_RESERVATION_TOKENS);
 }
 
 function inside(parent: string, candidate: string) {
@@ -81,7 +69,7 @@ async function readLedger(path: string): Promise<Ledger> {
     return snapshots[snapshots.length - 1]!;
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return { version: "live-budget-ledger-v1", budgetMicros: LIVE_COST_BUDGET_MICROS, attempts: [] };
+      return { version: "live-budget-ledger-v1", budgetMicros: null, attempts: [] };
     }
     throw new Error("LIVE_BUDGET_LEDGER_INVALID; no model request was sent.");
   }
@@ -171,8 +159,6 @@ export class LiveBudgetJournal {
     if (event.invocationId !== undefined && !z.string().uuid().safeParse(event.invocationId).success)
       throw new Error("LIVE_EVENT_ID_INVALID");
     const eventKey = `${event.invocationId ?? "legacy"}:${event.requestNumber}`;
-    let reservationExceeded = false;
-    let costReservationExceeded = false;
     await this.mutate((ledger) => {
       if (event.phase === "started") {
         const priorId = this.runAttempts.get(eventKey);
@@ -182,21 +168,6 @@ export class LiveBudgetJournal {
         if (!event.invocationId && prior && ["reserved", "response_received"].includes(prior.status) &&
           (prior.httpStatus === null || prior.httpStatus < 400))
           throw new Error("LIVE_EVENT_ID_REQUIRED; overlapping calls need distinct identities.");
-        if (ledger.attempts.some(tokenReservationExceeded))
-          throw new Error("LIVE_TOKEN_RESERVATION_BREACH; no additional request was sent.");
-        if (ledger.attempts.some((attempt) => (attempt.estimatedCostMicros ?? 0) > attempt.reservedCostMicros))
-          throw new Error("LIVE_COST_RESERVATION_BREACH; no additional request was sent.");
-        if (ledger.attempts.length >= LIVE_MAX_HTTP_ATTEMPTS)
-          throw new Error("LIVE_HTTP_ATTEMPT_LIMIT; no additional request was sent.");
-        const costAtRisk = ledger.attempts.reduce(
-          (sum, attempt) => sum + (attempt.estimatedCostMicros ?? attempt.reservedCostMicros),
-          0,
-        );
-        if (costAtRisk + LIVE_ATTEMPT_RESERVATION_MICROS > ledger.budgetMicros)
-          throw new Error("LIVE_CUMULATIVE_BUDGET_LIMIT; no additional request was sent.");
-        const tokensAtRiskTotal = ledger.attempts.reduce((sum, attempt) => sum + tokensAtRisk(attempt), 0);
-        if (tokensAtRiskTotal + LIVE_ATTEMPT_RESERVATION_TOKENS > LIVE_TOKEN_BUDGET)
-          throw new Error("LIVE_CUMULATIVE_TOKEN_LIMIT; no additional request was sent.");
         const attempt: ValidatedLiveAttemptRecord = {
           id: randomUUID(),
           runId: this.runId,
@@ -240,13 +211,6 @@ export class LiveBudgetJournal {
       } else if (event.phase === "usage") {
         const usage = event.usage;
         if (!usage) throw new Error("LIVE_USAGE_EVENT_INVALID");
-        const observedTokens = usage.totalTokens ?? (
-          usage.inputTokens !== null && usage.outputTokens !== null
-            ? usage.inputTokens + usage.outputTokens
-            : null
-        );
-        if (observedTokens !== null && observedTokens > LIVE_ATTEMPT_RESERVATION_TOKENS)
-          reservationExceeded = true;
         attempt.durationMs = usage.durationMs;
         attempt.inputTokens = usage.inputTokens;
         attempt.cachedInputTokens = usage.cachedInputTokens;
@@ -255,21 +219,15 @@ export class LiveBudgetJournal {
         attempt.totalTokens = usage.totalTokens;
         attempt.responseId = usage.responseId;
         if (usage.inputTokens !== null && usage.outputTokens !== null) {
-          // Deliberately ignore cached-input discounts in the spend guard.
+          // Keep the undiscounted estimate for historical usage reporting.
           attempt.estimatedCostMicros = Math.ceil(
             (usage.inputTokens * 1_250_000 + usage.outputTokens * 4_250_000) / 1_000_000,
           );
         }
-        if ((attempt.estimatedCostMicros ?? 0) > attempt.reservedCostMicros)
-          costReservationExceeded = true;
         attempt.status = "usage_recorded";
       }
       return ledger;
     });
-    if (reservationExceeded)
-      throw new Error("LIVE_ATTEMPT_TOKEN_RESERVATION_EXCEEDED; stopping after this response.");
-    if (costReservationExceeded)
-      throw new Error("LIVE_ATTEMPT_COST_RESERVATION_EXCEEDED; stopping after this response.");
   }
 
   async attemptsFor(scenarioId: string): Promise<LiveAttemptRecord[]> {
@@ -287,16 +245,16 @@ export class LiveBudgetJournal {
       runId: this.runId,
       attempts: attempts.length,
       runAttempts: attempts.filter((attempt) => attempt.runId === this.runId).length,
-      attemptBudget: LIVE_MAX_HTTP_ATTEMPTS,
-      remainingAttempts: Math.max(0, LIVE_MAX_HTTP_ATTEMPTS - attempts.length),
+      attemptBudget: null,
+      remainingAttempts: null,
       estimatedCostMicros: attempts.reduce(
         (sum, attempt) => sum + (attempt.estimatedCostMicros ?? attempt.reservedCostMicros),
         0,
       ),
-      budgetMicros: ledger.budgetMicros,
+      budgetMicros: null,
       tokensAtRisk: tokenExposure,
-      tokenBudget: LIVE_TOKEN_BUDGET,
-      remainingTokens: Math.max(0, LIVE_TOKEN_BUDGET - tokenExposure),
+      tokenBudget: null,
+      remainingTokens: null,
     };
   }
 

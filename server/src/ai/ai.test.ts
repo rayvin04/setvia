@@ -568,7 +568,7 @@ test("a real-test request budget can include retries without exceeding its cap",
     client.createResponse({ input: "test" }),
     (error: unknown) => {
       assert.ok(error instanceof MetaApiError);
-      assert.equal(error.code, "request_budget_exhausted");
+      assert.equal(error.code, "request_limit");
       return true;
     },
   );

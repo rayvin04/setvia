@@ -47,11 +47,11 @@ export interface StudioHealth {
     enabled: boolean;
     budget: null | {
       attempts: number;
-      remainingAttempts: number;
+      remainingAttempts: number | null;
       reservedTokens: number;
-      remainingTokens: number;
+      remainingTokens: number | null;
       reservedCostMicros: number;
-      remainingCostMicros: number;
+      remainingCostMicros: number | null;
     };
   };
   scenarioGeneratorMounted: boolean;

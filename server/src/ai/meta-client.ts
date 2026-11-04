@@ -335,8 +335,8 @@ export function createMetaClient(
           requestCount >= options.maxTotalRequests
         ) {
           throw new MetaApiError(
-            "request_budget_exhausted",
-            "The configured Meta test request limit has been reached.",
+            "request_limit",
+            "This Meta client has already used its single-request guard.",
           );
         }
         requestOptions.signal?.throwIfAborted();

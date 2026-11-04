@@ -143,7 +143,7 @@ test("scenario contract keeps attendee counts, private evidence, and message ord
   assert.equal(ScenarioDraftSchema.safeParse(excessiveDelay).success, false);
 });
 
-test("generation reserves the shared budget and journals redacted attempt metadata", async () => {
+test("generation records its accounting estimate and journals redacted attempt metadata", async () => {
   const events: unknown[] = [];
   const reservations: Array<{ tokens: number; costMicros: number }> = [];
   const sentRequests: Array<Record<string, unknown>> = [];
@@ -194,27 +194,27 @@ test("generation reserves the shared budget and journals redacted attempt metada
   assert.equal(userInput.input.includes("Ben's maximum available contribution is PHP 500."), false);
 });
 
-test("generation denied by the shared budget makes no HTTP attempt", async () => {
+test("failed request accounting prevents an unjournaled HTTP attempt", async () => {
   let networkCalls = 0;
   const input = GenerateScenarioRequestSchema.parse({ category: "beach_outing", difficulty: "easy", expectedAttendeeCount: 8, activePlannerCount: 2, messageCount: 2, timeZone: "Asia/Manila", dateLocal: null });
   const client = createScenarioGenerationClient({
     input,
     client: { config: metaConfig, fetchImpl: async () => { networkCalls += 1; return new Response("{}"); } },
     hooks: {
-      reserveAttempt: async () => { throw new Error("INTEGRATION_RUN_BUDGET_LIMIT"); },
-      recordHttpEvent: async () => { assert.fail("A rejected reservation must not be journaled as an HTTP attempt."); },
+      reserveAttempt: async () => { throw new Error("private journal unavailable"); },
+      recordHttpEvent: async () => { assert.fail("A failed accounting step must not be journaled as an HTTP attempt."); },
     },
   });
   await assert.rejects(generateScenario(input, client), (error: unknown) => {
     assert.ok(error instanceof ScenarioGenerationError);
     assert.equal(error.attempts, 0);
-    assert.equal(error.budgetRejected, true);
+    assert.equal(error.accountingFailed, true);
     return true;
   });
   assert.equal(networkCalls, 0);
 });
 
-test("Studio generation route requires service authentication and uses the room runtime budget hooks", async () => {
+test("Studio generation route requires service authentication and uses room runtime accounting hooks", async () => {
   const token = "S".repeat(43);
   const events: Array<{ phase: string; role?: string }> = [];
   const reservations: Array<{ tokens: number; costMicros: number }> = [];
