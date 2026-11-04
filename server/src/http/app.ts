@@ -1,6 +1,7 @@
 import express, {
   type ErrorRequestHandler,
   type Request,
+  type RequestHandler,
   type Response,
 } from "express";
 import { z } from "zod";
@@ -18,6 +19,7 @@ import {
 } from "../ai/extract-image.js";
 import type { MetaApiClient } from "../ai/meta-client.js";
 import { StateError } from "../agents/store.js";
+import { assertPlanningScope, PLANNING_REDIRECT, PlanningScopeError } from "../ai/planning-scope.js";
 import {
   ApproveProposalRequestSchema,
   CreateRoomRequestSchema,
@@ -48,8 +50,12 @@ interface RateWindow {
 
 export interface AppOptions {
   client: MetaApiClient;
+  meteredExtractionClient?: MetaApiClient;
   rooms?: RoomRuntime | null;
   roomOrigins?: string[];
+  trustProxy?: boolean | number | string;
+  demoScenarioRouter?: RequestHandler;
+  inferenceEnabled?: () => boolean;
   rateLimit?: {
     limit?: number;
     windowMs?: number;
@@ -112,6 +118,9 @@ function safeFailure(error: unknown): { status: number; message: string } {
 
   if (error instanceof InvalidImageError) {
     return { status: 400, message: error.message };
+  }
+  if (error instanceof PlanningScopeError) {
+    return { status: 422, message: PLANNING_REDIRECT };
   }
   if (error instanceof InvalidModelOutputError) {
     return {
@@ -176,6 +185,7 @@ function roomErrorMessage(code: string) {
     CANDIDATE_NOT_FOUND: "That private suggestion is no longer available.",
     INPUT_QUEUE_LIMIT: "Setvia is still processing earlier responses. Try again shortly.",
     RESPONSE_LIMIT: "This room has reached its response limit.",
+    PARTICIPANT_COOLDOWN: "Please wait a moment before sending another planning response.",
     INTEGRATION_RUN_BUDGET_LIMIT: "The remaining live-analysis allowance cannot cover this operation. Developer approval is required for more requests.",
     LIVE_HTTP_ATTEMPT_LIMIT: "The remaining request allowance cannot cover a complete analysis. Developer approval is required for more requests.",
     ROOM_BUDGET_LIMIT: "This room has reached its live-analysis budget.",
@@ -196,6 +206,7 @@ export function createApp(options: AppOptions) {
   const now = options.rateLimit?.now ?? Date.now;
 
   app.disable("x-powered-by");
+  if (options.trustProxy !== undefined) app.set("trust proxy", options.trustProxy);
   app.use((_request, response, next) => {
     response.setHeader("X-Content-Type-Options", "nosniff");
     response.setHeader("Referrer-Policy", "no-referrer");
@@ -207,17 +218,17 @@ export function createApp(options: AppOptions) {
     response.json({ status: "ok" });
   });
 
-  const allowedRoomOrigins = new Set(
+  const allowedBrowserOrigins = new Set(
     options.roomOrigins ?? [
       "http://127.0.0.1:5173",
       "http://localhost:5173",
       "http://127.0.0.1:4176",
     ],
   );
-  app.use("/api/rooms", (request, response, next) => {
+  const restrictBrowserOrigin = (request: Request, response: Response, next: (error?: unknown) => void) => {
     const origin = request.header("origin");
-    if (origin && !allowedRoomOrigins.has(origin)) {
-      response.status(403).json({ error: "This browser origin cannot access local planning rooms." });
+    if (origin && !allowedBrowserOrigins.has(origin)) {
+      response.status(403).json({ error: "This browser origin cannot access the planning API." });
       return;
     }
     if (origin) {
@@ -231,18 +242,30 @@ export function createApp(options: AppOptions) {
       return;
     }
     next();
-  });
+  };
+  app.use("/api/rooms", restrictBrowserOrigin);
+  app.use("/api/ai", restrictBrowserOrigin);
   app.get("/api/rooms/health", (_request, response) => {
-    response.json({
+    const health = {
       enabled: Boolean(options.rooms),
-      mode: options.rooms?.inferenceMode === "MOCK" ? "offline-mock" : options.rooms?.demoMode ? "synthetic-live-demo" : options.rooms ? "local-live" : "unavailable",
-      ...(options.rooms ? { budget: options.rooms.budget } : {}),
-    });
+      mode: options.rooms?.inferenceMode === "MOCK"
+        ? "offline-mock"
+        : options.rooms?.demoMode
+          ? "synthetic-live-demo"
+          : options.rooms
+            ? "local-live"
+            : "unavailable",
+    } as const;
+    response.json(
+      process.env.NODE_ENV === "production" || !options.rooms
+        ? health
+        : { ...health, budget: options.rooms.budget },
+    );
   });
   app.use("/api/rooms", createRateLimiter(40, 60_000, now));
   app.use("/api/rooms", express.json({ limit: "24kb", strict: true }));
 
-  app.post("/api/rooms", async (request, response) => {
+  app.post("/api/rooms", createRateLimiter(3, 60 * 60_000, now), async (request, response) => {
     if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
     const parsed = CreateRoomRequestSchema.safeParse(request.body);
     if (!parsed.success) return response.status(400).json({ error: "Add a valid event name and starting plan." });
@@ -285,7 +308,7 @@ export function createApp(options: AppOptions) {
     } catch (error) { sendRoomFailure(response, error); }
   });
 
-  app.post("/api/rooms/:roomId/messages", async (request, response) => {
+  app.post<{ roomId: string }>("/api/rooms/:roomId/messages", createRateLimiter(12, 60_000, now), async (request, response) => {
     if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
     const roomId = request.params.roomId;
     const parsed = SubmitRoomMessageSchema.safeParse(request.body);
@@ -346,9 +369,13 @@ export function createApp(options: AppOptions) {
   });
 
   app.use("/api/ai", (_request, response, next) => {
+    if (options.inferenceEnabled?.() === false) {
+      response.status(503).json({ error: "Planning inference is temporarily disabled." });
+      return;
+    }
     // The standalone extractor does not reserve from the room evaluation
     // ledgers. A valid server key must not make that a path around live caps.
-    if (options.rooms) {
+    if (options.rooms && !options.meteredExtractionClient) {
       response.status(503).json({ error: "Planning extraction is unavailable during the bounded room evaluation. Enter the starting plan manually." });
       return;
     }
@@ -368,9 +395,11 @@ export function createApp(options: AppOptions) {
         return;
       }
 
+      assertPlanningScope(parsed.data.description);
+
       const plan = await extractPlanFromText(
         parsed.data.description,
-        options.client,
+        options.meteredExtractionClient ?? options.client,
       );
       response.json({ plan });
     },
@@ -404,11 +433,15 @@ export function createApp(options: AppOptions) {
           bytes: new Uint8Array(request.body),
           mimeType,
         },
-        options.client,
+        options.meteredExtractionClient ?? options.client,
       );
       response.json({ plan });
     },
   );
+
+  if (options.demoScenarioRouter) {
+    app.use("/api/demo/scenarios", options.demoScenarioRouter);
+  }
 
   app.use("/api", (_request, response) => {
     response.status(404).json({ error: "API route not found." });

@@ -107,6 +107,47 @@ async function responseBody(response: Response): Promise<Record<string, unknown>
   return (await response.json()) as Record<string, unknown>;
 }
 
+test("CORS allows the configured frontend origin on API preflight and blocks unlisted origins", async () => {
+  const { client, requests } = mockClient();
+  await withServer(createApp({ client, roomOrigins: ["https://setvia.r4yv.tech"] }), async (baseUrl) => {
+    const preflight = await fetch(baseUrl + "/api/ai/extract/text", {
+      method: "OPTIONS",
+      headers: {
+        origin: "https://setvia.r4yv.tech",
+        "access-control-request-method": "POST",
+        "access-control-request-headers": "content-type",
+      },
+    });
+    assert.equal(preflight.status, 204);
+    assert.equal(preflight.headers.get("access-control-allow-origin"), "https://setvia.r4yv.tech");
+    assert.match(preflight.headers.get("access-control-allow-headers") ?? "", /Content-Type/i);
+
+    const denied = await fetch(baseUrl + "/api/ai/extract/text", {
+      method: "POST",
+      headers: { origin: "https://untrusted.example", "content-type": "application/json" },
+      body: JSON.stringify({ description: "A private plan" }),
+    });
+    assert.equal(denied.status, 403);
+    assert.equal(requests.length, 0);
+  });
+});
+
+test("anonymous room creation has a small per-IP hourly limit", async () => {
+  await withServer(createApp({ client: mockClient().client }), async (baseUrl) => {
+    const statuses: number[] = [];
+    for (let attempt = 0; attempt < 4; attempt++) {
+      const response = await fetch(baseUrl + "/api/rooms", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ creatorName: "Alex", eventType: "Trip", proposal: { id: "plan", label: "Trip", values: {} } }),
+      });
+      statuses.push(response.status);
+      if (attempt === 3) assert.ok(Number(response.headers.get("retry-after")) > 0);
+    }
+    assert.deepEqual(statuses, [503, 503, 503, 429]);
+  });
+});
+
 test("text route calls the existing structured extractor and returns a validated plan", async () => {
   const { client, requests } = mockClient();
   await withServer(createApp({ client }), async (baseUrl) => {
@@ -121,6 +162,29 @@ test("text route calls the existing structured extractor and returns a validated
     assert.deepEqual((await responseBody(response)).plan, validPlan);
     assert.equal(requests.length, 1);
     assert.equal(requests[0]?.text?.format.type, "json_schema");
+  });
+});
+
+test("text route blocks out-of-scope requests and the inference kill switch before model calls", async () => {
+  const { client, requests } = mockClient();
+  await withServer(createApp({ client }), async (baseUrl) => {
+    const response = await fetch(baseUrl + "/api/ai/extract/text", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ description: "Please write me an unrelated poem." }),
+    });
+    assert.equal(response.status, 422);
+    assert.match(String((await responseBody(response)).error), /help your group make plans/);
+    assert.equal(requests.length, 0);
+  });
+  await withServer(createApp({ client, inferenceEnabled: () => false }), async (baseUrl) => {
+    const response = await fetch(baseUrl + "/api/ai/extract/text", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ description: "A fictional group meeting next week." }),
+    });
+    assert.equal(response.status, 503);
+    assert.equal(requests.length, 0);
   });
 });
 

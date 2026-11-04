@@ -25,7 +25,9 @@ export function questionQuickReplies(
   return question.options.map((label, index) => ({
     id: `${question.id}_reply_${index}`,
     label,
-    intent: /^review details$/i.test(label)
+    intent: label.endsWith("[conflicts with a confirmed requirement]")
+      ? "compose"
+      : /^review details$/i.test(label)
       ? "review"
       : /another|suggest|different|change|more details|something else/i.test(
             label,

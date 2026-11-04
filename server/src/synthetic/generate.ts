@@ -192,6 +192,8 @@ export interface ScenarioGeneratorHttpEvent extends MetaHttpAttemptEvent {
 export interface ScenarioGenerationHooks {
   reserveAttempt(allowance: { tokens: number; costMicros: number }): void | Promise<void>;
   recordHttpEvent(event: ScenarioGeneratorHttpEvent): void | Promise<void>;
+  acquireAttempt?(): Promise<() => void>;
+  beforeAttempt?(): void | Promise<void>;
 }
 
 export function createScenarioGenerationClient(options: {
@@ -207,8 +209,10 @@ export function createScenarioGenerationClient(options: {
     timeoutMs: options.client?.timeoutMs ?? 45_000,
     maxRetries: 0,
     maxTotalRequests: SCENARIO_GENERATOR_MAX_ATTEMPTS_PER_REQUEST,
+    acquireAttempt: options.hooks.acquireAttempt,
     beforeAttempt: async () => {
       try {
+        await options.hooks.beforeAttempt?.();
         await options.hooks.reserveAttempt({
           tokens: SCENARIO_GENERATOR_INPUT_TOKEN_ALLOWANCE + SCENARIO_GENERATOR_MAX_OUTPUT_TOKENS,
           costMicros: SCENARIO_GENERATOR_RESERVED_COST_MICROS,

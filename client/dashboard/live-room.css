@@ -95,6 +95,17 @@
   font: 10px/1.4 ui-monospace, SFMono-Regular, Consolas, monospace;
 }
 .live-invite-field > span { color: #829ba6; font-size: 9px; line-height: 1.5; }
+.live-room-code { display: flex; align-items: center; gap: 7px; }
+.live-room-code span { color: #8da7b2; font-size: 9px; }
+.live-room-code code {
+  padding: 4px 7px;
+  border: 1px solid #264956;
+  border-radius: 6px;
+  background: #0a202a;
+  color: #a9e4ff;
+  font: 600 11px/1.2 ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .09em;
+}
 
 .live-budget-note {
   margin-top: 6px;
@@ -104,6 +115,27 @@
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
+
+.live-demo-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px 20px;
+  width: min(1840px, calc(100% - 36px));
+  margin: 10px auto 14px;
+  padding: 12px 15px;
+  border: 1px solid #304b56;
+  border-radius: 11px;
+  background: #09171d;
+}
+.live-demo-copy { min-width: 0; }
+.live-demo-copy h2 { margin: 2px 0 3px; color: #edf4f2; font-size: 14px; font-weight: 560; }
+.live-demo-copy p { max-width: 100ch; margin: 0; color: #b0c0c4; font-size: 10px; line-height: 1.5; }
+.live-demo-copy small { display: block; margin-top: 5px; color: #849ba4; font-size: 9px; }
+.live-demo-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 7px; }
+.live-demo-actions .dashboard-button { min-height: 34px; padding: 6px 9px; font-size: 10px; }
+.live-demo-status { max-width: 31ch; color: #a8c0c5; font-size: 9px; line-height: 1.4; }
+.live-demo-error { grid-column: 1 / -1; margin: 0; color: #ffb8ab; font-size: 10px; }
 
 .live-error {
   display: flex;
@@ -234,12 +266,25 @@
     order: 1;
     gap: 4px !important;
   }
-  .live-room-header-actions .live-connection,
   .live-room-header-actions .live-sound-toggle span,
   .live-room-header-actions .live-leave span { display: none; }
+  .live-room-header-actions .live-connection {
+    display: inline-flex;
+    align-items: center;
+    min-height: 28px;
+    padding: 3px 7px;
+    border: 1px solid #29434d;
+    border-radius: 999px;
+    font-size: 9px;
+    line-height: 1.15;
+    white-space: nowrap;
+  }
   .live-room-header .live-sound-toggle,
   .live-room-header .live-leave { width: 34px; min-width: 34px; padding: 0; }
   .live-room-header .live-copy-invite { min-height: 34px; padding-inline: 9px; }
+  .live-demo-panel { grid-template-columns: 1fr; gap: 10px; }
+  .live-demo-actions { justify-content: flex-start; }
+  .live-demo-status { max-width: none; }
   .live-room-header .dashboard-viewer-avatar { display: none; }
   .live-invite-field,
   .private-candidate-strip,

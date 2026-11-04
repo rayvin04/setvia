@@ -9,6 +9,7 @@ import {
   MAX_PLANNING_MESSAGE_LENGTH,
   type PlanningMessage,
 } from "../../shared/planning-message.js";
+import type { Question } from "../../server/src/agents/contracts.js";
 import { createPreviewInteractions } from "./preview-interactions.js";
 import {
   currentQuestion,
@@ -262,6 +263,13 @@ test("preview failures are recoverable and unknown errors never expose their pay
     planningMessageErrorText(new Error("PRIVATE_ERROR_PAYLOAD")),
     /PRIVATE_ERROR_PAYLOAD/,
   );
+  assert.equal(
+    planningMessageErrorText(Object.assign(
+      new Error("This room has reached its approved live-analysis limit."),
+      { name: "RoomApiError" },
+    )),
+    "This room has reached its approved live-analysis limit.",
+  );
   adapter.reset(snapshot.room.roomId);
   await adapter.submit(
     messageFor(snapshot),
@@ -303,6 +311,19 @@ test("quick replies retain validated arbitrary choices and make alternative inpu
       ),
     /reply option changed/,
   );
+});
+
+test("a choice that conflicts with a confirmed requirement cannot be sent as an ordinary quick reply", () => {
+  const question: Question = {
+    id: "departure_choice",
+    findingId: "schedule_gap",
+    targetId: null,
+    visibility: "group",
+    kind: "choice",
+    text: "When should the group leave?",
+    options: ["Leave at 9 AM [conflicts with a confirmed requirement]"],
+  };
+  assert.equal(questionQuickReplies(question)[0]?.intent, "compose");
 });
 test("composer renders labeled pending, disabled and safe error states", async () => {
   const room = (await beach).initial.alex!.room;

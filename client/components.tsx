@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   motion,
   useScroll,
@@ -11,6 +11,7 @@ import { Link, useLocation } from "react-router-dom";
 import { ArrowUpRight } from "lucide-react";
 import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { initialHeaderState, nextHeaderState } from "./header-state";
 export const cn = (...values: Parameters<typeof clsx>) =>
   twMerge(clsx(...values));
 const MotionLink = motion.create(Link);
@@ -54,21 +55,60 @@ export function Wordmark() {
   );
 }
 export function Header() {
-  const [scrolled, setScrolled] = useState(false);
+  const [view, setView] = useState({ compact: false, hidden: false });
+  const [focused, setFocused] = useState(false);
+  const tracker = useRef(initialHeaderState);
+  const location = useLocation();
   const { scrollY } = useScroll();
   const reduced = useReducedMotion();
-  useMotionValueEvent(scrollY, "change", (y) =>
-    setScrolled((old) => (old === y > 28 ? old : y > 28)),
-  );
+  useEffect(() => {
+    tracker.current = initialHeaderState;
+    setView({ compact: false, hidden: false });
+  }, [location.pathname]);
+  useMotionValueEvent(scrollY, "change", (y) => {
+    tracker.current = nextHeaderState(tracker.current, y);
+    const { compact, hidden } = tracker.current;
+    setView((old) =>
+      old.compact === compact && old.hidden === hidden
+        ? old
+        : { compact, hidden },
+    );
+  });
   return (
-    <header className={cn("header", scrolled && "is-scrolled")}>
+    <motion.header
+      initial={false}
+      className={cn("header", "site-header", view.compact && "is-scrolled")}
+      data-hidden={view.hidden && !focused}
+      animate={{
+        scale: reduced ? 1 : view.hidden && !focused ? 0.96 : 1,
+        opacity: view.hidden && !focused ? 0 : 1,
+      }}
+      transition={{
+        scale: reduced
+          ? { duration: 0 }
+          : { type: "spring", bounce: 0, visualDuration: 0.32 },
+        opacity: { duration: reduced ? 0.08 : 0.2, ease: "easeInOut" },
+      }}
+      onFocusCapture={() => setFocused(true)}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget))
+          setFocused(false);
+      }}
+    >
       <motion.div
         className="header-inner"
-        animate={{ scale: scrolled && !reduced ? 0.985 : 1 }}
-        transition={{ type: "spring", bounce: 0, duration: 0.35 }}
+        layout={reduced ? false : true}
+        transition={{
+          layout: { type: "spring", bounce: 0, visualDuration: 0.4 },
+        }}
       >
-        <Wordmark />
-        <nav aria-label="Main navigation">
+        <motion.div layout={reduced ? false : "position"}>
+          <Wordmark />
+        </motion.div>
+        <motion.nav
+          layout={reduced ? false : "position"}
+          aria-label="Main navigation"
+        >
           <a href="/#how-it-works">How it works</a>
           <Link to="/demos">Explore demos</Link>
           <Link to="/join" className="join-link">
@@ -90,9 +130,9 @@ export function Header() {
               className="github-mark"
             />
           </a>
-        </nav>
+        </motion.nav>
       </motion.div>
-    </header>
+    </motion.header>
   );
 }
 export function Footer() {

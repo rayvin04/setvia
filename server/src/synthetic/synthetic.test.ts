@@ -1,17 +1,21 @@
 import assert from "node:assert/strict";
 import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
+import type { AddressInfo } from "node:net";
 import { test } from "node:test";
 import {
   META_API_BASE_URL,
   META_SPARK_MODEL,
   type MetaConfig,
+  type MetaApiClient,
 } from "../ai/meta-client.js";
+import { createApp } from "../http/app.js";
 import { ScenarioDraftSchema, ScenarioRecordSchema, scenarioJsonSchema, type ScenarioDraft } from "./scenario-schema.js";
 import { createScenarioGenerationClient, generateScenario, GenerateScenarioRequestSchema, ScenarioGenerationError } from "./generate.js";
+import { createScenarioGenerationRouter } from "./generation-router.js";
 import { SyntheticScenarioStore } from "./store.js";
 import { SyntheticSimulationService } from "./simulator.js";
-import type { SyntheticRoomApiClient } from "./room-client.js";
+import { SyntheticRoomApiClient, type SyntheticRoomApiClient as SyntheticRoomApiClientType } from "./room-client.js";
 
 const validScenario: ScenarioDraft = {
   category: "beach_outing",
@@ -103,6 +107,17 @@ function scenarioRecord(scenario = validScenario) {
     },
     review: { approvedForPlayback: true, approvedAt: "2026-11-03T00:00:00.000Z" },
   });
+}
+
+async function withServer<T>(app: ReturnType<typeof createApp>, action: (baseUrl: string) => Promise<T>) {
+  const server = app.listen(0, "127.0.0.1");
+  await new Promise<void>((resolve) => server.once("listening", resolve));
+  const address = server.address() as AddressInfo;
+  try {
+    return await action(`http://127.0.0.1:${address.port}`);
+  } finally {
+    await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  }
 }
 
 test("scenario contract keeps attendee counts, private evidence, and message order consistent", () => {
@@ -199,6 +214,105 @@ test("generation denied by the shared budget makes no HTTP attempt", async () =>
   assert.equal(networkCalls, 0);
 });
 
+test("Studio generation route requires service authentication and uses the room runtime budget hooks", async () => {
+  const token = "S".repeat(43);
+  const events: Array<{ phase: string; role?: string }> = [];
+  const reservations: Array<{ tokens: number; costMicros: number }> = [];
+  let networkCalls = 0;
+  const runtimeClient: MetaApiClient = {
+    baseUrl: META_API_BASE_URL,
+    model: META_SPARK_MODEL,
+    getRequestCount: () => 0,
+    async createResponse() { throw new Error("The generator test must use its mocked HTTP transport."); },
+  };
+  const router = createScenarioGenerationRouter({
+    internalToken: token,
+    hooks: {
+      reserveAttempt: async (allowance) => { reservations.push(allowance); },
+      recordHttpEvent: async (event) => { events.push({ phase: event.phase, role: event.role }); },
+    },
+    client: {
+      config: metaConfig,
+      fetchImpl: async () => {
+        networkCalls += 1;
+        return new Response(JSON.stringify({
+          id: "resp_route_test",
+          model: META_SPARK_MODEL,
+          output_text: JSON.stringify(validScenario),
+          usage: { input_tokens: 100, output_tokens: 100, total_tokens: 200 },
+        }), { status: 200, headers: { "Content-Type": "application/json" } });
+      },
+    },
+  });
+  const app = createApp({ client: runtimeClient, demoScenarioRouter: router });
+
+  await withServer(app, async (baseUrl) => {
+    const missingAuth = await fetch(`${baseUrl}/api/demo/scenarios/health`);
+    assert.equal(missingAuth.status, 401);
+
+    const browserRequest = await fetch(`${baseUrl}/api/demo/scenarios/health`, {
+      headers: { Authorization: `Bearer ${token}`, Origin: "https://setvia.r4yv.tech" },
+    });
+    assert.equal(browserRequest.status, 403);
+
+    const badToken = await fetch(`${baseUrl}/api/demo/scenarios/health`, {
+      headers: { Authorization: `Bearer ${"T".repeat(43)}` },
+    });
+    assert.equal(badToken.status, 401);
+
+    const health = await fetch(`${baseUrl}/api/demo/scenarios/health`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    assert.equal(health.status, 200);
+    assert.equal((await health.json() as { available: boolean }).available, true);
+
+    const generated = await fetch(`${baseUrl}/api/demo/scenarios`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ category: "beach_outing", difficulty: "medium", expectedAttendeeCount: 42, activePlannerCount: 2, messageCount: 2, timeZone: "Asia/Manila", dateLocal: null }),
+    });
+    assert.equal(generated.status, 201);
+    assert.equal((await generated.json() as { playbackStarted: boolean }).playbackStarted, false);
+  });
+
+  assert.equal(networkCalls, 1);
+  assert.deepEqual(reservations, [{ tokens: 32_000, costMicros: 64_000 }]);
+  assert.deepEqual(events.map((event) => event.phase), ["started", "response", "usage"]);
+  assert.ok(events.every((event) => event.role === "Scenario Generator"));
+});
+
+test("simulator room client permits HTTPS and submits using the authenticated room message route", async () => {
+  assert.equal(new SyntheticRoomApiClient("https://api.setvia.r4yv.tech").baseUrl, "https://api.setvia.r4yv.tech");
+  assert.throws(() => new SyntheticRoomApiClient("http://api.setvia.r4yv.tech"), /HTTPS origin/);
+  assert.throws(() => new SyntheticRoomApiClient("https://api.setvia.r4yv.tech/path"), /HTTPS origin/);
+
+  const session = { roomId: "room-123", participantId: "planner-1", token: "a".repeat(64) };
+  let capturedUrl = "";
+  let capturedHeaders: HeadersInit | undefined;
+  const client = new SyntheticRoomApiClient("https://api.setvia.r4yv.tech", async (input, init) => {
+    capturedUrl = String(input);
+    capturedHeaders = init?.headers;
+    return new Response(JSON.stringify({
+      receipt: { id: "receipt-1", ownerId: session.participantId, proposalVersion: 1, occurredAt: "2026-11-04T00:00:00.000Z" },
+      duplicate: false,
+      snapshot: {
+        schemaVersion: "dashboard-v1", source: "room", sequence: 4,
+        room: { roomId: session.roomId, viewerId: session.participantId, revision: 3, proposalVersion: 1, analysisStatus: "queued", privateAnalysisStatus: "idle", participants: [], questions: [], readiness: null },
+      },
+    }), { status: 200, headers: { "Content-Type": "application/json" } });
+  });
+
+  await client.submitMessage(session, {
+    messageId: "message-1", expectedRevision: 2, proposalVersion: 1,
+    text: "Sunday works for me.", visibility: "group", questionId: null, replyOption: null,
+  });
+
+  assert.equal(capturedUrl, "https://api.setvia.r4yv.tech/api/rooms/room-123/messages");
+  const headers = new Headers(capturedHeaders);
+  assert.equal(headers.get("authorization"), `Bearer ${session.token}`);
+  assert.equal(headers.get("x-setvia-participant"), session.participantId);
+});
+
 test("private scenario store versions edits and approvals outside the public workspace", async (context) => {
   const privateRoot = await mkdtemp(join(process.cwd(), "..", "setvia-synthetic-test-"));
   context.after(async () => rm(privateRoot, { recursive: true, force: true }));
@@ -270,7 +384,7 @@ test("live simulator uses participant actions and does not send ground truth to 
       sequence += 1;
       return { receipt: { ownerId: session.participantId }, duplicate: false, snapshot: snapshot(session) };
     },
-  } as unknown as SyntheticRoomApiClient;
+  } as unknown as SyntheticRoomApiClientType;
 
   const service = new SyntheticSimulationService(store, fakeRooms);
   const started = await service.startLive(record.datasetId, record.datasetVersion);

@@ -5,7 +5,7 @@ import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve, sep } from "node:path";
 import { Categories, RoleSchemas, RoomSchema, type Question } from "./contracts.js";
-import { AgentEngine, MOCK_LIMITS, validateJudge } from "./engine.js";
+import { AgentEngine, MOCK_LIMITS, annotateInfeasibleQuestionOptions, validateJudge } from "./engine.js";
 import {
   fixture,
   judge,
@@ -51,6 +51,44 @@ test("unnecessary agents are skipped and completed analysis stops without anothe
     f.calls.map((c) => c.role),
     ["Judge"],
   );
+});
+
+test("choice options that conflict with confirmed shared hard constraints require explicit reconsideration", async () => {
+  const f = await fixture([]);
+  const room = await f.store.read(f.roomId);
+  room.constraints = [{
+    id: "confirmed_departure_time",
+    ownerId: f.auth.participantId,
+    visibility: "group",
+    category: "Schedule Check",
+    key: "departureTime",
+    operator: "gte",
+    expected: "10:00 AM",
+    hard: true,
+  }];
+  const questions: Question[] = [{
+    id: "departure_choice",
+    findingId: "schedule_gap",
+    targetId: null,
+    visibility: "group",
+    kind: "choice",
+    text: "When should the group leave?",
+    options: ["Leave at 9 AM", "Leave at 10:30 AM"],
+  }];
+  annotateInfeasibleQuestionOptions(room, questions);
+  assert.match(questions[0]!.options[0]!, /conflicts with a confirmed requirement/);
+  assert.equal(questions[0]!.options[1], "Leave at 10:30 AM");
+
+  const privateConstraintRoom = {
+    ...room,
+    constraints: room.constraints.map((constraint) => ({ ...constraint, visibility: "private" as const })),
+  };
+  const privateQuestions = structuredClone(questions).map((question) => ({
+    ...question,
+    options: ["Leave at 9 AM", "Leave at 10:30 AM"],
+  }));
+  annotateInfeasibleQuestionOptions(privateConstraintRoom, privateQuestions);
+  assert.deepEqual(privateQuestions[0]!.options, ["Leave at 9 AM", "Leave at 10:30 AM"]);
 });
 test("live cycle admission failure stops before any model request", async () => {
   const f = await fixture([]);

@@ -2,13 +2,11 @@
   background: radial-gradient(ellipse at 78% 0%, #072333 0, transparent 34rem), #02070a;
   min-height: 75svh;
 }
-.planning-top { max-width: 1376px; padding-top: 38px; padding-bottom: 88px; }
+.planning-page .planning-top { max-width: 1540px; padding-top: 112px; padding-bottom: 88px; }
 .planning-top > .back-link { margin-bottom: 30px; }
-.planning-heading { display:flex; align-items:center; justify-content:space-between; gap:32px; margin-bottom:34px; }
-.planning-heading h1 { margin-top:9px; font-size:clamp(34px,4vw,54px); line-height:1.16; font-weight:520; }
-.planning-heading > div:first-child > p { max-width:650px; margin-top:14px; color:#a4afb8; line-height:1.7; }
-.planning-kicker { display:inline-flex; align-items:center; gap:8px; color:#6ecfff; font-size:12px; letter-spacing:.02em; }
-.planning-mascot { display:grid; place-items:center; width:94px; height:84px; flex:0 0 auto; border:1px solid #ffffff14; border-radius:28px 28px 28px 8px; background:linear-gradient(145deg,#11252d,#080d11); }
+.planning-heading { display:flex; align-items:center; gap:16px; margin-bottom:28px; }
+.planning-heading h1 { font-size:clamp(34px,4vw,54px); line-height:1.16; font-weight:520; }
+.planning-mascot { display:grid; place-items:center; flex:none; }
 .planning-mascot .mascot { width:70px; height:58px; }
 .planning-mascot.is-analysing { animation:mascot-bob 1.3s ease-in-out infinite; }
 @keyframes mascot-bob { 0%,100%{transform:translateY(0) rotate(-2deg)} 50%{transform:translateY(-5px) rotate(2deg)} }
@@ -35,6 +33,12 @@
 .room-launch-unavailable svg,.room-launch-error svg,.room-launch-notice svg { flex:0 0 auto; margin-top:1px; }
 .room-launch-button { width:100%; min-height:48px; }
 .room-launch-button:disabled { cursor:not-allowed; opacity:.52; }
+.room-launch-demo { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px 16px; padding-top:14px; border-top:1px solid #ffffff14; }
+.room-launch-demo > div { display:grid; gap:4px; }
+.room-launch-demo strong { color:#dfe9e9; font-size:11px; font-weight:550; }
+.room-launch-demo span { color:#99afb7; font-size:10px; line-height:1.5; }
+.room-launch-demo button { min-height:40px; white-space:nowrap; }
+@media (max-width:600px) { .room-launch-demo { grid-template-columns:1fr; } .room-launch-demo button { width:100%; } }
 .source-card,.draft-card,.plan-card,.review-card,.open-questions-card,.proxy-card {
   background:linear-gradient(148deg,#0b151b,#071015); border:1px solid #ffffff14; border-radius:19px; box-shadow:0 18px 55px #00000020;
 }
@@ -175,10 +179,9 @@
   .accept-all { margin:16px 0 0 48px; }
 }
 @media (max-width:720px) {
-  .planning-top { padding:28px 18px 70px; }
-  .planning-heading { align-items:flex-start; gap:12px; }
+  .planning-page .planning-top { padding:88px 18px 70px; }
+  .planning-heading { gap:12px; }
   .planning-heading h1 { font-size:36px; }
-  .planning-mascot { width:65px; height:62px; border-radius:20px 20px 20px 7px; }
   .planning-mascot .mascot { width:52px; }
   .planning-layout { grid-template-columns:minmax(0,1fr); }
   .source-card,.draft-card,.plan-card,.review-card,.open-questions-card { border-radius:15px; }
@@ -187,10 +190,7 @@
   .planning-live-status { right:12px; bottom:12px; }
 }
 @media (max-width:460px) {
-  .planning-heading { align-items:flex-start; }
   .planning-heading h1 { font-size:31px; }
-  .planning-heading > div:first-child > p { font-size:12px; }
-  .planning-mascot { width:53px; height:53px; border-radius:16px 16px 16px 6px; }
   .planning-mascot .mascot { width:44px; }
   .source-card,.draft-card,.plan-card,.review-card,.open-questions-card { padding:19px 16px; }
   .plan-field-grid,.proxy-input-grid { grid-template-columns:minmax(0,1fr); }

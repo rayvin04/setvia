@@ -5,6 +5,7 @@ import { lstat, mkdir, open, readFile } from "node:fs/promises";
 import type { FileHandle } from "node:fs/promises";
 import { LiveBudgetJournal, LIVE_MAX_HTTP_ATTEMPTS, LIVE_ATTEMPT_RESERVATION_MICROS, LIVE_ATTEMPT_RESERVATION_TOKENS } from "../../../scripts/live-budget-journal.js";
 import { readMetaConfig } from "../ai/meta-client.js";
+import { assertPlanningScope } from "../ai/planning-scope.js";
 import { createMetaGateway } from "../agents/meta-gateway.js";
 import type { MetaHttpEvent } from "../agents/meta-gateway.js";
 import { AgentEngine, type Limits } from "../agents/engine.js";
@@ -20,8 +21,7 @@ import type { CreateRoomRequest } from "../../../shared/room-api.js";
 
 export const DEFAULT_ROOM_PROMPT_VERSION = "agents-v8";
 
-// Cumulative authorization: original 10 plus 21 browser-workflow requests.
-// Existing reservations remain in the same append-only ledger.
+// Keep the committed Stage B integration ceiling; Studio and extraction share this ledger.
 export const LIVE_CAP = {
   attempts: 31,
   costMicros: 3_224_000,
@@ -314,11 +314,16 @@ interface RoomRuntimeOptions {
   syntheticDemo: boolean;
   events?: RoomEventHub;
   beforeGroup?(): Promise<void>;
+  acquireAttempt?(): Promise<() => void>;
+  beforeAttempt?(): void | Promise<void>;
+  participantCooldownMs?: number;
 }
 
 export interface AuxiliaryInferenceHooks {
   reserveAttempt(allowance: { tokens: number; costMicros: number }): Promise<void>;
   recordHttpEvent(event: MetaHttpEvent): Promise<void>;
+  acquireAttempt(): Promise<() => void>;
+  beforeAttempt(): void | Promise<void>;
 }
 
 export class RoomRuntime {
@@ -329,6 +334,7 @@ export class RoomRuntime {
   private readonly privateTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private readonly privateRuns = new Map<string, Promise<void>>();
   private readonly activeTasks = new Set<Promise<void>>();
+  private readonly participantSubmissions = new Map<string, { at: number; messageId: string }>();
   private closed = false;
 
   constructor(private readonly options: RoomRuntimeOptions) {
@@ -345,6 +351,8 @@ export class RoomRuntime {
     return {
       reserveAttempt: (allowance) => this.options.budget.reserve(allowance),
       recordHttpEvent: (event) => this.options.journal.handle(event, "F"),
+      acquireAttempt: () => this.options.acquireAttempt?.() ?? Promise.resolve(() => {}),
+      beforeAttempt: () => this.options.beforeAttempt?.(),
     };
   }
 
@@ -396,19 +404,34 @@ export class RoomRuntime {
     // The HTTP contract is always the idempotent object form.
     // Authorize before exposing budget state. Duplicate receipts need no run.
     await this.rooms.view(roomId, auth);
+    assertPlanningScope(input.text);
     const state = await this.options.engine.store.read(roomId);
-    if (input.visibility === "group" && !state.responses.some((response) => response.id === input.messageId))
-      await this.options.beforeGroup?.();
-    const result = await this.rooms.submit(roomId, auth, input);
-    if (!result.duplicate) {
-      if (input.visibility === "group") this.scheduleGroup(roomId, auth);
-      else this.schedulePrivate(roomId, auth.participantId);
+    const existing = state.responses.some((response) => response.id === input.messageId);
+    const prior = this.participantSubmissions.get(auth.participantId);
+    const now = Date.now();
+    const cooldown = this.options.participantCooldownMs ?? 0;
+    if (!existing && prior && prior.messageId !== input.messageId && now - prior.at < cooldown)
+      throw new StateError("PARTICIPANT_COOLDOWN");
+    const reservation = existing ? null : { at: now, messageId: input.messageId };
+    if (reservation) this.participantSubmissions.set(auth.participantId, reservation);
+    try {
+      if (!existing) await this.options.beforeAttempt?.();
+      if (input.visibility === "group" && !existing) await this.options.beforeGroup?.();
+      const result = await this.rooms.submit(roomId, auth, input);
+      if (!result.duplicate) {
+        if (input.visibility === "group") this.scheduleGroup(roomId, auth);
+        else this.schedulePrivate(roomId, auth.participantId);
+      }
+      return SubmitRoomMessageResultSchema.parse({
+        receipt: result.receipt,
+        duplicate: result.duplicate,
+        snapshot: await this.snapshot(roomId, auth),
+      });
+    } catch (error) {
+      if (reservation && this.participantSubmissions.get(auth.participantId) === reservation)
+        this.participantSubmissions.delete(auth.participantId);
+      throw error;
     }
-    return SubmitRoomMessageResultSchema.parse({
-      receipt: result.receipt,
-      duplicate: result.duplicate,
-      snapshot: await this.snapshot(roomId, auth),
-    });
   }
 
   async shareCandidate(roomId: string, auth: Auth, expectedRevision: number, candidateId: string) {
@@ -436,6 +459,7 @@ export class RoomRuntime {
     const privateTimer = this.privateTimers.get(privateTimerKey);
     if (privateTimer) clearTimeout(privateTimer);
     this.privateTimers.delete(privateTimerKey);
+    this.participantSubmissions.delete(auth.participantId);
     this.options.engine.cancelPrivate(roomId, auth.participantId);
     await this.rooms.leave(roomId, auth, expectedRevision);
     const next = await this.options.engine.store.read(roomId);
@@ -561,7 +585,6 @@ export class RoomRuntime {
           publicRevision: room.revision,
           proposalVersion: analysis.proposalVersion,
           privateOwnerLabel: `Participant ${ownerIndex + 1}`,
-          privateCandidates: analysis.candidates.map(({ key, value }) => ({ key, value })),
         },
         cycle,
       };
@@ -596,15 +619,32 @@ export class RoomRuntime {
   }
 }
 
-export async function createRoomMetaGateway(privateRoot: string, promptVersion: string, onHttpEvent: (event: MetaHttpEvent) => Promise<void>) {
+export async function createRoomMetaGateway(
+  privateRoot: string,
+  promptVersion: string,
+  onHttpEvent: (event: MetaHttpEvent) => Promise<void>,
+  promptRoot?: string,
+  attemptControls?: {
+    acquireAttempt?: () => Promise<() => void>;
+    beforeAttempt?: () => void | Promise<void>;
+  },
+) {
   if (!/^agents-v[0-9]+$/.test(promptVersion)) throw new StateError("INVALID_PROMPT_VERSION");
   const prompts = {} as Record<Role, string>;
   for (const role of Roles) {
     const file = role === "Question Strategist" ? "question-strategist.txt" : role.toLowerCase() + ".txt";
-    prompts[role] = await readFile(resolve(privateRoot, "prompts", promptVersion, file), "utf8");
+    prompts[role] = await readFile(
+      promptRoot
+        ? resolve(promptRoot, `${promptVersion}-${file}`)
+        : resolve(privateRoot, "prompts", promptVersion, file),
+      "utf8",
+    );
   }
   return createMetaGateway({
-    client: { config: readMetaConfig(), timeoutMs: 30_000, maxRetries: 0, maxTotalRequests: 1 },
+    client: {
+      config: readMetaConfig(), timeoutMs: 30_000, maxRetries: 0, maxTotalRequests: 1,
+      ...attemptControls,
+    },
     prompts, promptVersion, maxRequestBytes: MAX_REQUEST_BYTES, maxOutputTokens: MAX_OUTPUT_TOKENS,
     inputTokenAllowance: INPUT_TOKEN_ALLOWANCE, callTokenAllowance: CALL_TOKEN_ALLOWANCE,
     callCostMicros: CALL_COST_MICROS, inputPriceMicrosPerMillion: INPUT_PRICE_MICROS_PER_MILLION,
@@ -615,8 +655,12 @@ export async function createRoomMetaGateway(privateRoot: string, promptVersion: 
 export async function createLocalRoomRuntime(options: {
   privateRoot: string;
   publicRoot: string;
+  promptRoot?: string;
   promptVersion?: string;
   syntheticDemo?: boolean;
+  acquireAttempt?: () => Promise<() => void>;
+  beforeAttempt?: () => void | Promise<void>;
+  participantCooldownMs?: number;
 }): Promise<RoomRuntime> {
   const privateRoot = resolve(options.privateRoot);
   const persistence = new JsonPersistence(resolve(privateRoot, "room-state"), options.publicRoot);
@@ -628,7 +672,13 @@ export async function createLocalRoomRuntime(options: {
     const runBudget = await IntegrationRunBudget.open(resolve(privateRoot, "room-state", "integration-budget.ndjson"));
     budget = runBudget;
     const promptVersion = options.promptVersion ?? DEFAULT_ROOM_PROMPT_VERSION;
-    const base = await createRoomMetaGateway(privateRoot, promptVersion, (event) => journal!.handle(event, "F"));
+    const base = await createRoomMetaGateway(
+      privateRoot,
+      promptVersion,
+      (event) => journal!.handle(event, "F"),
+      options.promptRoot,
+      { acquireAttempt: options.acquireAttempt, beforeAttempt: options.beforeAttempt },
+    );
     const gateway: AgentGateway = {
       mode: base.mode,
       promptVersion: base.promptVersion,
@@ -694,6 +744,9 @@ export async function createLocalRoomRuntime(options: {
       syntheticDemo: options.syntheticDemo ?? false,
       events: hub,
       beforeGroup: () => checkGroupCapacity(limits.maxRequests),
+      acquireAttempt: options.acquireAttempt,
+      beforeAttempt: options.beforeAttempt,
+      participantCooldownMs: options.participantCooldownMs,
     });
     return runtime;
   } catch (error) {
@@ -715,7 +768,7 @@ export function roomAuthFromHeaders(headers: Record<string, unknown>): Auth {
 }
 
 export function roomErrorStatus(code: string) {
-  if (code === "ROOM_STREAM_LIMIT") return 429;
+  if (code === "ROOM_STREAM_LIMIT" || code === "PARTICIPANT_COOLDOWN") return 429;
   if (["UNAUTHORIZED", "UNAUTHORIZED_ANSWER", "PRIVATE_ANSWER_REQUIRED", "DUPLICATE_MESSAGE_ID"].includes(code)) return 403;
   if (["ROOM_NOT_FOUND", "CANDIDATE_NOT_FOUND"].includes(code)) return 404;
   if (["STALE_STATE", "STALE_PROPOSAL", "STALE_PRIVATE_ANALYSIS", "INVALID_REPLY_OPTION", "REPLY_WITHOUT_QUESTION"].includes(code)) return 409;

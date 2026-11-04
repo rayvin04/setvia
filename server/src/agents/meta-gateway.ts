@@ -15,7 +15,7 @@ export interface MetaHttpEvent {
   requestNumber: number;
   invocationId?: string;
   requestHash: string;
-  role: Role | "Scenario Generator";
+  role: Role | "Scenario Generator" | "Plan Extraction";
   promptVersion: string;
   status?: number;
   durationMs?: number;

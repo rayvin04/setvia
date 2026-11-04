@@ -59,7 +59,7 @@ async function readResponse<T>(response: Response, schema: z.ZodType<T>): Promis
   if (!response.ok) {
     const message = value && typeof value === "object" && "error" in value && typeof value.error === "string"
       ? value.error
-      : "The local planning service could not complete that action.";
+      : "Setvia could not complete that room action. Check your connection and try again.";
     throw new RoomApiError(message, response.status);
   }
   const parsed = schema.safeParse(value);
@@ -91,9 +91,16 @@ export function getRoomSession(roomId: string): ParticipantSession | null {
 
 export function getInvitationLink(roomId: string): string | null {
   try {
-    const invitation = window.sessionStorage.getItem(invitationKey(roomId));
+    const invitation = getRoomInvitation(roomId);
     if (!invitation || !/^[a-f0-9]{64}$/.test(invitation)) return null;
     return `${window.location.origin}/join?room=${encodeURIComponent(roomId)}#invite=${invitation}`;
+  } catch { return null; }
+}
+
+export function getRoomInvitation(roomId: string): string | null {
+  try {
+    const invitation = window.sessionStorage.getItem(invitationKey(roomId));
+    return invitation && /^[a-f0-9]{64}$/.test(invitation) ? invitation : null;
   } catch { return null; }
 }
 
@@ -119,7 +126,13 @@ export async function createRoom(input: CreateRoomRequest, signal?: AbortSignal)
   return { ...created, invitationLink: `${window.location.origin}/join?room=${encodeURIComponent(created.roomId)}#invite=${created.invitation}` };
 }
 
-export async function joinRoom(roomId: string, invitation: string, name: string, signal?: AbortSignal) {
+export async function joinRoom(
+  roomId: string,
+  invitation: string,
+  name: string,
+  signal?: AbortSignal,
+  options: { persistSession?: boolean } = {},
+) {
   const response = await fetch(endpoint(`/rooms/${encodeURIComponent(roomId)}/join`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -127,7 +140,7 @@ export async function joinRoom(roomId: string, invitation: string, name: string,
     cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal,
   });
   const joined = await readResponse(response, JoinedSchema);
-  storeSession(joined.session);
+  if (options.persistSession !== false) storeSession(joined.session);
   return joined;
 }
 

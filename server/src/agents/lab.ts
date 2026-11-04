@@ -11,7 +11,7 @@ export interface LiveAttemptRecord {
   scenarioId: string;
   model: "muse-spark-1.3";
   promptVersion: string;
-  role: Role | "Scenario Generator";
+  role: Role | "Scenario Generator" | "Plan Extraction";
   requestHash: string;
   invocationId?: string;
   status: "reserved" | "response_received" | "transport_error" | "usage_recorded";
@@ -79,7 +79,6 @@ export interface LabRecord {
     publicRevision: number;
     proposalVersion: number;
     privateOwnerLabel?: string;
-    privateCandidates?: Array<{ key: string; value: unknown }>;
   };
   simulation?: true;
   participantCount?: number;

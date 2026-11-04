@@ -6,11 +6,13 @@ import { Roles } from "../server/src/agents/contracts.js";
 import type { MetaHttpEvent } from "../server/src/agents/meta-gateway.js";
 import type { LiveAttemptRecord } from "../server/src/agents/lab.js";
 
+// Cumulative ceiling across all metered Setvia features.
 export const LIVE_COST_BUDGET_MICROS = 10_000_000;
 export const LIVE_ATTEMPT_RESERVATION_MICROS = 104_000;
 export const LIVE_MAX_HTTP_ATTEMPTS = 70;
 export const LIVE_ATTEMPT_RESERVATION_TOKENS = 64_000;
 export const LIVE_TOKEN_BUDGET = 3_200_000;
+const LEGACY_LIVE_COST_BUDGET_MICROS = 10_000_000;
 const LEDGER_NAME = "live-budget-ledger-v1.json";
 const LOCK_NAME = "live-budget-ledger-v1.lock";
 
@@ -20,7 +22,7 @@ const AttemptSchema = z.object({
   scenarioId: z.string().min(1).max(20),
   model: z.literal("muse-spark-1.3"),
   promptVersion: z.string().regex(/^agents-v[0-9]+$/),
-  role: z.enum([...Roles, "Scenario Generator"]),
+  role: z.enum([...Roles, "Scenario Generator", "Plan Extraction"]),
   requestHash: z.string().regex(/^[a-f0-9]{64}$/),
   invocationId: z.string().uuid().optional(),
   status: z.enum(["reserved", "response_received", "transport_error", "usage_recorded"]),
@@ -41,7 +43,11 @@ type ValidatedLiveAttemptRecord = z.infer<typeof AttemptSchema>;
 
 const LedgerSchema = z.object({
   version: z.literal("live-budget-ledger-v1"),
-  budgetMicros: z.literal(LIVE_COST_BUDGET_MICROS),
+  budgetMicros: z.union([
+    z.literal(LEGACY_LIVE_COST_BUDGET_MICROS),
+    z.literal(10_537_504),
+    z.literal(LIVE_COST_BUDGET_MICROS),
+  ]),
   attempts: z.array(AttemptSchema),
 }).strict();
 type Ledger = z.infer<typeof LedgerSchema>;

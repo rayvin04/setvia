@@ -229,6 +229,7 @@ function validateQuestions(
   findings: Finding[],
 ) {
   unique(questions.map((q) => q.id));
+  annotateInfeasibleQuestionOptions(room, questions);
   for (const q of questions) {
     const target = room.participants.find((p) => p.id === q.targetId);
     if (!findings.some((f) => f.id === q.findingId && f.status !== "resolved"))
@@ -250,6 +251,63 @@ function validateQuestions(
     if (q.visibility === "group" && target && !target.publicTargetingConsent)
       throw new StateError("DISCLOSURE_DENIED");
   }
+}
+
+const CONFIRMED_CONFLICT_SUFFIX = " [conflicts with a confirmed requirement]";
+
+function parseClockMinutes(value: string): number | undefined {
+  const meridiem = value.match(/\b(1[0-2]|0?[1-9])(?::([0-5]\d))?\s*(a\.?m\.?|p\.?m\.?)\b/i);
+  if (meridiem) {
+    let hours = Number(meridiem[1]) % 12;
+    if (meridiem[3]!.toLowerCase().startsWith("p")) hours += 12;
+    return hours * 60 + Number(meridiem[2] ?? 0);
+  }
+  const twentyFourHour = value.match(/\b([01]?\d|2[0-3]):([0-5]\d)\b/);
+  if (!twentyFourHour) return undefined;
+  return Number(twentyFourHour[1]) * 60 + Number(twentyFourHour[2]);
+}
+
+function parsedChoiceValue(key: string, expected: unknown, label: string) {
+  if (typeof expected === "string" && /time|departure|leave|start|arrival|meet/i.test(key)) {
+    const actual = parseClockMinutes(label);
+    const target = parseClockMinutes(expected);
+    return actual === undefined || target === undefined ? undefined : { actual, target };
+  }
+  if (typeof expected === "number" && /budget|cost|price|amount|spend/i.test(key)) {
+    if (!/₱|php|\$|usd|dollars?/i.test(label)) return undefined;
+    const amount = label.match(/(?:₱|php|\$|usd\s*)\s*([0-9][0-9,]*(?:\.\d+)?)/i);
+    if (!amount) return undefined;
+    return { actual: Number(amount[1]!.replaceAll(",", "")), target: expected };
+  }
+  return undefined;
+}
+
+/** Labels structured choices that contradict a confirmed shared hard constraint. */
+export function annotateInfeasibleQuestionOptions(room: Room, questions: Question[]) {
+  const hardShared = room.constraints.filter((constraint) =>
+    constraint.visibility === "group" && constraint.hard,
+  );
+  for (const question of questions) {
+    if (question.kind !== "choice") continue;
+    question.options = question.options.map((label) => {
+      if (label.endsWith(CONFIRMED_CONFLICT_SUFFIX)) return label;
+      const conflict = hardShared.some((constraint) => {
+        const parsed = parsedChoiceValue(constraint.key, constraint.expected, label);
+        if (!parsed) return false;
+        switch (constraint.operator) {
+          case "eq": return parsed.actual !== parsed.target;
+          case "neq": return parsed.actual === parsed.target;
+          case "lte": return parsed.actual > parsed.target;
+          case "gte": return parsed.actual < parsed.target;
+          case "required": return false;
+        }
+      });
+      return conflict
+        ? `${label.slice(0, 120)}${CONFIRMED_CONFLICT_SUFFIX}`
+        : label;
+    });
+  }
+  return questions;
 }
 
 function traceFailure(error: unknown): { code: string; message: string } {

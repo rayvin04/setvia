@@ -93,6 +93,8 @@ export interface MetaClientOptions {
   onUsage?: (metadata: SafeUsageMetadata, requestNumber: number) => unknown | Promise<unknown>;
   // Awaited before every HTTP attempt, including retries. May reject a reserved budget.
   beforeAttempt?: () => void | Promise<void>;
+  // Shared process-wide limiter, acquired before reservations and held until response headers.
+  acquireAttempt?: () => Promise<() => void>;
   // Awaited immediately before fetch and after its transport result for durable attempt journals.
   onHttpEvent?: (event: MetaHttpAttemptEvent) => void | Promise<void>;
 }
@@ -338,69 +340,75 @@ export function createMetaClient(
           );
         }
         requestOptions.signal?.throwIfAborted();
-        await options.beforeAttempt?.();
-        requestOptions.signal?.throwIfAborted();
-        requestCount += 1;
-        const attemptStartedAt = performance.now();
-        await options.onHttpEvent?.({
-          phase: "started",
-          requestNumber: requestCount,
-        });
-
         let response: Response;
         let attemptSignal: AbortSignal | undefined;
+        const releaseAttempt = await options.acquireAttempt?.();
         try {
-          const timeoutSignal = AbortSignal.timeout(timeoutMs);
-          const signal = requestOptions.signal
-            ? AbortSignal.any([requestOptions.signal, timeoutSignal])
-            : timeoutSignal;
-          attemptSignal = signal;
-          response = await fetchImpl(config.baseUrl + "/responses", {
-            method: "POST",
-            headers: {
-              Authorization: "Bearer " + config.apiKey,
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ ...request, model: config.model }),
-            signal,
-          });
-        } catch {
+          requestOptions.signal?.throwIfAborted();
+          await options.beforeAttempt?.();
+          requestOptions.signal?.throwIfAborted();
+          requestCount += 1;
+          const attemptStartedAt = performance.now();
           await options.onHttpEvent?.({
-            phase: "transport_error",
+            phase: "started",
             requestNumber: requestCount,
-            durationMs: Math.round(performance.now() - attemptStartedAt),
           });
-          if (requestOptions.signal?.aborted) {
+
+          try {
+            const timeoutSignal = AbortSignal.timeout(timeoutMs);
+            const signal = requestOptions.signal
+              ? AbortSignal.any([requestOptions.signal, timeoutSignal])
+              : timeoutSignal;
+            attemptSignal = signal;
+            response = await fetchImpl(config.baseUrl + "/responses", {
+              method: "POST",
+              headers: {
+                Authorization: "Bearer " + config.apiKey,
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ ...request, model: config.model }),
+              signal,
+            });
+          } catch {
+            await options.onHttpEvent?.({
+              phase: "transport_error",
+              requestNumber: requestCount,
+              durationMs: Math.round(performance.now() - attemptStartedAt),
+            });
+            if (requestOptions.signal?.aborted) {
+              throw new MetaApiError(
+                "timeout",
+                "Meta request was cancelled before completion.",
+              );
+            }
+            const timedOut = attemptSignal?.aborted === true;
+            if (attempt < maxRetries) {
+              const delay = 200 * 2 ** attempt + Math.floor(random() * 100);
+              attempt += 1;
+              await sleep(delay);
+              continue;
+            }
+            if (timedOut) {
+              throw new MetaApiError("timeout", "Meta request timed out.", {
+                retryable: true,
+              });
+            }
             throw new MetaApiError(
-              "timeout",
-              "Meta request was cancelled before completion.",
+              "connection",
+              "Could not connect to the Meta Model API.",
+              { retryable: true },
             );
           }
-          const timedOut = attemptSignal?.aborted === true;
-          if (attempt < maxRetries) {
-            const delay = 200 * 2 ** attempt + Math.floor(random() * 100);
-            attempt += 1;
-            await sleep(delay);
-            continue;
-          }
-          if (timedOut) {
-            throw new MetaApiError("timeout", "Meta request timed out.", {
-              retryable: true,
-            });
-          }
-          throw new MetaApiError(
-            "connection",
-            "Could not connect to the Meta Model API.",
-            { retryable: true },
-          );
-        }
 
-        await options.onHttpEvent?.({
-          phase: "response",
-          requestNumber: requestCount,
-          status: response.status,
-          durationMs: Math.round(performance.now() - attemptStartedAt),
-        });
+          await options.onHttpEvent?.({
+            phase: "response",
+            requestNumber: requestCount,
+            status: response.status,
+            durationMs: Math.round(performance.now() - attemptStartedAt),
+          });
+        } finally {
+          releaseAttempt?.();
+        }
 
         if (!response.ok) {
           const apiError = safeApiError(response.status);

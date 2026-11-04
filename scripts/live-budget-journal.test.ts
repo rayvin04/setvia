@@ -69,19 +69,26 @@ test("live request journal persists reservations, HTTP status, usage, and privat
   assert.ok(root.length > 0);
 });
 
-test("unknown usage still stops at the cumulative token ceiling after attempt authorization expands", async (t) => {
+test("unknown usage stops at the tighter cumulative spend or token ceiling", async (t) => {
   const { privateRoot, publicRoot } = await tempRoots(t);
   const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A"]);
   try {
-    const maximumUnknownAttempts = Math.floor(LIVE_TOKEN_BUDGET / LIVE_ATTEMPT_RESERVATION_TOKENS);
+    const maximumUnknownAttempts = Math.min(
+      Math.floor(LIVE_TOKEN_BUDGET / LIVE_ATTEMPT_RESERVATION_TOKENS),
+      Math.floor(LIVE_COST_BUDGET_MICROS / LIVE_ATTEMPT_RESERVATION_MICROS),
+    );
     for (let index = 0; index < maximumUnknownAttempts; index++)
       await journal.handle(event("started", index + 1), "A");
     const before = await journal.snapshot();
     assert.equal(before.attempts, maximumUnknownAttempts);
-    assert.equal(before.tokensAtRisk, LIVE_TOKEN_BUDGET);
-    assert.equal(before.remainingTokens, 0);
+    assert.equal(before.tokensAtRisk, maximumUnknownAttempts * LIVE_ATTEMPT_RESERVATION_TOKENS);
+    assert.equal(before.remainingTokens, LIVE_TOKEN_BUDGET - before.tokensAtRisk);
     assert.equal(before.remainingAttempts, LIVE_MAX_HTTP_ATTEMPTS - maximumUnknownAttempts);
-    await assert.rejects(journal.handle(event("started", maximumUnknownAttempts + 1), "A"), /LIVE_CUMULATIVE_TOKEN_LIMIT/);
+    const stopCode = LIVE_COST_BUDGET_MICROS / LIVE_ATTEMPT_RESERVATION_MICROS <=
+      LIVE_TOKEN_BUDGET / LIVE_ATTEMPT_RESERVATION_TOKENS
+      ? /LIVE_CUMULATIVE_BUDGET_LIMIT/
+      : /LIVE_CUMULATIVE_TOKEN_LIMIT/;
+    await assert.rejects(journal.handle(event("started", maximumUnknownAttempts + 1), "A"), stopCode);
     assert.equal((await journal.snapshot()).attempts, maximumUnknownAttempts);
     assert.ok(before.estimatedCostMicros <= LIVE_COST_BUDGET_MICROS);
     assert.equal(before.estimatedCostMicros, maximumUnknownAttempts * LIVE_ATTEMPT_RESERVATION_MICROS);
@@ -90,21 +97,65 @@ test("unknown usage still stops at the cumulative token ceiling after attempt au
   }
 });
 
-test("the expanded HTTP attempt ceiling remains enforced with observed usage", async (t) => {
+test("an old $10 ledger retains the same enforced and persisted cap", async (t) => {
   const { privateRoot, publicRoot } = await tempRoots(t);
+  const ledgerDirectory = join(privateRoot, "lab", "live");
+  await mkdir(ledgerDirectory, { recursive: true });
+  const ledgerPath = join(ledgerDirectory, "live-budget-ledger-v1.json");
+  await writeFile(ledgerPath, JSON.stringify({
+    version: "live-budget-ledger-v1",
+    budgetMicros: 10_000_000,
+    attempts: [],
+  }) + "\n");
   const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A"]);
   try {
-    for (let requestNumber = 1; requestNumber < LIVE_MAX_HTTP_ATTEMPTS; requestNumber++) {
-      await journal.handle(event("started", requestNumber), "A");
-      await journal.handle({ ...event("usage", requestNumber), usage: {
-        model: "muse-spark-1.3", responseId: "synthetic", inputTokens: 1, outputTokens: 1,
-        totalTokens: 2, cachedInputTokens: 0, reasoningTokens: 0, durationMs: 1,
-      } }, "A");
-    }
-    const contenders = await Promise.allSettled([70, 71, 72, 73].map((number) => journal.handle(event("started", number), "A")));
-    assert.equal(contenders.filter((result) => result.status === "fulfilled").length, 1);
-    assert.equal((await journal.snapshot()).attempts, 70);
-    await assert.rejects(journal.handle(event("started", 71), "A"), /LIVE_HTTP_ATTEMPT_LIMIT/);
+    assert.equal((await journal.snapshot()).budgetMicros, 10_000_000);
+    await journal.handle(event("started", 1), "A");
+    const snapshots = (await readFile(ledgerPath, "utf8")).trimEnd().split("\n").map((line) => JSON.parse(line));
+    assert.equal(snapshots[0]?.budgetMicros, 10_000_000);
+    assert.equal(snapshots.at(-1)?.budgetMicros, 10_000_000);
+  } finally {
+    await journal.release();
+  }
+});
+
+test("the committed HTTP attempt ceiling remains enforced with observed usage", async (t) => {
+  const { privateRoot, publicRoot } = await tempRoots(t);
+  const ledgerDirectory = join(privateRoot, "lab", "live");
+  await mkdir(ledgerDirectory, { recursive: true });
+  const ledgerPath = join(ledgerDirectory, "live-budget-ledger-v1.json");
+  const attempts = Array.from({ length: LIVE_MAX_HTTP_ATTEMPTS - 1 }, () => ({
+    id: randomUUID(),
+    runId: randomUUID(),
+    scenarioId: "A",
+    model: "muse-spark-1.3",
+    promptVersion: "agents-v1",
+    role: "Judge",
+    requestHash: "a".repeat(64),
+    status: "usage_recorded",
+    httpStatus: 200,
+    startedAt: new Date().toISOString(),
+    durationMs: 1,
+    reservedCostMicros: 0,
+    reservedTokens: 0,
+    estimatedCostMicros: 0,
+    inputTokens: 0,
+    cachedInputTokens: 0,
+    outputTokens: 0,
+    reasoningTokens: 0,
+    totalTokens: 0,
+    responseId: "synthetic",
+  }));
+  await writeFile(ledgerPath, JSON.stringify({
+    version: "live-budget-ledger-v1",
+    budgetMicros: LIVE_COST_BUDGET_MICROS,
+    attempts,
+  }) + "\n");
+  const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A"]);
+  try {
+    await journal.handle(event("started", 1), "A");
+    assert.equal((await journal.snapshot()).attempts, LIVE_MAX_HTTP_ATTEMPTS);
+    await assert.rejects(journal.handle(event("started", 2), "A"), /LIVE_HTTP_ATTEMPT_LIMIT/);
   } finally { await journal.release(); }
 });
 

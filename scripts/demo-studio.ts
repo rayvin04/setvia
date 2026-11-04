@@ -19,6 +19,8 @@ if (!Number.isInteger(port) || port < 1 || port > 65_535) throw new Error("SETVI
 const allowedOrigins = new Set((process.env.SETVIA_DEMO_STUDIO_UI_ORIGINS ?? "http://127.0.0.1:5173,http://localhost:5173,http://127.0.0.1:4173,http://localhost:4173")
   .split(",").map((origin) => origin.trim()).filter(Boolean));
 const rooms = new SyntheticRoomApiClient();
+const generatorToken = process.env.SETVIA_DEMO_API_TOKEN?.trim();
+const generatorHeaders = generatorToken ? { Authorization: `Bearer ${generatorToken}` } : {};
 const store = new SyntheticScenarioStore(resolve(privateRoot), appRoot);
 const simulation = new SyntheticSimulationService(store, rooms);
 const drafts = new Map<string, {
@@ -98,7 +100,7 @@ app.get("/api/demo-studio/health", async (_request, response) => {
   try {
     const [roomHealth, generationHealth] = await Promise.all([
       rooms.health(),
-      fetch(`${rooms.baseUrl}/api/demo/scenarios/health`, { cache: "no-store", redirect: "error", signal: AbortSignal.timeout(3_000) })
+      fetch(`${rooms.baseUrl}/api/demo/scenarios/health`, { headers: generatorHeaders, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(3_000) })
         .then(async (upstream) => upstream.ok ? await upstream.json() as { available?: unknown } : null)
         .catch(() => null),
     ]);
@@ -135,7 +137,7 @@ app.post("/api/demo-studio/generate", async (request, response) => {
   try {
     const upstream = await fetch(`${rooms.baseUrl}/api/demo/scenarios`, {
       method: "POST",
-      headers: { Accept: "application/json", "Content-Type": "application/json" },
+      headers: { ...generatorHeaders, Accept: "application/json", "Content-Type": "application/json" },
       body: JSON.stringify(parsed.data),
       cache: "no-store",
       credentials: "omit",

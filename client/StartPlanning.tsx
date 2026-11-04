@@ -348,17 +348,13 @@ export function StartPlanning() {
       <div className="planning-top section-shell">
         <Link className="back-link" to="/"><ArrowLeft size={17} aria-hidden="true" />Back to Setvia</Link>
         <div className="planning-heading">
-          <div>
-            <span className="planning-kicker"><Sparkles size={15} aria-hidden="true" /> Meta Muse Spark · real extraction</span>
-            <h1>What are we planning?</h1>
-            <p>Start with an idea or a planning image. Setvia will fill in what it can, then leave the choices with you.</p>
-          </div>
+          <h1>What are we planning?</h1>
           <div className={"planning-mascot" + (busy ? " is-analysing" : "")}><Mascot /></div>
         </div>
         <form className="planning-layout" onSubmit={handleSubmit}>
           <aside className="planning-source-column">
             <section className="source-card" aria-labelledby="source-heading">
-              <div className="card-heading"><span className="section-index">01</span><div><h2 id="source-heading">Bring the plan in</h2><p>Describe it or share the image you already have.</p></div></div>
+              <div className="card-heading"><h2 id="source-heading">Bring the plan in</h2></div>
               <div className="source-mode" role="group" aria-label="Choose an autofill source">
                 <button type="button" aria-pressed={sourceMode === "text"} className={sourceMode === "text" ? "is-active" : ""} onClick={() => { setSourceMode("text"); setStatusMessage(""); }}>Describe your plan</button>
                 <button type="button" aria-pressed={sourceMode === "image"} className={sourceMode === "image" ? "is-active" : ""} onClick={() => { setSourceMode("image"); setStatusMessage(""); }}>Upload an image</button>
@@ -390,9 +386,8 @@ export function StartPlanning() {
                   {selectedImage && <div className="image-actions"><button type="button" className="text-button" onClick={() => fileInputRef.current?.click()}>Replace image</button></div>}
                 </div>
               )}
-              <div className="source-privacy"><LockKeyhole size={16} aria-hidden="true" /><p>Your source is sent to Meta’s API through Setvia’s server for extraction. Setvia holds uploaded images in memory for the request and does not save them to this device or a database.</p></div>
-              <button className="button button-primary autofill-button" type="submit" disabled={busy}><Sparkles size={18} aria-hidden="true" />{busy ? "Analyzing with Muse Spark…" : "Autofill with Setvia"}</button>
-              <p className="source-disclaimer">Muse Spark returns suggestions. Review them before relying on any detail.</p>
+              <div className="source-privacy"><LockKeyhole size={16} aria-hidden="true" /><p>Autofill sends your source to Meta. Setvia does not save uploaded images.</p></div>
+              <button className="button button-primary autofill-button" type="submit" disabled={busy}><Sparkles size={18} aria-hidden="true" />{busy ? "Reading your plan…" : "Autofill with Setvia"}</button>
             </section>
 
             <section className="draft-card" aria-labelledby="draft-heading">
@@ -406,7 +401,7 @@ export function StartPlanning() {
 
           <div className="plan-editor">
             <section className="plan-card" aria-labelledby="plan-heading">
-              <div className="card-heading"><span className="section-index">02</span><div><h2 id="plan-heading">Shape your plan</h2><p>Choose a category if you know it. Muse Spark can suggest one too.</p></div></div>
+              <div className="card-heading"><h2 id="plan-heading">Shape your plan</h2></div>
               <fieldset className="category-fieldset">
                 <legend>What kind of plan is this? <span>Optional</span></legend>
                 <div className="category-grid">

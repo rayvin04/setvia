@@ -1,4 +1,5 @@
-import { Router, type Request, type Response } from "express";
+import { createHash, timingSafeEqual } from "node:crypto";
+import express, { Router, type Request, type Response } from "express";
 import { MetaConfigurationError } from "../ai/errors.js";
 import type { MetaClientOptions } from "../ai/meta-client.js";
 import {
@@ -12,6 +13,7 @@ import {
 
 export interface ScenarioGenerationRouterOptions {
   hooks: ScenarioGenerationHooks;
+  internalToken: string;
   env?: Record<string, string | undefined>;
   client?: Pick<MetaClientOptions, "config" | "fetchImpl" | "timeoutMs">;
   now?: () => Date;
@@ -35,8 +37,29 @@ function safeMessage(error: unknown) {
  * This router intentionally has no standalone budget or direct HTTP bypass.
  */
 export function createScenarioGenerationRouter(options: ScenarioGenerationRouterOptions) {
+  if (!/^[A-Za-z0-9_-]{43,256}$/.test(options.internalToken)) {
+    throw new Error("SCENARIO_GENERATOR_INTERNAL_TOKEN_INVALID");
+  }
   const router = Router();
   const now = options.now ?? (() => new Date());
+  const expectedTokenDigest = createHash("sha256").update(options.internalToken).digest();
+
+  router.use((request: Request, response: Response, next) => {
+    // Only the private Studio service may use this budgeted route. Browser
+    // requests are rejected even if a hostile page attempts a direct POST.
+    if (request.header("origin")) {
+      response.status(403).json({ error: "This internal endpoint does not accept browser requests." });
+      return;
+    }
+    const match = /^Bearer ([A-Za-z0-9_-]{43,256})$/.exec(request.header("authorization") ?? "");
+    const tokenDigest = createHash("sha256").update(match?.[1] ?? "").digest();
+    if (!match || !timingSafeEqual(expectedTokenDigest, tokenDigest)) {
+      response.status(401).json({ error: "This internal endpoint is not authorized." });
+      return;
+    }
+    next();
+  });
+  router.use(express.json({ limit: "24kb", strict: true }));
 
   router.get("/health", (_request: Request, response: Response) => {
     response.json({ available: true, model: "muse-spark-1.3", promptVersion: SCENARIO_GENERATOR_PROMPT_VERSION });

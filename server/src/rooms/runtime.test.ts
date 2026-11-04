@@ -66,7 +66,7 @@ test("concurrent reservations cannot exceed the persistent run cap", async () =>
   });
 });
 
-test("expanded cumulative authorization preserves prior reservations and keeps each cycle bounded", async () => {
+test("committed cumulative authorization preserves prior reservations and keeps each cycle bounded", async () => {
   await withLedger(async (path) => {
     const allowance = { tokens: 64_000, costMicros: 104_000 };
     const original = await IntegrationRunBudget.open(path, { attempts: 10, tokens: 640_000, costMicros: 2_000_000 });
@@ -78,16 +78,18 @@ test("expanded cumulative authorization preserves prior reservations and keeps e
     assert.equal(expanded.snapshot().attempts, 10);
     assert.equal(expanded.snapshot().remainingAttempts, 21);
     assert.equal(expanded.snapshot().remainingTokens, 1_344_000);
+    assert.equal(expanded.snapshot().remainingCostMicros, 2_184_000);
+    assert.equal(LIVE_CAP.attempts, 31);
+    assert.equal(LIVE_CAP.tokens, 1_984_000);
     assert.equal(LIVE_CAP.costMicros, 3_224_000);
     assert.equal(LIVE_CYCLE_CAP.attempts, 10);
-    await expanded.reserve(allowance);
     const first = await expanded.holdCycle(LIVE_CYCLE_CAP.attempts, allowance);
-    await first.reserve(allowance);
+    for (let index = 0; index < LIVE_CYCLE_CAP.attempts; index++) await first.reserve(allowance);
     await first.release();
-    const second = await expanded.holdCycle(LIVE_CYCLE_CAP.attempts, allowance);
-    await second.reserve(allowance);
-    await second.release();
-    assert.equal(expanded.snapshot().attempts, 13);
+    assert.equal(expanded.snapshot().attempts, 20);
+    assert.equal(expanded.snapshot().remainingAttempts, 11);
+    assert.equal(expanded.snapshot().remainingTokens, 704_000);
+    assert.equal(expanded.snapshot().remainingCostMicros, 1_144_000);
     assert.ok((await readFile(path, "utf8")).startsWith(priorContents));
     await expanded.close();
   });
@@ -167,6 +169,65 @@ test("creating and joining an idle room authenticates sessions without spending 
     assert.equal(joined.snapshot.room.participants.length, 2);
     assert.notEqual(created.session.token, joined.session.token);
     assert.equal(calls, 0);
+    assert.equal(runtime.budget.attempts, 0);
+  } finally {
+    await runtime.close();
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("room submissions enforce scope and per-participant cooldown while allowing idempotent receipt retries", async () => {
+  const directory = await mkdtemp(resolve(process.cwd(), `.setvia-room-cooldown-${randomUUID()}-`));
+  const budget = await IntegrationRunBudget.open(join(directory, "integration-budget.ndjson"));
+  const engine = new AgentEngine(new RoomStore(new MemoryPersistence()), scriptedGateway([]).gateway);
+  const journal = {
+    runId: randomUUID(),
+    attemptsFor: async () => [],
+    snapshot: async () => ({ runId: "test", attempts: 0, runAttempts: 0, estimatedCostMicros: 0 }),
+    release: async () => {},
+  };
+  const runtime = new RoomRuntime({
+    engine,
+    journal: journal as never,
+    budget,
+    persistenceLock: async () => {},
+    privateRoot: directory,
+    publicRoot: join(directory, "public"),
+    syntheticDemo: false,
+    participantCooldownMs: 60_000,
+  });
+  try {
+    const created = await runtime.create(
+      CreateRoomRequestSchema.parse({
+        creatorName: "Alex",
+        eventType: "Weekend hike",
+        proposal: { id: "hike-plan", label: "Saturday trail walk", values: { startTime: "08:00" } },
+      }),
+      "Alex",
+    );
+    const auth = { participantId: created.session.participantId, token: created.session.token };
+    const snapshot = await runtime.snapshot(created.roomId, auth);
+    const request = (messageId: string, text: string) => SubmitRoomMessageSchema.parse({
+      messageId,
+      expectedRevision: snapshot.room.revision,
+      proposalVersion: snapshot.room.proposalVersion,
+      text,
+      visibility: "private",
+      questionId: null,
+      replyOption: null,
+    });
+    await assert.rejects(
+      runtime.submit(created.roomId, auth, request("off_topic", "Write me an unrelated essay.")),
+      /Setvia is here to help your group make plans/,
+    );
+    const first = await runtime.submit(created.roomId, auth, request("first_private", "I need shade near the picnic area."));
+    const retry = await runtime.submit(created.roomId, auth, request("first_private", "I need shade near the picnic area."));
+    assert.equal(first.duplicate, false);
+    assert.equal(retry.duplicate, true);
+    await assert.rejects(
+      runtime.submit(created.roomId, auth, request("second_private", "I can bring water.")),
+      (error: unknown) => (error as { code?: string }).code === "PARTICIPANT_COOLDOWN",
+    );
     assert.equal(runtime.budget.attempts, 0);
   } finally {
     await runtime.close();
@@ -298,6 +359,7 @@ test("synthetic room Lab records redact every Listener trace before saving", asy
   const scripted = scriptedGateway([
     { role: "Listener", output: { candidates: [{ key: "availability", value: "08:00" }] } },
     { role: "Judge", output: judge() },
+    { role: "Listener", output: { candidates: [{ key: "private_note", value: "PRIVATE_INPUT_CANARY" }] } },
   ]);
   const engine = new AgentEngine(new RoomStore(new MemoryPersistence()), scripted.gateway);
   const journal = {
@@ -353,6 +415,37 @@ test("synthetic room Lab records redact every Listener trace before saving", asy
     assert.deepEqual(listener?.input, { redacted: true, context: "group-response" });
     assert.deepEqual(listener?.output, { redacted: true, validated: true });
     assert.equal(JSON.stringify(listener).includes("GROUP_TRACE_CANARY"), false);
+
+    const currentRoom = await engine.store.read(created.roomId);
+    await runtime.submit(created.roomId, auth, SubmitRoomMessageSchema.parse({
+      messageId: "private_trace_canary",
+      expectedRevision: currentRoom.revision,
+      proposalVersion: currentRoom.proposalVersion,
+      text: "PRIVATE_INPUT_CANARY: please keep this thought private.",
+      visibility: "private",
+      questionId: null,
+      replyOption: null,
+    }));
+    let reportPaths: string[] = [];
+    for (let attempt = 0; attempt < 50 && reportPaths.length < 2; attempt++) {
+      await new Promise((resolvePromise) => setTimeout(resolvePromise, 50));
+      reportPaths = (await readdir(labRoot)).filter((name) => /^run-.*\.json$/.test(name));
+    }
+    assert.equal(reportPaths.length, 2, "group and private analyses should each have a Lab record");
+    await runtime.close();
+
+    for (const name of reportPaths) {
+      const text = await readFile(join(labRoot, name), "utf8");
+      assert.equal(text.includes("PRIVATE_INPUT_CANARY"), false, "private thought and extracted value must not enter Lab history");
+      const parsed = JSON.parse(text) as {
+        records: Array<{ cycle: { traces: Array<{ role: string; input: unknown; output: unknown }> } }>;
+      };
+      const privateListener = parsed.records[0]?.cycle.traces.find((trace) => trace.role === "Listener");
+      if (name !== reportPath) {
+        assert.deepEqual(privateListener?.input, { redacted: true, context: "owner-private" });
+        assert.deepEqual(privateListener?.output, { redacted: true, validated: true });
+      }
+    }
   } finally {
     await runtime.close();
     await rm(directory, { recursive: true, force: true });

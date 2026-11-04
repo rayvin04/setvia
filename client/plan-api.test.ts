@@ -39,6 +39,14 @@ test("text client sends only the description to the same-origin route and valida
   assert.equal(JSON.parse(String(requestInit?.body)).description, "Fictional project planning");
 });
 
+test("unavailable plan autofill explains the manual path without affecting live room analysis", async () => {
+  await assert.rejects(
+    extractPlanFromText("A small planning example", async () =>
+      Response.json({ error: "bounded live evaluation" }, { status: 503 })),
+    (error: unknown) => error instanceof PlanApiError && /Enter the plan manually/.test(error.message),
+  );
+});
+
 test("image client sends the binary blob and its media type", async () => {
   let requestInit: RequestInit | undefined;
   const image = new Blob(["synthetic"], { type: "image/png" });
@@ -64,6 +72,6 @@ test("client rejects invalid plans and hides server response contents", async ()
 test("client presents a useful local-server error when the network fails", async () => {
   await assert.rejects(
     extractPlanFromText("example", async () => { throw new TypeError("offline"); }),
-    /Make sure the local server is running/,
+    /Check your connection and try again/,
   );
 });

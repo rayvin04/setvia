@@ -11,6 +11,13 @@ export class PlanApiError extends Error {
 export type FetchLike = typeof fetch;
 
 const RESPONSE_SCHEMA = z.object({ plan: PlanExtractionSchema }).strict();
+const apiBase = ((import.meta as ImportMeta & {
+  env?: ImportMetaEnv & { VITE_SETVIA_API_ORIGIN?: string };
+}).env?.VITE_SETVIA_API_ORIGIN ?? "").replace(/\/$/, "");
+
+function endpoint(path: string) {
+  return `${apiBase}/api${path}`;
+}
 
 function messageForStatus(status: number): string {
   switch (status) {
@@ -23,7 +30,7 @@ function messageForStatus(status: number): string {
     case 429:
       return "Setvia or Meta is handling too many requests. Wait a moment and try again.";
     case 503:
-      return "Meta extraction is not available. Check the server configuration.";
+      return "AI plan autofill is unavailable for this session. Enter the plan manually; Setvia will analyze the live room conversation.";
     case 504:
       return "Muse Spark took too long to respond. Try again.";
     case 502:
@@ -61,7 +68,7 @@ export async function extractPlanFromText(
   fetcher: FetchLike = defaultFetch(),
 ): Promise<PlanExtraction> {
   try {
-    const response = await fetcher("/api/ai/extract/text", {
+    const response = await fetcher(endpoint("/ai/extract/text"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ description }),
@@ -70,7 +77,7 @@ export async function extractPlanFromText(
   } catch (error) {
     if (error instanceof PlanApiError) throw error;
     throw new PlanApiError(
-      "Could not reach the Setvia API. Make sure the local server is running.",
+      "Could not reach Setvia. Check your connection and try again.",
     );
   }
 }
@@ -80,7 +87,7 @@ export async function extractPlanFromImage(
   fetcher: FetchLike = defaultFetch(),
 ): Promise<PlanExtraction> {
   try {
-    const response = await fetcher("/api/ai/extract/image", {
+    const response = await fetcher(endpoint("/ai/extract/image"), {
       method: "POST",
       headers: { "Content-Type": image.type },
       body: image,
@@ -89,7 +96,7 @@ export async function extractPlanFromImage(
   } catch (error) {
     if (error instanceof PlanApiError) throw error;
     throw new PlanApiError(
-      "Could not reach the Setvia API. Make sure the local server is running.",
+      "Could not reach Setvia. Check your connection and try again.",
     );
   }
 }

@@ -12,6 +12,50 @@
     background-color 180ms ease-out,
     border-color 180ms ease-out;
 }
+.header.is-hidden .header-inner { pointer-events: none; }
+.has-room-header { padding-top: 96px; }
+.site-header.header {
+  top: max(16px, env(safe-area-inset-top));
+  padding-inline: 24px;
+  border: 0;
+}
+.site-header.header .header-inner {
+  max-width: 1248px;
+  min-height: 60px;
+  padding-inline: 12px;
+  border: 1px solid transparent;
+  background: transparent;
+  backdrop-filter: none;
+  box-shadow: none;
+  transition:
+    background-color 240ms ease-in-out,
+    border-color 240ms ease-in-out;
+}
+.site-header.header.is-scrolled .header-inner {
+  max-width: 960px;
+  padding-inline: 24px;
+  background: #101e27ee;
+  border-color: #ffffff20;
+  backdrop-filter: blur(16px);
+}
+.site-header.header nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.site-header.header nav .github-link {
+  width: 44px;
+  height: 44px;
+}
+.site-header.header[data-hidden="true"] .header-inner {
+  pointer-events: none;
+}
+.site-header.header .join-link {
+  border-color: #ffffff24;
+  background: #12202b80;
+}
 .header.is-scrolled .header-inner {
   background: #10212be8;
   border-color: #ffffff32;
@@ -101,6 +145,21 @@
   .header {
     top: max(12px, env(safe-area-inset-top));
   }
+  .site-header.header {
+    top: max(10px, env(safe-area-inset-top));
+    padding-inline: 14px;
+  }
+  .site-header.header .header-inner,
+  .site-header.header.is-scrolled .header-inner {
+    min-height: 58px;
+    padding-inline: 10px;
+  }
+  .site-header.header nav {
+    gap: 8px;
+  }
+  .site-header.header nav > a[href="/#how-it-works"] {
+    display: none;
+  }
   .header nav {
     gap: 13px;
   }
@@ -120,6 +179,28 @@
   }
 }
 @media (max-width: 440px) {
+  .site-header.header nav > a[href="/demos"] {
+    display: inline-flex;
+    font-size: 11px;
+  }
+  .site-header.header nav .github-link {
+    display: none;
+  }
+  .site-header.header .wordmark {
+    font-size: 22px;
+    gap: 7px;
+  }
+  .site-header.header .brand-eyes {
+    width: 24px;
+    height: 27px;
+  }
+  .site-header.header .join-link {
+    font-size: 11px;
+    padding-inline: 9px;
+  }
+  .site-header.header nav {
+    gap: 10px;
+  }
   .header nav > a[href="/demos"] {
     display: none;
   }

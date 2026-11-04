@@ -1,16 +1,55 @@
 import { resolve } from "node:path";
 import { createApp } from "./http/app.js";
 import { createMetaClient, readMetaConfig } from "./ai/meta-client.js";
+import { MetaApiError } from "./ai/errors.js";
+import { InferenceConcurrencyLimiter, inferenceEnabled, readInferenceConcurrency, readParticipantCooldownMs } from "./ai/inference-control.js";
 import { createLocalRoomRuntime, DEFAULT_ROOM_PROMPT_VERSION } from "./rooms/runtime.js";
+import { seedProductionBudgetLedgers } from "./storage-seed.js";
+import { createScenarioGenerationRouter } from "./synthetic/generation-router.js";
+import { createMeteredExtractionClient } from "./ai/metered-extraction.js";
 
 const port = Number(process.env.PORT ?? "3001");
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
   throw new Error("PORT must be an integer between 1 and 65535.");
 }
 
+const production = process.env.NODE_ENV === "production";
+const host = process.env.HOST ?? "127.0.0.1";
+if (production) {
+  if (host !== "127.0.0.1") {
+    throw new Error("Production must listen on 127.0.0.1 behind the reverse proxy.");
+  }
+  if (process.env.SETVIA_LIVE_ENABLED !== "1") {
+    throw new Error("Production requires SETVIA_LIVE_ENABLED=1.");
+  }
+  if (process.env.SETVIA_LIVE_BILLING_CHECKED !== "1") {
+    throw new Error("Production requires the approved live billing check.");
+  }
+  if (!process.env.SETVIA_PRIVATE_ROOT) {
+    throw new Error("Production requires SETVIA_PRIVATE_ROOT on durable storage.");
+  }
+  if (!process.env.SETVIA_ROOM_ORIGINS?.trim()) {
+    throw new Error("Production requires an explicit SETVIA_ROOM_ORIGINS allowlist.");
+  }
+  if (!process.env.SETVIA_PROMPT_ROOT || !process.env.MODEL_API_KEY?.trim()) {
+    throw new Error("Production requires private prompt files and the server-side Meta API key.");
+  }
+  if (!process.env.SETVIA_LIVE_BUDGET_SEED_FILE || !process.env.SETVIA_STAGE_BUDGET_SEED_FILE) {
+    throw new Error("Production requires the existing bounded-usage ledgers to be migrated.");
+  }
+}
+
+const metaConfig = readMetaConfig();
+const limiter = new InferenceConcurrencyLimiter(readInferenceConcurrency());
+const acquireAttempt = () => limiter.acquire();
+const ensureInferenceEnabled = () => {
+  if (!inferenceEnabled()) throw new MetaApiError("forbidden", "Inference is disabled.");
+};
 const client = createMetaClient({
-  config: readMetaConfig(),
+  config: metaConfig,
   maxRetries: 1,
+  acquireAttempt,
+  beforeAttempt: ensureInferenceEnabled,
 });
 const appRoot = resolve(process.cwd());
 const enabled = process.env.SETVIA_LIVE_ENABLED === "1";
@@ -29,26 +68,51 @@ const roomOrigins = (process.env.SETVIA_ROOM_ORIGINS ?? "")
 const privateRoot = resolve(
   process.env.SETVIA_PRIVATE_ROOT ?? resolve(appRoot, "..", "setvia-local"),
 );
+if (production) {
+  await seedProductionBudgetLedgers(privateRoot, appRoot, {
+    globalLedgerBase64File: process.env.SETVIA_LIVE_BUDGET_SEED_FILE!,
+    stageBudgetFile: process.env.SETVIA_STAGE_BUDGET_SEED_FILE!,
+  });
+}
 const runtime = liveEnabled
   ? await createLocalRoomRuntime({
       privateRoot,
       publicRoot: appRoot,
+      ...(process.env.SETVIA_PROMPT_ROOT ? { promptRoot: resolve(process.env.SETVIA_PROMPT_ROOT) } : {}),
       promptVersion: process.env.SETVIA_PROMPT_VERSION ?? DEFAULT_ROOM_PROMPT_VERSION,
       syntheticDemo: process.env.SETVIA_SYNTHETIC_DEMO === "1",
+      acquireAttempt,
+      beforeAttempt: ensureInferenceEnabled,
+      participantCooldownMs: readParticipantCooldownMs(),
+    })
+  : undefined;
+const demoApiToken = process.env.SETVIA_DEMO_API_TOKEN?.trim();
+if (demoApiToken && !/^[A-Za-z0-9_-]{43,256}$/.test(demoApiToken)) {
+  throw new Error("SETVIA_DEMO_API_TOKEN must be a base64url token with at least 32 random bytes.");
+}
+const demoScenarioRouter = runtime && demoApiToken
+  ? createScenarioGenerationRouter({
+      hooks: runtime.getAuxiliaryInferenceHooks(),
+      env: process.env,
+      internalToken: demoApiToken,
     })
   : undefined;
 const app = createApp({
   client,
+  meteredExtractionClient: runtime && createMeteredExtractionClient(metaConfig, runtime.getAuxiliaryInferenceHooks()),
   rooms: runtime,
   roomOrigins: roomOrigins.length ? roomOrigins : undefined,
+  trustProxy: production ? 1 : undefined,
+  demoScenarioRouter,
+  inferenceEnabled,
 });
-const server = app.listen(port, "127.0.0.1");
+const server = app.listen(port, host);
 await new Promise<void>((resolveReady, reject) => {
   server.once("listening", resolveReady);
   server.once("error", reject);
 });
 console.log(
-  `Setvia API listening at http://127.0.0.1:${port}${runtime ? " (local live rooms enabled)" : ""}`,
+  `Setvia API listening on ${host}:${port}${runtime ? " (live rooms enabled)" : ""}`,
 );
 let closing = false;
 const close = () => {

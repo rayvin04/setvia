@@ -4,18 +4,21 @@ The local Demo Studio creates, reviews, saves, and plays fictional group-plannin
 
 ## Local setup
 
-The room API and dashboard must be integrated and running with the Stage B real-room work before live playback is available. The Muse generator router is deliberately exported but not mounted in this branch. Mount it on the Setvia API process at `POST /api/demo/scenarios` and `GET /api/demo/scenarios/health`, using the active `RoomRuntime.getAuxiliaryInferenceHooks()` adapter:
+The Setvia API mounts the Muse generator route only when live rooms are enabled and `SETVIA_DEMO_API_TOKEN` is configured. Both endpoints require that bearer token, reject browser-origin requests, and use the active `RoomRuntime.getAuxiliaryInferenceHooks()` adapter:
 
 ```ts
 app.use("/api/demo/scenarios", createScenarioGenerationRouter({
   hooks: roomRuntime.getAuxiliaryInferenceHooks(),
   env: process.env,
+  internalToken: process.env.SETVIA_DEMO_API_TOKEN!,
 }));
 ```
 
-The shared hook reserves every request before fetch and journals `Scenario Generator` with its request hash and prompt version. The router is bounded to one HTTP attempt per generation. It has no independent budget counter.
+The server-to-server token belongs in the Setvia API environment and the private Studio service environment. Do not put it in Vite variables or browser storage. The shared hook reserves every request before fetch and journals `Scenario Generator` with its request hash and prompt version. The router is bounded to one HTTP attempt per generation. It has no independent budget counter.
 
-Point `SETVIA_PRIVATE_ROOT` at a local private workspace outside the public repository. Start the Stage B Setvia API, Studio API, and Vite app in three separate terminals:
+Point the Studio's `SETVIA_PRIVATE_ROOT` at a private workspace outside the public repository. The room simulator can use the local API by default or an HTTPS Setvia API by setting `SETVIA_ROOM_API_ORIGIN`; remote HTTP and credential-bearing origins are rejected. For a hosted test, set the Studio process to `https://api.setvia.r4yv.tech` and set `VITE_SETVIA_API_ORIGIN` to the same HTTPS origin for its embedded dashboard. If the dashboard runs from local Vite, explicitly add that exact local origin to the API's `SETVIA_ROOM_ORIGINS` allowlist for the test.
+
+Start the Stage B Setvia API, Studio API, and Vite app in three separate terminals. Configure the same randomly generated `SETVIA_DEMO_API_TOKEN` in the API and Studio process environments; keep it outside the repository:
 
 ```powershell
 npm run dev:server
@@ -44,7 +47,7 @@ The live simulator creates rooms and submits each fictional planner's actions th
 
 At live room creation the API returns the creator's tab session to the Studio UI once. The UI stores it in the same tab's established `sessionStorage` keys and embeds `/rooms/:roomId`; no session token is placed in any URL or saved run. The embedded dashboard renders actual room state, while the Studio keeps playback controls visible.
 
-Scenario versions, simulation snapshots, and private room outputs live under `SETVIA_PRIVATE_ROOT/lab/synthetic-scenarios/`. Do not commit those files. The existing integration budget remains authoritative for both scenario generation and room-agent requests. Request events label the generator separately; token and published-price estimates are displayed with provenance.
+Scenario versions and simulation snapshots live under the Studio's private `SETVIA_PRIVATE_ROOT/lab/synthetic-scenarios/`; room state and inference journals live under the API server's separate private root. Do not commit either tree. The existing integration budget remains authoritative for both scenario generation and room-agent requests. Request events label the generator separately; token and published-price estimates are displayed with provenance.
 
 ## Verification
 

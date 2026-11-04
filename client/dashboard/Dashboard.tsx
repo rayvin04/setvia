@@ -160,8 +160,7 @@ function MobileIdentity({ snapshot }: { snapshot: DashboardSnapshot }) {
             : `${responses}/${snapshot.room.participants.length} responded`}
         </span>
         <span className="identity-approvals">
-          {snapshot.room.approvalCount} approved v
-          {snapshot.room.proposalVersion}
+          {snapshot.room.approvalCount} approved
         </span>
       </div>
     </div>

@@ -83,9 +83,11 @@ export class SyntheticRoomApiClient {
   constructor(baseUrl = process.env.SETVIA_ROOM_API_ORIGIN ?? "http://127.0.0.1:3001", private readonly fetcher: typeof fetch = fetch) {
     let parsed: URL;
     try { parsed = new URL(baseUrl); }
-    catch { throw new Error("SETVIA_ROOM_API_ORIGIN must be a loopback HTTP origin."); }
-    if (parsed.protocol !== "http:" || !["127.0.0.1", "localhost", "[::1]"].includes(parsed.hostname) || parsed.pathname !== "/" || parsed.search || parsed.hash)
-      throw new Error("SETVIA_ROOM_API_ORIGIN must be a loopback HTTP origin.");
+    catch { throw new Error("SETVIA_ROOM_API_ORIGIN must be an HTTPS origin or loopback HTTP origin."); }
+    const loopback = ["127.0.0.1", "localhost", "[::1]"].includes(parsed.hostname);
+    const allowedTransport = parsed.protocol === "https:" || (parsed.protocol === "http:" && loopback);
+    if (!allowedTransport || parsed.username || parsed.password || parsed.pathname !== "/" || parsed.search || parsed.hash)
+      throw new Error("SETVIA_ROOM_API_ORIGIN must be an HTTPS origin or loopback HTTP origin.");
     this.baseUrl = parsed.origin;
   }
 

@@ -54,7 +54,10 @@ const questionGateway = scriptedGateway([
   { role: "Question Strategist", output: { questions: [q] } },
   {
     role: "Speaker",
-    output: { questionIds: [q.id], findingIds: [], mascot: "curious" },
+    output: {
+      replies: [{ questionId: q.id, findingId: null, text: q.text }],
+      mascot: "curious",
+    },
   },
   { role: "Judge", output: { ...needsInput, acceptedQuestionIds: [q.id] } },
 ]);
@@ -118,9 +121,10 @@ const specificChecks = [
   records[foundationOffset + 4].cycle.finalEvaluation === null,
 ];
 records.forEach((record, index) => {
-  record.expectedOutcome = expected[index];
+  const regressionIndex = index >= foundationOffset ? index - foundationOffset : index;
+  record.expectedOutcome = expected[regressionIndex];
   record.passed =
-    record.cycle.outcome === expected[index] && specificChecks[index];
+    record.cycle.outcome === expected[regressionIndex] && specificChecks[regressionIndex];
 });
 const realistic = await runAllScenarioMocks();
 records.push(...realistic.map(({ record }) => record));

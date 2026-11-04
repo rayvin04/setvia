@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CircleAlert, LockKeyhole, Radio, ShieldCheck } from "lucide-react";
+import { ArrowRight, CircleAlert, LockKeyhole, Radio, ShieldCheck, Waves } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import type { PlanDraft } from "../plan-mapping";
 import { createRoom, getRoomHealth, RoomApiError, type RoomHealth } from "./room-api";
+import { beachTripDemoRequest, BEACH_TRIP_DEMO_QUERY } from "./beach-trip-demo";
 
 export function RoomLaunch({ draft }: { draft: PlanDraft }) {
   const navigate = useNavigate();
@@ -31,7 +32,7 @@ export function RoomLaunch({ draft }: { draft: PlanDraft }) {
     setError("");
     setNotice("");
     if (!health?.enabled) {
-      setError("The local live-room server is not running. Start the authorized local API and try again.");
+      setError("Setvia's live planning service is unavailable right now. Try again in a moment.");
       return;
     }
     if (!readyDraft) {
@@ -75,13 +76,40 @@ export function RoomLaunch({ draft }: { draft: PlanDraft }) {
     }
   }
 
+  async function startBeachTripDemo() {
+    if (busy) return;
+    setError("");
+    setNotice("");
+    if (!health?.enabled) {
+      setError("Setvia's live planning service is unavailable right now. Try again in a moment.");
+      return;
+    }
+    if (!nickname.trim()) {
+      setError("Choose the name your group will see.");
+      return;
+    }
+    if (!understandsMeta) {
+      setError("Confirm the Meta processing disclosure before starting a live room.");
+      return;
+    }
+    setBusy(true);
+    try {
+      const created = await createRoom(beachTripDemoRequest(nickname.trim()));
+      navigate(`/rooms/${created.roomId}?demo=${BEACH_TRIP_DEMO_QUERY}`);
+    } catch (failure) {
+      setError(failure instanceof RoomApiError ? failure.message : "The demo room could not be created. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section className="room-launch" aria-labelledby="room-launch-title">
       <div className="room-launch-heading">
         <Radio size={19} aria-hidden="true" />
         <div>
           <h2 id="room-launch-title">Bring your group in</h2>
-          <p>Create a real local planning room, then invite people with a private link.</p>
+          <p>Create a real planning room, then invite people with a private link.</p>
         </div>
       </div>
       <div className="room-launch-fields">
@@ -102,13 +130,13 @@ export function RoomLaunch({ draft }: { draft: PlanDraft }) {
         </span>
       </label>
       <div className="room-launch-foot">
-        <p><LockKeyhole size={14} aria-hidden="true" /> Room snapshots and credentials stay on the local private host.</p>
+        <p><LockKeyhole size={14} aria-hidden="true" /> Room data stays in authorized server-side files. Meta credentials never enter the browser.</p>
         <span className="room-launch-mode">
-          {health?.mode === "offline-mock" ? "Offline mock test · no Meta requests" : health?.mode === "synthetic-live-demo" ? "Live Muse Spark · synthetic demo mode" : "Live Muse Spark · local server"}
+          {health?.mode === "offline-mock" ? "Offline mock test · no Meta requests" : health?.mode === "synthetic-live-demo" ? "Live Muse Spark · synthetic test" : "Live Muse Spark · secure server"}
         </span>
       </div>
       {health && !health.enabled ? (
-        <p className="room-launch-unavailable"><CircleAlert size={15} aria-hidden="true" /> Real rooms are not available from this server. The synthetic dashboard preview remains available.</p>
+        <p className="room-launch-unavailable"><CircleAlert size={15} aria-hidden="true" /> Real rooms are not available right now. The synthetic dashboard preview remains available.</p>
       ) : null}
       {error ? <p className="room-launch-error" role="alert"><CircleAlert size={15} aria-hidden="true" />{error}</p> : null}
       {notice ? <p className="room-launch-notice" role="status"><ShieldCheck size={15} aria-hidden="true" />{notice}</p> : null}
@@ -116,6 +144,12 @@ export function RoomLaunch({ draft }: { draft: PlanDraft }) {
         {busy ? "Opening room…" : "Create a live room"}
         <ArrowRight size={17} aria-hidden="true" />
       </button>
+      <div className="room-launch-demo">
+        <div><strong>Want to see it in action?</strong><span>A ready-made Beach Trip room starts with four fictional planners. Your chat and Setvia's analysis are live.</span></div>
+        <button type="button" className="button button-secondary" disabled={busy || !health?.enabled} onClick={() => void startBeachTripDemo()}>
+          <Waves size={16} aria-hidden="true" />{busy ? "Opening demo…" : "Try the live demo"}
+        </button>
+      </div>
     </section>
   );
 }

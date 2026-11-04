@@ -108,7 +108,8 @@ export function validatePlanningMessage(
 }
 
 export function planningMessageErrorText(error: unknown): string {
-  return error instanceof PlanningMessageError
-    ? error.message
-    : "Your response wasn’t recorded. Please try again.";
+  if (error instanceof PlanningMessageError) return error.message;
+  if (error instanceof Error && error.name === "RoomApiError" && error.message.length <= 240)
+    return error.message;
+  return "Your response wasn’t recorded. Please try again.";
 }

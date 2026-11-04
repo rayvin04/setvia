@@ -15,7 +15,7 @@ const StartPlanning = lazy(() =>
 const Dashboard = lazy(() => import("./dashboard/Dashboard"));
 const LiveRoom = lazy(() => import("./dashboard/LiveRoom"));
 const JoinRoomPage = lazy(() => import("./JoinRoomPage").then((module) => ({ default: module.JoinRoomPage })));
-const DemoStudio = lazy(() => import("./DemoStudio"));
+const DemoStudio = import.meta.env.DEV ? lazy(() => import("./DemoStudio")) : null;
 
 function FormPage({ join = false }: { join?: boolean }) {
   const [message, setMessage] = useState("");
@@ -125,8 +125,8 @@ export default function App() {
           Skip to content
         </a>
       ) : null}
-      {showChrome ? <Header /> : null}
-      <main id="main" className={isStudio ? "demo-studio-main" : undefined}>
+      <Header />
+      <main id="main" className={isStudio ? "demo-studio-main has-room-header" : planningRoom ? "has-room-header" : undefined}>
         <PageTransition>
           <Routes>
             <Route
@@ -173,7 +173,7 @@ export default function App() {
               }
             />
             <Route path="/join" element={<Suspense fallback={<div className="planning-loading" role="status">Opening invitation…</div>}><JoinRoomPage /></Suspense>} />
-            <Route path="/demo-studio" element={studioEnabled ? <Suspense fallback={<div className="planning-loading" role="status">Opening Demo Studio…</div>}><DemoStudio /></Suspense> : <Missing />} />
+            <Route path="/demo-studio" element={studioEnabled && DemoStudio ? <Suspense fallback={<div className="planning-loading" role="status">Opening Demo Studio…</div>}><DemoStudio /></Suspense> : <Missing />} />
             <Route path="/demos" element={<Demos />} />
             <Route path="*" element={<Missing />} />
           </Routes>

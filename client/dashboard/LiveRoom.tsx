@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { Check, CircleAlert, Copy, LogOut, Volume2, VolumeX, X } from "lucide-react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Wordmark } from "../components";
 import { Avatar } from "../Mascot";
 import { MessageComposer, type MessageComposerHandle } from "./MessageComposer";
@@ -12,9 +12,13 @@ import { projectDecisionReceipt } from "./decision-receipt";
 import { currentQuestion, questionQuickReplies } from "./composer-model";
 import { acceptDashboardUpdate } from "./model";
 import { validateDashboardAction, type DashboardAction, type DashboardSnapshot } from "../../shared/dashboard";
+import { roomCodeFromId } from "../../shared/room-code";
 import type { SubmitPlanningMessage } from "../../shared/planning-message";
+import { BEACH_TRIP_DEMO_EVENT_TYPE, BEACH_TRIP_DEMO_QUERY, beachTripDemoRequest } from "./beach-trip-demo";
+import { FictionalParticipantsDemo } from "./FictionalParticipantsDemo";
 import {
   approveRoomProposal,
+  createRoom,
   getInvitationLink,
   getRoomHealth,
   getRoomSession,
@@ -95,6 +99,7 @@ function liveStatusLabel(stream: StreamStatus | "loading" | "offline") {
 
 export default function LiveRoom() {
   const { roomId = "" } = useParams();
+  const [searchParams] = useSearchParams();
   const session = useMemo(() => getRoomSession(roomId), [roomId]);
   const [snapshot, setSnapshot] = useState<DashboardSnapshot | null>(null);
   const [streamStatus, setStreamStatus] = useState<StreamStatus | "loading" | "offline">("loading");
@@ -138,7 +143,7 @@ export default function LiveRoom() {
       .catch((failure) => {
         if (controller.signal.aborted) return;
         setStreamStatus(failure instanceof RoomApiError && (failure.status === 401 || failure.status === 403) ? "unauthorized" : "offline");
-        setError(failure instanceof RoomApiError ? failure.message : "The room could not be loaded. Check that the local API is running.");
+        setError(failure instanceof RoomApiError ? failure.message : "The room could not be loaded. Check your connection and try again.");
       });
     void getRoomHealth(controller.signal).then(setHealth).catch(() => {});
     return () => {
@@ -287,6 +292,24 @@ export default function LiveRoom() {
   })) ?? [];
   const readyToApprove = Boolean(snapshot && snapshot.room.analysisCurrent && snapshot.room.finalEvaluationAvailable && !snapshot.room.analysisIncomplete && snapshot.room.loopState === "COMPLETED" && snapshot.room.readiness?.status === "ready_for_human_review");
   const budget = health?.budget;
+  const isBeachTripDemo = Boolean(
+    snapshot &&
+    searchParams.get("demo") === BEACH_TRIP_DEMO_QUERY &&
+    snapshot.room.eventType === BEACH_TRIP_DEMO_EVENT_TYPE,
+  );
+
+  async function startFreshDemoRoom() {
+    if (!participant || busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const created = await createRoom(beachTripDemoRequest(participant.name));
+      window.location.assign(`/rooms/${created.roomId}?demo=${BEACH_TRIP_DEMO_QUERY}`);
+    } catch (failure) {
+      setError(failure instanceof RoomApiError ? failure.message : "A fresh demo room could not be opened.");
+      setBusy(false);
+    }
+  }
 
   return (
     <div className="dashboard-shell dashboard-refined live-room-shell"
@@ -295,7 +318,7 @@ export default function LiveRoom() {
         <Wordmark />
         <div className="live-room-mode" data-demo={health?.mode === "synthetic-live-demo"}>
           <span className="live-indicator" aria-hidden="true" />
-          <strong>{health?.mode === "offline-mock" ? "Offline mock test · no Meta requests" : health?.mode === "synthetic-live-demo" ? "Synthetic live test" : health?.enabled ? "Live Meta room" : "Room server unavailable"}</strong>
+        <strong>{health?.mode === "offline-mock" ? "Offline mock test · no Meta requests" : health?.mode === "synthetic-live-demo" ? "Synthetic live test" : health?.enabled ? "Live Muse Spark room" : "Room service unavailable"}</strong>
           {health?.enabled ? <span>· Muse Spark</span> : null}
         </div>
         <div className="live-room-header-actions">
@@ -313,9 +336,15 @@ export default function LiveRoom() {
         </div>
       </header>
 
-      {inviteLink ? <div className="live-invite-field"><label htmlFor="live-invitation-url">Share invitation</label><input id="live-invitation-url" readOnly value={inviteLink} onFocus={(event) => event.currentTarget.select()} /><span>The invitation token stays in the link fragment; it is exchanged for a tab-only participant session.</span></div> : null}
+      {inviteLink ? <div className="live-invite-field"><label htmlFor="live-invitation-url">Share invitation</label><input id="live-invitation-url" readOnly value={inviteLink} onFocus={(event) => event.currentTarget.select()} /><div className="live-room-code"><span>Room code</span><code>{roomCodeFromId(roomId)}</code></div><span>The code identifies this room. The invitation link verifies access and gives each person their own session.</span></div> : null}
       {budget ? <p className="live-budget-note">Live test budget · {budget.attempts}/{budget.attempts + budget.remainingAttempts} HTTP attempts used · ${(budget.reservedCostMicros / 1_000_000).toFixed(2)} reserved</p> : null}
       {error ? <div className="live-error" role="alert"><CircleAlert size={16} aria-hidden="true" /><span>{error}</span></div> : null}
+      {snapshot && participant && isBeachTripDemo ? <FictionalParticipantsDemo
+        roomId={roomId}
+        organizer={session}
+        room={snapshot.room}
+        onStartFreshRoom={() => void startFreshDemoRoom()}
+      /> : null}
 
       {snapshot ? (
         <>
@@ -335,8 +364,8 @@ export default function LiveRoom() {
             contributionMode="room"
           />
           <div className="live-room-actions">
-            <span>{snapshot.room.approvalCount} of {snapshot.room.participants.length} room members approved this exact version.</span>
-            {snapshot.room.approved ? <strong className="live-approved"><Check size={15} aria-hidden="true" /> Everyone approved proposal v{snapshot.room.proposalVersion}</strong> : null}
+            <span>{snapshot.room.approvalCount} of {snapshot.room.participants.length} approved</span>
+            {snapshot.room.approved ? <strong className="live-approved"><Check size={15} aria-hidden="true" /> Everyone approved the plan</strong> : null}
             <button type="button" className="dashboard-button primary" disabled={!readyToApprove || busy || Boolean(snapshot.room.participants.find((p) => p.id === snapshot.room.viewerId)?.approved)} onClick={() => void approve()}>
               {snapshot.room.participants.find((p) => p.id === snapshot.room.viewerId)?.approved ? "You approved this version" : "Approve this proposal"}
             </button>
