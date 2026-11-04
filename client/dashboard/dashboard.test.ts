@@ -37,19 +37,39 @@ import {
   speakerPresentation,
 } from "./model.js";
 
+type PreviewFixtureView = Record<
+  "initial" | "updated" | "revised" | "review" | "carpool",
+  DashboardSnapshot
+>;
 type PreviewFixtureData = Record<
-  "initial" | "updated" | "revised" | "carpool",
+  "initial" | "updated" | "revised" | "review" | "carpool",
   Record<string, DashboardSnapshot>
 >;
 function loadPreviewFixture(scenario: string): PreviewFixtureData {
-  return JSON.parse(
-    readFileSync(
-      new URL(
-        "../../public/dashboard-preview/" + scenario + ".json",
-        import.meta.url,
+  const fixtureByViewer = Object.fromEntries(
+    ["alex", "jo", "mika", "sam"].map((viewer) => [
+      viewer,
+      JSON.parse(
+        readFileSync(
+          new URL(
+            "../../public/dashboard-preview/" + scenario + "/" + viewer + ".json",
+            import.meta.url,
+          ),
+          "utf8",
+        ),
+      ) as PreviewFixtureView,
+    ]),
+  ) as Record<string, PreviewFixtureView>;
+  return Object.fromEntries(
+    ["initial", "updated", "revised", "review", "carpool"].map((frame) => [
+      frame,
+      Object.fromEntries(
+        Object.entries(fixtureByViewer).map(([viewer, fixture]) => [
+          viewer,
+          fixture[frame as keyof PreviewFixtureView],
+        ]),
       ),
-      "utf8",
-    ),
+    ]),
   ) as PreviewFixtureData;
 }
 const beach = loadPreviewFixture("beach");
@@ -199,15 +219,15 @@ test("answering a group question acknowledges only this member and does not appr
 });
 test("private targeted questions require the recipient and private audience", async () => {
   const frames = await createPreviewFixture("family");
-  const alex = frames.initial.alex!;
-  const q = currentQuestion(alex.room)!;
-  const input = messageFor(alex, {
+  const pat = frames.initial.mika!;
+  const q = currentQuestion(pat.room)!;
+  const input = messageFor(pat, {
     questionId: q.id,
     text: "I need a step-free entrance.",
   });
-  assert.equal(validatePlanningMessage(alex.room, input).visibility, "private");
+  assert.equal(validatePlanningMessage(pat.room, input).visibility, "private");
   assert.throws(
-    () => validatePlanningMessage(alex.room, { ...input, visibility: "group" }),
+    () => validatePlanningMessage(pat.room, { ...input, visibility: "group" }),
     /private answer/,
   );
   assert.throws(
@@ -221,7 +241,7 @@ test("private targeted questions require the recipient and private audience", as
   assert.throws(
     () =>
       validatePlanningMessage(
-        alex.room,
+        pat.room,
         { ...input, visibility: "group", questionId: null },
         ["private"],
       ),
@@ -231,6 +251,7 @@ test("private targeted questions require the recipient and private audience", as
 test("preview submission preserves multiline text and reset removes temporary contributions", async () => {
   const snapshot = (await beach).initial.alex!;
   const adapter = createPreviewInteractions();
+  const seeded = snapshot.contributions;
   const text =
     "Saturday does not work.\nMy budget is ₱500.\nI can help with food.";
   await adapter.submit(
@@ -240,7 +261,7 @@ test("preview submission preserves multiline text and reset removes temporary co
   );
   assert.equal(adapter.project(snapshot).contributions[0].text, text);
   adapter.reset(snapshot.room.roomId);
-  assert.deepEqual(adapter.project(snapshot).contributions, []);
+  assert.deepEqual(adapter.project(snapshot).contributions, seeded);
 });
 test("pending preview messages revalidate revision and participant before recording", async () => {
   const frames = await beach;
@@ -257,11 +278,11 @@ test("pending preview messages revalidate revision and participant before record
     () => current,
     new AbortController().signal,
   );
-  assert.equal(adapter.project(current).contributions.length, 0);
+  assert.deepEqual(adapter.project(current).contributions, current.contributions);
   current = frames.updated.alex!;
   release();
   await assert.rejects(promise, /proposal changed/);
-  assert.equal(adapter.project(current).contributions.length, 0);
+  assert.deepEqual(adapter.project(current).contributions, current.contributions);
 });
 test("switching viewers or aborting a pending response cannot record under a foreign identity", async () => {
   const frames = await beach;
@@ -291,7 +312,7 @@ test("switching viewers or aborting a pending response cannot record under a for
   aborted.abort();
   release();
   await assert.rejects(cancelled);
-  assert.equal(adapter.project(current).contributions.length, 0);
+  assert.deepEqual(adapter.project(current).contributions, current.contributions);
 });
 test("preview failures are recoverable and unknown errors never expose their payload", async () => {
   const snapshot = (await beach).initial.alex!;
@@ -326,7 +347,33 @@ test("preview failures are recoverable and unknown errors never expose their pay
     () => snapshot,
     new AbortController().signal,
   );
-  assert.equal(adapter.project(snapshot).contributions.length, 1);
+  assert.equal(
+    adapter.project(snapshot).contributions.filter((entry) => "mode" in entry)
+      .length,
+    1,
+  );
+});
+test("preview approvals are explicit, participant-scoped and tied to one ready proposal version", async () => {
+  const frames = await beach;
+  const alex = frames.review.alex!;
+  const mika = frames.review.mika!;
+  const adapter = createPreviewInteractions();
+  assert.throws(() => adapter.approve(frames.initial.alex!), /not ready/);
+  adapter.approve(alex);
+  assert.equal(adapter.project(alex).snapshot.room.approvalCount, 1);
+  assert.equal(
+    adapter.project(alex).snapshot.room.participants.find(
+      (person) => person.id === alex.room.viewerId,
+    )?.approved,
+    true,
+  );
+  assert.deepEqual(adapter.project(alex).snapshot.room.readiness, alex.room.readiness);
+  assert.throws(() => adapter.approve(alex), /already approved/);
+  adapter.approve(mika);
+  assert.equal(adapter.project(mika).snapshot.room.approvalCount, 2);
+  assert.equal(adapter.project(frames.carpool.alex!).snapshot.room.approvalCount, 0);
+  adapter.reset(alex.room.roomId);
+  assert.equal(adapter.project(mika).snapshot.room.approvalCount, 0);
 });
 test("quick replies retain validated arbitrary choices and make alternative input or detail review explicit", async () => {
   const snapshot = (await beach).initial.alex!;
@@ -412,13 +459,14 @@ test("composer renders labeled pending, disabled and safe error states", async (
 });
 test("event attendees remain separate from response and approval denominators", async () => {
   const snapshot = structuredClone((await beach).initial.alex!);
+  const responsesBefore = responseCount(snapshot);
   snapshot.room.proposal.values.expectedAttendees = 150;
   const html = renderToStaticMarkup(createElement(PlanPanel, { snapshot }));
   assert.match(html, /150 expected/);
   assert.match(html, /separate from room members/);
   assert.equal(snapshot.room.participants.length, 4);
-  assert.equal(responseCount(snapshot), 3);
-  assert.equal(snapshot.room.approvalCount, 2);
+  assert.equal(responseCount(snapshot), responsesBefore);
+  assert.equal(snapshot.room.approvalCount, 0);
 });
 test("visual viewport offsets keep a mobile composer above an overlay keyboard", () => {
   assert.equal(virtualKeyboardInset(780, 400, 0), 380);
@@ -474,8 +522,9 @@ test("readiness distinguishes unknown, stale, blocked analysis and human review"
     readinessPresentation({ ...room, loopState: "BLOCKED" }).historical,
     true,
   );
-  const kickoff = (await createPreviewFixture("kickoff")).initial.alex!.room;
+  const kickoff = (await createPreviewFixture("kickoff")).review.alex!.room;
   assert.equal(readinessPresentation(kickoff).label, "Ready for review");
+  assert.equal(kickoff.loopState, "COMPLETED");
   assert.equal(kickoff.approved, false);
 });
 test("stale, duplicate, foreign and malformed event snapshots cannot replace a current view", async () => {
@@ -557,7 +606,7 @@ test("validated choices accept only current structured options for this particip
   );
 });
 test("a private question cannot be submitted by a different participant", async () => {
-  const snapshot = loadPreviewFixture("family").initial.alex!;
+  const snapshot = loadPreviewFixture("family").initial.mika!;
   const other = snapshot.room.participants.find(
     (p) => p.id !== snapshot.room.viewerId,
   )!;
@@ -602,7 +651,7 @@ test("raw traces and participant data are rejected at the rendering boundary", a
 });
 test("real response counts remain unknown until a response ledger exists", async () => {
   const snapshot = (await beach).initial.alex!;
-  assert.equal(responseCount(snapshot), 3);
+  assert.equal(responseCount(snapshot), 4);
   assert.equal(
     responseCount({
       ...snapshot,

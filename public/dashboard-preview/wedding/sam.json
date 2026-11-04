@@ -1,0 +1,2656 @@
+{
+  "initial": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "eb376f5c-a710-4b32-a0c8-5c213f348bef",
+      "viewerId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+      "eventType": "Wedding planning",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 17,
+      "analysisStatus": "complete",
+      "proposalVersion": 10,
+      "participants": [
+        {
+          "id": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+          "name": "Jules",
+          "approved": false
+        },
+        {
+          "id": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+          "name": "Sky",
+          "approved": false
+        },
+        {
+          "id": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+          "name": "Reese",
+          "approved": false
+        },
+        {
+          "id": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+          "name": "Blake",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "A celebration with room to breathe",
+        "values": {
+          "date": "Saturday, 19 December",
+          "time": "4:00 PM – 10:00 PM",
+          "location": "Garden venue · hold to confirm",
+          "cost": 8500,
+          "currency": "PHP",
+          "transport": "Guest shuttle · quote pending",
+          "preparation": "Final guest list, vows & day-of kit"
+        }
+      },
+      "readiness": {
+        "percentage": 70,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 67,
+            "status": "incomplete"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 0,
+            "status": "incomplete"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "budget_range",
+          "venue_hold",
+          "supplier_owner"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "curious",
+      "findings": [
+        {
+          "id": "budget_range",
+          "category": "Budget Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The per-person estimate has not been checked against the shared ceiling.",
+          "recommendedAction": "Confirm the estimate and keep the agreed contingency available."
+        },
+        {
+          "id": "venue_hold",
+          "category": "Logistics Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The venue hold and transport quote are still pending.",
+          "recommendedAction": "Confirm the venue hold and guest shuttle quote."
+        },
+        {
+          "id": "supplier_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The supplier follow-up still needs an owner.",
+          "recommendedAction": "Assign who will confirm the venue and supplier deadlines."
+        }
+      ],
+      "questions": [
+        {
+          "id": "wedding_budget_question",
+          "findingId": "budget_range",
+          "targetId": null,
+          "visibility": "group",
+          "kind": "choice",
+          "text": "Can the per-person estimate stay at or below ₱8,500, with contingency left aside?",
+          "options": [
+            "Yes, keep the ₱8,500 ceiling",
+            "Reduce the estimate",
+            "Choose another amount",
+            "Still deciding"
+          ]
+        }
+      ],
+      "options": [
+        {
+          "id": "supplier_hold",
+          "label": "Hold the venue, confirm suppliers by RSVP",
+          "values": {
+            "date": "Saturday, 19 December",
+            "time": "4:00 PM – 10:00 PM",
+            "location": "Garden venue · provisional hold",
+            "cost": 8200,
+            "currency": "PHP",
+            "transport": "Guest shuttle · quote requested",
+            "preparation": "Final guest list, vows & day-of kit"
+          }
+        },
+        {
+          "id": "contingency_plan",
+          "label": "Keep the venue flexible and protect contingency",
+          "values": {
+            "date": "Saturday, 19 December",
+            "time": "4:00 PM – 10:00 PM",
+            "location": "Garden venue · second option pending",
+            "cost": 7900,
+            "currency": "PHP",
+            "transport": "Guest shuttle · compare two quotes",
+            "preparation": "Final guest list, vows & day-of kit"
+          }
+        }
+      ],
+      "messages": [
+        {
+          "text": "Can the per-person estimate stay at or below ₱8,500, with contingency left aside?",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": "wedding_budget_question",
+          "proposalVersion": 10
+        },
+        {
+          "text": "The per-person estimate has not been checked against the shared ceiling.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 10
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "proposalVersion": 10,
+        "responded": true
+      },
+      {
+        "participantId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "proposalVersion": 10,
+        "responded": true
+      },
+      {
+        "participantId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "proposalVersion": 10,
+        "responded": true
+      },
+      {
+        "participantId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "proposalVersion": 10,
+        "responded": true
+      }
+    ],
+    "contributions": [
+      {
+        "id": "fixture_wedding_alex_1",
+        "participantId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "participantName": "Jules",
+        "visibility": "group",
+        "targetId": null,
+        "text": "Please keep the per-person estimate within our ₱8,500 ceiling.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.980Z",
+        "proposalVersion": 10
+      },
+      {
+        "id": "fixture_wedding_sam_2",
+        "participantId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "participantName": "Sky",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can compare guest shuttle quotes before the RSVP deadline.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.981Z",
+        "proposalVersion": 10
+      },
+      {
+        "id": "fixture_wedding_jo_3",
+        "participantId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "participantName": "Reese",
+        "visibility": "group",
+        "targetId": null,
+        "text": "Let’s keep a little budget aside for last-minute costs.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.982Z",
+        "proposalVersion": 10
+      },
+      {
+        "id": "fixture_wedding_mika_4",
+        "participantId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "participantName": "Blake",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can coordinate catering once the guest count is confirmed.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.983Z",
+        "proposalVersion": 10
+      }
+    ],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "summary": "Sky joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "summary": "Reese joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "summary": "Blake joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "summary": "Sky added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "summary": "Reese added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "summary": "Blake added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The per-person estimate has not been checked against the shared ceiling.",
+        "category": "Budget Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The venue hold and transport quote are still pending.",
+        "category": "Logistics Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The supplier follow-up still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_12",
+        "kind": "question_asked",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Can the per-person estimate stay at or below ₱8,500, with contingency left aside?",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 70%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 70,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 67,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "budget_range",
+            "venue_hold",
+            "supplier_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The wedding outline has a budget estimate. Venue, transport and supplier ownership remain open."
+      }
+    ]
+  },
+  "updated": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 2,
+    "room": {
+      "roomId": "eb376f5c-a710-4b32-a0c8-5c213f348bef",
+      "viewerId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+      "eventType": "Wedding planning",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 21,
+      "analysisStatus": "complete",
+      "proposalVersion": 13,
+      "participants": [
+        {
+          "id": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+          "name": "Jules",
+          "approved": false
+        },
+        {
+          "id": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+          "name": "Sky",
+          "approved": false
+        },
+        {
+          "id": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+          "name": "Reese",
+          "approved": false
+        },
+        {
+          "id": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+          "name": "Blake",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "A celebration with room to breathe",
+        "values": {
+          "date": "Saturday, 19 December",
+          "time": "4:00 PM – 10:00 PM",
+          "location": "Garden venue · hold to confirm",
+          "cost": 8500,
+          "currency": "PHP",
+          "transport": "Guest shuttle · quote pending",
+          "preparation": "Final guest list, vows & day-of kit"
+        }
+      },
+      "readiness": {
+        "percentage": 92,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": 22,
+        "newIssueIds": [],
+        "resolvedIssueIds": [
+          "budget_range",
+          "venue_hold"
+        ],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "curious",
+      "findings": [
+        {
+          "id": "budget_range",
+          "category": "Budget Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_budget"
+          ],
+          "uncertainty": "none",
+          "message": "The estimate is within the group’s per-person ceiling.",
+          "recommendedAction": "Keep contingency funds separate from the current estimate."
+        },
+        {
+          "id": "venue_hold",
+          "category": "Logistics Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_venue"
+          ],
+          "uncertainty": "none",
+          "message": "The venue hold and shuttle quote were reviewed.",
+          "recommendedAction": "Reconfirm both before making a booking."
+        },
+        {
+          "id": "supplier_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The supplier follow-up still needs an owner.",
+          "recommendedAction": "Assign who will confirm the venue and supplier deadlines."
+        }
+      ],
+      "questions": [
+        {
+          "id": "supplier_owner_question",
+          "findingId": "supplier_owner",
+          "targetId": null,
+          "visibility": "group",
+          "kind": "choice",
+          "text": "Who can confirm the venue hold and supplier deadlines?",
+          "options": [
+            "Jules can coordinate suppliers",
+            "Sky can coordinate suppliers",
+            "Still deciding"
+          ]
+        }
+      ],
+      "options": [
+        {
+          "id": "supplier_hold",
+          "label": "Hold the venue, confirm suppliers by RSVP",
+          "values": {
+            "date": "Saturday, 19 December",
+            "time": "4:00 PM – 10:00 PM",
+            "location": "Garden venue · provisional hold",
+            "cost": 8200,
+            "currency": "PHP",
+            "transport": "Guest shuttle · quote requested",
+            "preparation": "Final guest list, vows & day-of kit"
+          }
+        },
+        {
+          "id": "contingency_plan",
+          "label": "Keep the venue flexible and protect contingency",
+          "values": {
+            "date": "Saturday, 19 December",
+            "time": "4:00 PM – 10:00 PM",
+            "location": "Garden venue · second option pending",
+            "cost": 7900,
+            "currency": "PHP",
+            "transport": "Guest shuttle · compare two quotes",
+            "preparation": "Final guest list, vows & day-of kit"
+          }
+        }
+      ],
+      "messages": [
+        {
+          "text": "Who can confirm the venue hold and supplier deadlines?",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": "supplier_owner_question",
+          "proposalVersion": 13
+        },
+        {
+          "text": "The estimate is within the group’s per-person ceiling.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 13
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "proposalVersion": 13,
+        "responded": false
+      },
+      {
+        "participantId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "proposalVersion": 13,
+        "responded": false
+      },
+      {
+        "participantId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "proposalVersion": 13,
+        "responded": false
+      },
+      {
+        "participantId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "proposalVersion": 13,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "summary": "Sky joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "summary": "Reese joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "summary": "Blake joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "summary": "Sky added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "summary": "Reese added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "summary": "Blake added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The per-person estimate has not been checked against the shared ceiling.",
+        "category": "Budget Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The venue hold and transport quote are still pending.",
+        "category": "Logistics Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The supplier follow-up still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_12",
+        "kind": "question_asked",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Can the per-person estimate stay at or below ₱8,500, with contingency left aside?",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 70%.",
+        "category": null
+      },
+      {
+        "id": "activity_14",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "constraint_confirmed",
+        "revision": 19,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "budget was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "constraint_confirmed",
+        "revision": 20,
+        "proposalVersion": 12,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "venue was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "constraint_confirmed",
+        "revision": 21,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "transport was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "readiness_changed",
+        "revision": 21,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 92%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 70,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 67,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "budget_range",
+            "venue_hold",
+            "supplier_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The wedding outline has a budget estimate. Venue, transport and supplier ownership remain open."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 21,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 92,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 22,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "budget_range",
+            "venue_hold"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      }
+    ]
+  },
+  "revised": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 3,
+    "room": {
+      "roomId": "eb376f5c-a710-4b32-a0c8-5c213f348bef",
+      "viewerId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+      "eventType": "Wedding planning",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 24,
+      "analysisStatus": "complete",
+      "proposalVersion": 15,
+      "participants": [
+        {
+          "id": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+          "name": "Jules",
+          "approved": false
+        },
+        {
+          "id": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+          "name": "Sky",
+          "approved": false
+        },
+        {
+          "id": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+          "name": "Reese",
+          "approved": false
+        },
+        {
+          "id": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+          "name": "Blake",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "supplier_hold",
+        "label": "Hold the venue, confirm suppliers by RSVP",
+        "values": {
+          "date": "Saturday, 19 December",
+          "time": "4:00 PM – 10:00 PM",
+          "location": "Garden venue · provisional hold",
+          "cost": 8200,
+          "currency": "PHP",
+          "transport": "Guest shuttle · quote requested",
+          "preparation": "Final guest list, vows & day-of kit"
+        }
+      },
+      "readiness": {
+        "percentage": 100,
+        "status": "ready_for_human_review",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": 8,
+        "newIssueIds": [],
+        "resolvedIssueIds": [
+          "supplier_owner"
+        ],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "COMPLETED",
+      "mascot": null,
+      "findings": [
+        {
+          "id": "budget_range",
+          "category": "Budget Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_budget"
+          ],
+          "uncertainty": "none",
+          "message": "The estimate is within the group’s per-person ceiling.",
+          "recommendedAction": "Keep contingency funds separate from the current estimate."
+        },
+        {
+          "id": "venue_hold",
+          "category": "Logistics Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_venue"
+          ],
+          "uncertainty": "none",
+          "message": "The venue hold and shuttle quote were reviewed.",
+          "recommendedAction": "Reconfirm both before making a booking."
+        },
+        {
+          "id": "supplier_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_owners"
+          ],
+          "uncertainty": "none",
+          "message": "A supplier follow-up owner was assigned.",
+          "recommendedAction": "Review supplier deadlines before the RSVP cutoff."
+        }
+      ],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "proposalVersion": 15,
+        "responded": false
+      },
+      {
+        "participantId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "proposalVersion": 15,
+        "responded": false
+      },
+      {
+        "participantId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "proposalVersion": 15,
+        "responded": false
+      },
+      {
+        "participantId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "proposalVersion": 15,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "summary": "Sky joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "summary": "Reese joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "summary": "Blake joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "summary": "Sky added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "summary": "Reese added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "summary": "Blake added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The per-person estimate has not been checked against the shared ceiling.",
+        "category": "Budget Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The venue hold and transport quote are still pending.",
+        "category": "Logistics Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The supplier follow-up still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_12",
+        "kind": "question_asked",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Can the per-person estimate stay at or below ₱8,500, with contingency left aside?",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 70%.",
+        "category": null
+      },
+      {
+        "id": "activity_14",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "constraint_confirmed",
+        "revision": 19,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "budget was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "constraint_confirmed",
+        "revision": 20,
+        "proposalVersion": 12,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "venue was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "constraint_confirmed",
+        "revision": 21,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "transport was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "readiness_changed",
+        "revision": 21,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 92%.",
+        "category": null
+      },
+      {
+        "id": "activity_19",
+        "kind": "participant_responded",
+        "revision": 22,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:36:20.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_20",
+        "kind": "proposal_revised",
+        "revision": 24,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:36:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "A revised fictional proposal is ready for participant review.",
+        "category": null
+      },
+      {
+        "id": "activity_21",
+        "kind": "readiness_changed",
+        "revision": 24,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:37:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 100%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 70,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 67,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "budget_range",
+            "venue_hold",
+            "supplier_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The wedding outline has a budget estimate. Venue, transport and supplier ownership remain open."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 21,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 92,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 22,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "budget_range",
+            "venue_hold"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      },
+      {
+        "id": "evaluation_2",
+        "revision": 24,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:41:00.000Z",
+        "readiness": {
+          "percentage": 100,
+          "status": "ready_for_human_review",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 8,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "supplier_owner"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "All required fictional planning details are confirmed. The proposal is ready for participants to review; no one has approved it yet."
+      }
+    ]
+  },
+  "review": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 4,
+    "room": {
+      "roomId": "eb376f5c-a710-4b32-a0c8-5c213f348bef",
+      "viewerId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+      "eventType": "Wedding planning",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 24,
+      "analysisStatus": "complete",
+      "proposalVersion": 15,
+      "participants": [
+        {
+          "id": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+          "name": "Jules",
+          "approved": false
+        },
+        {
+          "id": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+          "name": "Sky",
+          "approved": false
+        },
+        {
+          "id": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+          "name": "Reese",
+          "approved": false
+        },
+        {
+          "id": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+          "name": "Blake",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "supplier_hold",
+        "label": "Hold the venue, confirm suppliers by RSVP",
+        "values": {
+          "date": "Saturday, 19 December",
+          "time": "4:00 PM – 10:00 PM",
+          "location": "Garden venue · provisional hold",
+          "cost": 8200,
+          "currency": "PHP",
+          "transport": "Guest shuttle · quote requested",
+          "preparation": "Final guest list, vows & day-of kit"
+        }
+      },
+      "readiness": {
+        "percentage": 100,
+        "status": "ready_for_human_review",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": 8,
+        "newIssueIds": [],
+        "resolvedIssueIds": [
+          "supplier_owner"
+        ],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "COMPLETED",
+      "mascot": null,
+      "findings": [
+        {
+          "id": "budget_range",
+          "category": "Budget Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_budget"
+          ],
+          "uncertainty": "none",
+          "message": "The estimate is within the group’s per-person ceiling.",
+          "recommendedAction": "Keep contingency funds separate from the current estimate."
+        },
+        {
+          "id": "venue_hold",
+          "category": "Logistics Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_venue"
+          ],
+          "uncertainty": "none",
+          "message": "The venue hold and shuttle quote were reviewed.",
+          "recommendedAction": "Reconfirm both before making a booking."
+        },
+        {
+          "id": "supplier_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_owners"
+          ],
+          "uncertainty": "none",
+          "message": "A supplier follow-up owner was assigned.",
+          "recommendedAction": "Review supplier deadlines before the RSVP cutoff."
+        }
+      ],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "proposalVersion": 15,
+        "responded": false
+      },
+      {
+        "participantId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "proposalVersion": 15,
+        "responded": false
+      },
+      {
+        "participantId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "proposalVersion": 15,
+        "responded": false
+      },
+      {
+        "participantId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "proposalVersion": 15,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "summary": "Sky joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "summary": "Reese joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "summary": "Blake joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "summary": "Sky added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "summary": "Reese added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "summary": "Blake added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The per-person estimate has not been checked against the shared ceiling.",
+        "category": "Budget Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The venue hold and transport quote are still pending.",
+        "category": "Logistics Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The supplier follow-up still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_12",
+        "kind": "question_asked",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Can the per-person estimate stay at or below ₱8,500, with contingency left aside?",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 70%.",
+        "category": null
+      },
+      {
+        "id": "activity_14",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "constraint_confirmed",
+        "revision": 19,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "budget was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "constraint_confirmed",
+        "revision": 20,
+        "proposalVersion": 12,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "venue was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "constraint_confirmed",
+        "revision": 21,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "transport was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "readiness_changed",
+        "revision": 21,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 92%.",
+        "category": null
+      },
+      {
+        "id": "activity_19",
+        "kind": "participant_responded",
+        "revision": 22,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:36:20.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_20",
+        "kind": "proposal_revised",
+        "revision": 24,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:36:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "A revised fictional proposal is ready for participant review.",
+        "category": null
+      },
+      {
+        "id": "activity_21",
+        "kind": "readiness_changed",
+        "revision": 24,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:37:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 100%.",
+        "category": null
+      },
+      {
+        "id": "activity_22",
+        "kind": "analysis_completed",
+        "revision": 24,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:37:20.000Z",
+        "actorId": null,
+        "summary": "This proposal is ready for each participant to review.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 70,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 67,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "budget_range",
+            "venue_hold",
+            "supplier_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The wedding outline has a budget estimate. Venue, transport and supplier ownership remain open."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 21,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 92,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 22,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "budget_range",
+            "venue_hold"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      },
+      {
+        "id": "evaluation_2",
+        "revision": 24,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:41:00.000Z",
+        "readiness": {
+          "percentage": 100,
+          "status": "ready_for_human_review",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 8,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "supplier_owner"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "All required fictional planning details are confirmed. The proposal is ready for participants to review; no one has approved it yet."
+      }
+    ]
+  },
+  "carpool": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 5,
+    "room": {
+      "roomId": "eb376f5c-a710-4b32-a0c8-5c213f348bef",
+      "viewerId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+      "eventType": "Wedding planning",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 25,
+      "analysisStatus": "complete",
+      "proposalVersion": 16,
+      "participants": [
+        {
+          "id": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+          "name": "Jules",
+          "approved": false
+        },
+        {
+          "id": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+          "name": "Sky",
+          "approved": false
+        },
+        {
+          "id": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+          "name": "Reese",
+          "approved": false
+        },
+        {
+          "id": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+          "name": "Blake",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "contingency_plan",
+        "label": "Keep the venue flexible and protect contingency",
+        "values": {
+          "date": "Saturday, 19 December",
+          "time": "4:00 PM – 10:00 PM",
+          "location": "Garden venue · second option pending",
+          "cost": 7900,
+          "currency": "PHP",
+          "transport": "Guest shuttle · compare two quotes",
+          "preparation": "Final guest list, vows & day-of kit"
+        }
+      },
+      "readiness": {
+        "percentage": 97,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 80,
+            "status": "incomplete"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": -3,
+        "newIssueIds": [
+          "supplier_deposit"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "COMPLETED",
+      "mascot": null,
+      "findings": [
+        {
+          "id": "budget_range",
+          "category": "Budget Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_budget"
+          ],
+          "uncertainty": "none",
+          "message": "The estimate is within the group’s per-person ceiling.",
+          "recommendedAction": "Keep contingency funds separate from the current estimate."
+        },
+        {
+          "id": "venue_hold",
+          "category": "Logistics Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_venue"
+          ],
+          "uncertainty": "none",
+          "message": "The venue hold and shuttle quote were reviewed.",
+          "recommendedAction": "Reconfirm both before making a booking."
+        },
+        {
+          "id": "supplier_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_owners"
+          ],
+          "uncertainty": "none",
+          "message": "A supplier follow-up owner was assigned.",
+          "recommendedAction": "Review supplier deadlines before the RSVP cutoff."
+        },
+        {
+          "id": "supplier_deposit",
+          "category": "Budget Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The alternate supplier deposit needs confirmation against the contingency.",
+          "recommendedAction": "Confirm the deposit and remaining contingency before booking."
+        }
+      ],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "proposalVersion": 16,
+        "responded": false
+      },
+      {
+        "participantId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "proposalVersion": 16,
+        "responded": false
+      },
+      {
+        "participantId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "proposalVersion": 16,
+        "responded": false
+      },
+      {
+        "participantId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "proposalVersion": 16,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "summary": "Sky joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "summary": "Reese joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "summary": "Blake joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "99cd8994-02a7-421f-b9f6-ea1f5953cc39",
+        "summary": "Sky added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "171931ee-65c8-4e8d-89ac-a1c93d44e1ca",
+        "summary": "Reese added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "0de6c4ec-3351-41af-8b0b-1597d3dff82f",
+        "summary": "Blake added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The per-person estimate has not been checked against the shared ceiling.",
+        "category": "Budget Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The venue hold and transport quote are still pending.",
+        "category": "Logistics Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The supplier follow-up still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_12",
+        "kind": "question_asked",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Can the per-person estimate stay at or below ₱8,500, with contingency left aside?",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 70%.",
+        "category": null
+      },
+      {
+        "id": "activity_14",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "constraint_confirmed",
+        "revision": 19,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "budget was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "constraint_confirmed",
+        "revision": 20,
+        "proposalVersion": 12,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "venue was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "constraint_confirmed",
+        "revision": 21,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "transport was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "readiness_changed",
+        "revision": 21,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 92%.",
+        "category": null
+      },
+      {
+        "id": "activity_19",
+        "kind": "participant_responded",
+        "revision": 22,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:36:20.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "Jules answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_20",
+        "kind": "proposal_revised",
+        "revision": 24,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:36:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "A revised fictional proposal is ready for participant review.",
+        "category": null
+      },
+      {
+        "id": "activity_21",
+        "kind": "readiness_changed",
+        "revision": 24,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:37:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 100%.",
+        "category": null
+      },
+      {
+        "id": "activity_22",
+        "kind": "analysis_completed",
+        "revision": 24,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:37:20.000Z",
+        "actorId": null,
+        "summary": "This proposal is ready for each participant to review.",
+        "category": null
+      },
+      {
+        "id": "activity_23",
+        "kind": "proposal_revised",
+        "revision": 25,
+        "proposalVersion": 16,
+        "occurredAt": "2026-11-03T03:37:40.000Z",
+        "actorId": "71543a2b-0c62-4c84-b98d-a478719b5e5d",
+        "summary": "An alternative fictional proposal is open for review.",
+        "category": null
+      },
+      {
+        "id": "activity_24",
+        "kind": "readiness_changed",
+        "revision": 25,
+        "proposalVersion": 16,
+        "occurredAt": "2026-11-03T03:38:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 97%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 70,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 67,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "budget_range",
+            "venue_hold",
+            "supplier_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The wedding outline has a budget estimate. Venue, transport and supplier ownership remain open."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 21,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 92,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 22,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "budget_range",
+            "venue_hold"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      },
+      {
+        "id": "evaluation_2",
+        "revision": 24,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:41:00.000Z",
+        "readiness": {
+          "percentage": 100,
+          "status": "ready_for_human_review",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 8,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "supplier_owner"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "All required fictional planning details are confirmed. The proposal is ready for participants to review; no one has approved it yet."
+      },
+      {
+        "id": "evaluation_3",
+        "revision": 25,
+        "proposalVersion": 16,
+        "occurredAt": "2026-11-03T03:46:00.000Z",
+        "readiness": {
+          "percentage": 97,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 80,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": -3,
+          "newIssueIds": [
+            "supplier_deposit"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "This alternative has a follow-up item. Readiness is recalculated from its open finding; participant approval remains separate."
+      }
+    ]
+  }
+}

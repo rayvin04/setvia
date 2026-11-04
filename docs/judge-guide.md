@@ -1,24 +1,28 @@
 # Judge demo guide
 
-This guide distinguishes the homepage’s bounded live role playground from the synthetic scenario preview and the full planning-room flow.
+This guide distinguishes Setvia’s bounded live role playground, its no-login fictional planning-room demo, and local Meta-enabled extraction. Each shows a different part of the project.
 
 ## Public Muse Spark role playground
 
-Open [setvia.r4yv.tech/#meet-the-minds](https://setvia.r4yv.tech/#meet-the-minds). No account is required. Choose one of the four role cards and explicitly run a scenario to see the returned result and whether it was generated live or served from cache. The cards use Muse Spark 1.3 through the server-side playground API. Speaker demonstrates a Question Strategist → Speaker handoff. No model call happens on page load.
+Open [setvia.r4yv.tech/#meet-the-minds](https://setvia.r4yv.tech/#meet-the-minds). No account is required. Choose one of the four role cards and explicitly run a scenario to see its result and whether it was generated live or served from cache. The cards use Muse Spark through the server-side playground API. Speaker demonstrates a Question Strategist → Speaker handoff. No model call happens on page load.
 
 These are bounded role examples, not a complete group-planning session. They do not create a room or collect approvals. The optional Listener thought is not saved or placed in a public scenario cache. See the [playground guide](living-playground.md) for the role map and safeguards.
 
-## Public synthetic demonstration
+## No-login fictional planning-room demo
 
-Open [setvia.r4yv.tech/demos](https://setvia.r4yv.tech/demos). No account is required.
+Open [setvia.r4yv.tech/demos](https://setvia.r4yv.tech/demos). No account, API key, or setup is required.
 
-1. Choose one of the fictional examples: Beach Trip, Family Reunion, Project Kickoff, Group Project, or Wedding Planning.
-2. Select **Explore the planning dashboard**.
-3. Explore the available dashboard views and synthetic preview interactions. The dashboard can show different fictional participants and preview states.
+1. Choose Beach Trip, Family Reunion, Project Kickoff, Group Project, or Wedding Planning.
+2. Select **Try the … Demo** to open the matching planning room.
+3. Switch the fictional participant view, inspect the questions and proposal, try a suggested answer or custom message, and follow the authored stages. Use **Reset demo** to start over.
 
-The preview data is loaded from static JSON files in [`public/dashboard-preview/`](https://github.com/rayvin04/setvia/tree/main/public/dashboard-preview). The route makes no Meta request. Names, participant input, group activity, readiness, questions, replies, and proposals are fictional. Dashboard preview interactions are local to the browser session and are not shared with other visitors.
+Direct links can select a scenario, viewer, and stage, for example `/dashboard?scenario=family&viewer=mika&frame=initial` or `/dashboard?scenario=study&viewer=alex&frame=review`. Stages are **Initial discussion**, **Questions answered**, **Revised proposal**, **Participant review**, and **Alternative proposal**. Each regular demo has four fictional participants, distinct constraints, six Reality Check categories with scenario-specific applicability, and unresolved details. No approvals are prefilled. The technical selector also has a mountain hike, critical safety blocker, blocked analysis, unevaluated room, and loading state.
 
-The deployed site is a static Vite frontend. Model-backed operations use the separate Express API; `/demos` and `/dashboard` remain synthetic previews. The homepage playground does not create an authenticated room. See the local setup below for running the development server.
+Dashboard data comes from schema-validated fixtures generated through the room domain with a scripted mock gateway. Answers, messages, and explicit demo approvals stay in the browser session; they are not shared with visitors, persisted to the server, sent to a room API, or used to trigger an AI cycle. Selecting a stage displays its authored fixture. Readiness changes only when the selected fixture contains a valid changed state. The demo makes no Meta request.
+
+The static assets are viewer-scoped under [`public/dashboard-preview/`](https://github.com/rayvin04/setvia/tree/main/public/dashboard-preview). The family access detail and question appear only in the intended participant’s view. These URLs are publicly fetchable, so this format must contain fictional data only and must never be used for real private information.
+
+`/demos` and `/dashboard` are synthetic previews on the static Vite site. They do not create an authenticated room or represent a completed live planning cycle. Live room cycles require the configured Express runtime and private server-side role prompts.
 
 **Video:** The submission video does not have a verified URL yet. Add it to the README after recording and checking the final link.
 

@@ -1,0 +1,2439 @@
+{
+  "initial": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "36dbf6a5-4c99-4428-93fa-73a3b80ea636",
+      "viewerId": "e947c741-f425-4476-a215-ec6796a39056",
+      "eventType": "Project kickoff",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 12,
+      "analysisStatus": "complete",
+      "proposalVersion": 5,
+      "participants": [
+        {
+          "id": "e947c741-f425-4476-a215-ec6796a39056",
+          "name": "Morgan",
+          "approved": false
+        },
+        {
+          "id": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+          "name": "Casey",
+          "approved": false
+        },
+        {
+          "id": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+          "name": "Jordan",
+          "approved": false
+        },
+        {
+          "id": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+          "name": "Lee",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "A good start, together.",
+        "values": {
+          "date": "Monday, 16 November",
+          "time": "10:00 AM – 11:00 AM",
+          "location": "Online · meeting link to confirm",
+          "agenda": "Scope, priorities, owners & next steps",
+          "preparation": "Read the brief before the meeting"
+        }
+      },
+      "readiness": {
+        "percentage": 67,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "meeting_time",
+          "agenda_owner"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "curious",
+      "findings": [
+        {
+          "id": "meeting_time",
+          "category": "Schedule Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The proposed hour overlaps with a participant’s time-zone availability.",
+          "recommendedAction": "Confirm a shared 45-minute slot across the team’s time zones."
+        },
+        {
+          "id": "agenda_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "No one has confirmed ownership of the kickoff agenda.",
+          "recommendedAction": "Assign who will collect priorities and circulate the agenda."
+        }
+      ],
+      "questions": [
+        {
+          "id": "meeting_slot_question",
+          "findingId": "meeting_time",
+          "targetId": null,
+          "visibility": "group",
+          "kind": "choice",
+          "text": "Which 45-minute kickoff slot works across the team’s time zones?",
+          "options": [
+            "10:00–10:45 AM Manila time",
+            "11:00–11:45 AM Manila time",
+            "Suggest another time",
+            "Still deciding"
+          ]
+        }
+      ],
+      "options": [
+        {
+          "id": "shorter_slot",
+          "label": "45-minute kickoff with a focused agenda",
+          "values": {
+            "date": "Monday, 16 November",
+            "time": "10:00 AM – 10:45 AM",
+            "location": "Online · meeting link to confirm",
+            "agenda": "Priorities, decisions, owners & next steps",
+            "preparation": "Read the brief before the meeting"
+          }
+        },
+        {
+          "id": "later_slot",
+          "label": "Later slot for more time zones",
+          "values": {
+            "date": "Monday, 16 November",
+            "time": "11:00 AM – 11:45 AM",
+            "location": "Online · meeting link to confirm",
+            "agenda": "Priorities, decisions, owners & next steps",
+            "preparation": "Read the brief before the meeting"
+          }
+        }
+      ],
+      "messages": [
+        {
+          "text": "Which 45-minute kickoff slot works across the team’s time zones?",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": "meeting_slot_question",
+          "proposalVersion": 5
+        },
+        {
+          "text": "The proposed hour overlaps with a participant’s time-zone availability.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 5
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "e947c741-f425-4476-a215-ec6796a39056",
+        "proposalVersion": 5,
+        "responded": true
+      },
+      {
+        "participantId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "proposalVersion": 5,
+        "responded": true
+      },
+      {
+        "participantId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "proposalVersion": 5,
+        "responded": true
+      },
+      {
+        "participantId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "proposalVersion": 5,
+        "responded": true
+      }
+    ],
+    "contributions": [
+      {
+        "id": "fixture_kickoff_alex_1",
+        "participantId": "e947c741-f425-4476-a215-ec6796a39056",
+        "participantName": "Morgan",
+        "visibility": "group",
+        "targetId": null,
+        "text": "10:00 Manila time works; I cannot start earlier than 9.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.708Z",
+        "proposalVersion": 5
+      },
+      {
+        "id": "fixture_kickoff_sam_2",
+        "participantId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "participantName": "Casey",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I am three hours behind, so a later slot is easier for me.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.708Z",
+        "proposalVersion": 5
+      },
+      {
+        "id": "fixture_kickoff_jo_3",
+        "participantId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "participantName": "Jordan",
+        "visibility": "group",
+        "targetId": null,
+        "text": "Let’s agree on priorities before we assign owners.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.709Z",
+        "proposalVersion": 5
+      },
+      {
+        "id": "fixture_kickoff_mika_4",
+        "participantId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "participantName": "Lee",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can take notes, but I have a conflict after 10:45.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.710Z",
+        "proposalVersion": 5
+      }
+    ],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "summary": "Casey joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "summary": "Jordan joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "summary": "Lee joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 9,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 10,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "summary": "Casey added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 11,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "summary": "Jordan added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "summary": "Lee added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The proposed hour overlaps with a participant’s time-zone availability.",
+        "category": "Schedule Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "No one has confirmed ownership of the kickoff agenda.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "question_asked",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "Which 45-minute kickoff slot works across the team’s time zones?",
+        "category": null
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 67%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 67,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "meeting_time",
+            "agenda_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The team has a draft agenda and time. Time-zone availability and an agenda owner remain open."
+      }
+    ]
+  },
+  "updated": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 2,
+    "room": {
+      "roomId": "36dbf6a5-4c99-4428-93fa-73a3b80ea636",
+      "viewerId": "e947c741-f425-4476-a215-ec6796a39056",
+      "eventType": "Project kickoff",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 14,
+      "analysisStatus": "complete",
+      "proposalVersion": 6,
+      "participants": [
+        {
+          "id": "e947c741-f425-4476-a215-ec6796a39056",
+          "name": "Morgan",
+          "approved": false
+        },
+        {
+          "id": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+          "name": "Casey",
+          "approved": false
+        },
+        {
+          "id": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+          "name": "Jordan",
+          "approved": false
+        },
+        {
+          "id": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+          "name": "Lee",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "A good start, together.",
+        "values": {
+          "date": "Monday, 16 November",
+          "time": "10:00 AM – 11:00 AM",
+          "location": "Online · meeting link to confirm",
+          "agenda": "Scope, priorities, owners & next steps",
+          "preparation": "Read the brief before the meeting"
+        }
+      },
+      "readiness": {
+        "percentage": 83,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          }
+        ],
+        "delta": 16,
+        "newIssueIds": [],
+        "resolvedIssueIds": [
+          "meeting_time"
+        ],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "curious",
+      "findings": [
+        {
+          "id": "meeting_time",
+          "category": "Schedule Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_availability"
+          ],
+          "uncertainty": "none",
+          "message": "The team selected a shared 45-minute kickoff slot.",
+          "recommendedAction": "Review the calendar invitation."
+        },
+        {
+          "id": "agenda_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "No one has confirmed ownership of the kickoff agenda.",
+          "recommendedAction": "Assign who will collect priorities and circulate the agenda."
+        }
+      ],
+      "questions": [
+        {
+          "id": "agenda_owner_question",
+          "findingId": "agenda_owner",
+          "targetId": null,
+          "visibility": "group",
+          "kind": "choice",
+          "text": "Who can collect priorities and circulate the kickoff agenda?",
+          "options": [
+            "Morgan can own the agenda",
+            "Jordan can own the agenda",
+            "Still deciding"
+          ]
+        }
+      ],
+      "options": [
+        {
+          "id": "shorter_slot",
+          "label": "45-minute kickoff with a focused agenda",
+          "values": {
+            "date": "Monday, 16 November",
+            "time": "10:00 AM – 10:45 AM",
+            "location": "Online · meeting link to confirm",
+            "agenda": "Priorities, decisions, owners & next steps",
+            "preparation": "Read the brief before the meeting"
+          }
+        },
+        {
+          "id": "later_slot",
+          "label": "Later slot for more time zones",
+          "values": {
+            "date": "Monday, 16 November",
+            "time": "11:00 AM – 11:45 AM",
+            "location": "Online · meeting link to confirm",
+            "agenda": "Priorities, decisions, owners & next steps",
+            "preparation": "Read the brief before the meeting"
+          }
+        }
+      ],
+      "messages": [
+        {
+          "text": "Who can collect priorities and circulate the kickoff agenda?",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": "agenda_owner_question",
+          "proposalVersion": 6
+        },
+        {
+          "text": "The team selected a shared 45-minute kickoff slot.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 6
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "e947c741-f425-4476-a215-ec6796a39056",
+        "proposalVersion": 6,
+        "responded": false
+      },
+      {
+        "participantId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "proposalVersion": 6,
+        "responded": false
+      },
+      {
+        "participantId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "proposalVersion": 6,
+        "responded": false
+      },
+      {
+        "participantId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "proposalVersion": 6,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "summary": "Casey joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "summary": "Jordan joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "summary": "Lee joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 9,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 10,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "summary": "Casey added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 11,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "summary": "Jordan added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "summary": "Lee added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The proposed hour overlaps with a participant’s time-zone availability.",
+        "category": "Schedule Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "No one has confirmed ownership of the kickoff agenda.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "question_asked",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "Which 45-minute kickoff slot works across the team’s time zones?",
+        "category": null
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 67%.",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "participant_responded",
+        "revision": 13,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_14",
+        "kind": "constraint_confirmed",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "availability was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "readiness_changed",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 67,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "meeting_time",
+            "agenda_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The team has a draft agenda and time. Time-zone availability and an agenda owner remain open."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 16,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "meeting_time"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      }
+    ]
+  },
+  "revised": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 3,
+    "room": {
+      "roomId": "36dbf6a5-4c99-4428-93fa-73a3b80ea636",
+      "viewerId": "e947c741-f425-4476-a215-ec6796a39056",
+      "eventType": "Project kickoff",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 17,
+      "analysisStatus": "complete",
+      "proposalVersion": 8,
+      "participants": [
+        {
+          "id": "e947c741-f425-4476-a215-ec6796a39056",
+          "name": "Morgan",
+          "approved": false
+        },
+        {
+          "id": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+          "name": "Casey",
+          "approved": false
+        },
+        {
+          "id": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+          "name": "Jordan",
+          "approved": false
+        },
+        {
+          "id": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+          "name": "Lee",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "shorter_slot",
+        "label": "45-minute kickoff with a focused agenda",
+        "values": {
+          "date": "Monday, 16 November",
+          "time": "10:00 AM – 10:45 AM",
+          "location": "Online · meeting link to confirm",
+          "agenda": "Priorities, decisions, owners & next steps",
+          "preparation": "Read the brief before the meeting"
+        }
+      },
+      "readiness": {
+        "percentage": 100,
+        "status": "ready_for_human_review",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          }
+        ],
+        "delta": 17,
+        "newIssueIds": [],
+        "resolvedIssueIds": [
+          "agenda_owner"
+        ],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "COMPLETED",
+      "mascot": null,
+      "findings": [
+        {
+          "id": "meeting_time",
+          "category": "Schedule Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_availability"
+          ],
+          "uncertainty": "none",
+          "message": "The team selected a shared 45-minute kickoff slot.",
+          "recommendedAction": "Review the calendar invitation."
+        },
+        {
+          "id": "agenda_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_owners"
+          ],
+          "uncertainty": "none",
+          "message": "An agenda owner was selected for the kickoff.",
+          "recommendedAction": "Review the agenda before the meeting."
+        }
+      ],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "e947c741-f425-4476-a215-ec6796a39056",
+        "proposalVersion": 8,
+        "responded": false
+      },
+      {
+        "participantId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "proposalVersion": 8,
+        "responded": false
+      },
+      {
+        "participantId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "proposalVersion": 8,
+        "responded": false
+      },
+      {
+        "participantId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "proposalVersion": 8,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "summary": "Casey joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "summary": "Jordan joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "summary": "Lee joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 9,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 10,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "summary": "Casey added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 11,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "summary": "Jordan added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "summary": "Lee added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The proposed hour overlaps with a participant’s time-zone availability.",
+        "category": "Schedule Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "No one has confirmed ownership of the kickoff agenda.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "question_asked",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "Which 45-minute kickoff slot works across the team’s time zones?",
+        "category": null
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 67%.",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "participant_responded",
+        "revision": 13,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_14",
+        "kind": "constraint_confirmed",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "availability was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "readiness_changed",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "proposal_revised",
+        "revision": 17,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "A revised fictional proposal is ready for participant review.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 100%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 67,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "meeting_time",
+            "agenda_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The team has a draft agenda and time. Time-zone availability and an agenda owner remain open."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 16,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "meeting_time"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      },
+      {
+        "id": "evaluation_2",
+        "revision": 17,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:41:00.000Z",
+        "readiness": {
+          "percentage": 100,
+          "status": "ready_for_human_review",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 17,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "agenda_owner"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "All required fictional planning details are confirmed. The proposal is ready for participants to review; no one has approved it yet."
+      }
+    ]
+  },
+  "review": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 4,
+    "room": {
+      "roomId": "36dbf6a5-4c99-4428-93fa-73a3b80ea636",
+      "viewerId": "e947c741-f425-4476-a215-ec6796a39056",
+      "eventType": "Project kickoff",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 17,
+      "analysisStatus": "complete",
+      "proposalVersion": 8,
+      "participants": [
+        {
+          "id": "e947c741-f425-4476-a215-ec6796a39056",
+          "name": "Morgan",
+          "approved": false
+        },
+        {
+          "id": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+          "name": "Casey",
+          "approved": false
+        },
+        {
+          "id": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+          "name": "Jordan",
+          "approved": false
+        },
+        {
+          "id": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+          "name": "Lee",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "shorter_slot",
+        "label": "45-minute kickoff with a focused agenda",
+        "values": {
+          "date": "Monday, 16 November",
+          "time": "10:00 AM – 10:45 AM",
+          "location": "Online · meeting link to confirm",
+          "agenda": "Priorities, decisions, owners & next steps",
+          "preparation": "Read the brief before the meeting"
+        }
+      },
+      "readiness": {
+        "percentage": 100,
+        "status": "ready_for_human_review",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          }
+        ],
+        "delta": 17,
+        "newIssueIds": [],
+        "resolvedIssueIds": [
+          "agenda_owner"
+        ],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "COMPLETED",
+      "mascot": null,
+      "findings": [
+        {
+          "id": "meeting_time",
+          "category": "Schedule Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_availability"
+          ],
+          "uncertainty": "none",
+          "message": "The team selected a shared 45-minute kickoff slot.",
+          "recommendedAction": "Review the calendar invitation."
+        },
+        {
+          "id": "agenda_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_owners"
+          ],
+          "uncertainty": "none",
+          "message": "An agenda owner was selected for the kickoff.",
+          "recommendedAction": "Review the agenda before the meeting."
+        }
+      ],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "e947c741-f425-4476-a215-ec6796a39056",
+        "proposalVersion": 8,
+        "responded": false
+      },
+      {
+        "participantId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "proposalVersion": 8,
+        "responded": false
+      },
+      {
+        "participantId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "proposalVersion": 8,
+        "responded": false
+      },
+      {
+        "participantId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "proposalVersion": 8,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "summary": "Casey joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "summary": "Jordan joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "summary": "Lee joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 9,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 10,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "summary": "Casey added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 11,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "summary": "Jordan added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "summary": "Lee added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The proposed hour overlaps with a participant’s time-zone availability.",
+        "category": "Schedule Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "No one has confirmed ownership of the kickoff agenda.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "question_asked",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "Which 45-minute kickoff slot works across the team’s time zones?",
+        "category": null
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 67%.",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "participant_responded",
+        "revision": 13,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_14",
+        "kind": "constraint_confirmed",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "availability was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "readiness_changed",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "proposal_revised",
+        "revision": 17,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "A revised fictional proposal is ready for participant review.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 100%.",
+        "category": null
+      },
+      {
+        "id": "activity_19",
+        "kind": "analysis_completed",
+        "revision": 17,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:36:20.000Z",
+        "actorId": null,
+        "summary": "This proposal is ready for each participant to review.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 67,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "meeting_time",
+            "agenda_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The team has a draft agenda and time. Time-zone availability and an agenda owner remain open."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 16,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "meeting_time"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      },
+      {
+        "id": "evaluation_2",
+        "revision": 17,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:41:00.000Z",
+        "readiness": {
+          "percentage": 100,
+          "status": "ready_for_human_review",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 17,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "agenda_owner"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "All required fictional planning details are confirmed. The proposal is ready for participants to review; no one has approved it yet."
+      }
+    ]
+  },
+  "carpool": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 5,
+    "room": {
+      "roomId": "36dbf6a5-4c99-4428-93fa-73a3b80ea636",
+      "viewerId": "e947c741-f425-4476-a215-ec6796a39056",
+      "eventType": "Project kickoff",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 18,
+      "analysisStatus": "complete",
+      "proposalVersion": 9,
+      "participants": [
+        {
+          "id": "e947c741-f425-4476-a215-ec6796a39056",
+          "name": "Morgan",
+          "approved": false
+        },
+        {
+          "id": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+          "name": "Casey",
+          "approved": false
+        },
+        {
+          "id": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+          "name": "Jordan",
+          "approved": false
+        },
+        {
+          "id": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+          "name": "Lee",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "later_slot",
+        "label": "Later slot for more time zones",
+        "values": {
+          "date": "Monday, 16 November",
+          "time": "11:00 AM – 11:45 AM",
+          "location": "Online · meeting link to confirm",
+          "agenda": "Priorities, decisions, owners & next steps",
+          "preparation": "Read the brief before the meeting"
+        }
+      },
+      "readiness": {
+        "percentage": 93,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "People Check",
+            "percentage": 80,
+            "status": "incomplete"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          }
+        ],
+        "delta": -7,
+        "newIssueIds": [
+          "facilitator"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "COMPLETED",
+      "mascot": null,
+      "findings": [
+        {
+          "id": "meeting_time",
+          "category": "Schedule Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_availability"
+          ],
+          "uncertainty": "none",
+          "message": "The team selected a shared 45-minute kickoff slot.",
+          "recommendedAction": "Review the calendar invitation."
+        },
+        {
+          "id": "agenda_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_owners"
+          ],
+          "uncertainty": "none",
+          "message": "An agenda owner was selected for the kickoff.",
+          "recommendedAction": "Review the agenda before the meeting."
+        },
+        {
+          "id": "facilitator",
+          "category": "People Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The alternate meeting slot needs a facilitator.",
+          "recommendedAction": "Assign a facilitator before sending the invite."
+        }
+      ],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "e947c741-f425-4476-a215-ec6796a39056",
+        "proposalVersion": 9,
+        "responded": false
+      },
+      {
+        "participantId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "proposalVersion": 9,
+        "responded": false
+      },
+      {
+        "participantId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "proposalVersion": 9,
+        "responded": false
+      },
+      {
+        "participantId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "proposalVersion": 9,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "summary": "Casey joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "summary": "Jordan joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 8,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "summary": "Lee joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 9,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 10,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "e1ef2ecf-f51c-449f-ac72-397dd481d54d",
+        "summary": "Casey added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 11,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "ac576677-59f8-4d03-b7bc-d3904aa9ab12",
+        "summary": "Jordan added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "4466dd00-cc05-480b-96eb-c0d89e8e7abd",
+        "summary": "Lee added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The proposed hour overlaps with a participant’s time-zone availability.",
+        "category": "Schedule Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "No one has confirmed ownership of the kickoff agenda.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "question_asked",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "Which 45-minute kickoff slot works across the team’s time zones?",
+        "category": null
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 67%.",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "participant_responded",
+        "revision": 13,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_14",
+        "kind": "constraint_confirmed",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "availability was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "readiness_changed",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "Morgan answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "proposal_revised",
+        "revision": 17,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "A revised fictional proposal is ready for participant review.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 100%.",
+        "category": null
+      },
+      {
+        "id": "activity_19",
+        "kind": "analysis_completed",
+        "revision": 17,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:36:20.000Z",
+        "actorId": null,
+        "summary": "This proposal is ready for each participant to review.",
+        "category": null
+      },
+      {
+        "id": "activity_20",
+        "kind": "proposal_revised",
+        "revision": 18,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:36:40.000Z",
+        "actorId": "e947c741-f425-4476-a215-ec6796a39056",
+        "summary": "An alternative fictional proposal is open for review.",
+        "category": null
+      },
+      {
+        "id": "activity_21",
+        "kind": "readiness_changed",
+        "revision": 18,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:37:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 93%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 12,
+        "proposalVersion": 5,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 67,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "meeting_time",
+            "agenda_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The team has a draft agenda and time. Time-zone availability and an agenda owner remain open."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 16,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "meeting_time"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      },
+      {
+        "id": "evaluation_2",
+        "revision": 17,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:41:00.000Z",
+        "readiness": {
+          "percentage": 100,
+          "status": "ready_for_human_review",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 17,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "agenda_owner"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "All required fictional planning details are confirmed. The proposal is ready for participants to review; no one has approved it yet."
+      },
+      {
+        "id": "evaluation_3",
+        "revision": 18,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:46:00.000Z",
+        "readiness": {
+          "percentage": 93,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "People Check",
+              "percentage": 80,
+              "status": "incomplete"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": -7,
+          "newIssueIds": [
+            "facilitator"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "This alternative has a follow-up item. Readiness is recalculated from its open finding; participant approval remains separate."
+      }
+    ]
+  }
+}

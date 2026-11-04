@@ -59,24 +59,32 @@ test("critical safety overrides an 83 percent result while the analysis cycle ca
 });
 test("personal questions and question activity are projected server-side for their recipient", async () => {
   const frames = await family;
+  const pat = frames.initial.mika!;
   const alex = frames.initial.alex!;
   const sam = frames.initial.sam!;
-  assert.equal(alex.room.questions.length, 1);
-  assert.equal(alex.room.questions[0].targetId, alex.room.viewerId);
+  const jo = frames.initial.jo!;
+  assert.equal(pat.room.questions.length, 1);
+  assert.equal(pat.room.questions[0].targetId, pat.room.viewerId);
+  assert.equal(pat.room.questions[0].visibility, "private");
+  assert.equal(alex.room.questions.length, 0);
   assert.equal(sam.room.questions.length, 0);
   assert.equal(
-    sam.activity.some((e) => /Alex, what access/i.test(e.summary)),
+    sam.activity.some((e) => /private planning question/i.test(e.summary)),
     false,
   );
   assert.equal(
-    JSON.stringify(sam).includes("what access requirements would you"),
+    JSON.stringify(alex).includes("step-free entrance"),
     false,
   );
-  for (const snapshot of [alex, sam])
+  assert.match(JSON.stringify(pat), /step-free entrance/);
+  for (const snapshot of [alex, sam, jo])
     assert.doesNotMatch(
       JSON.stringify(snapshot),
-      /PRIVATE_CANARY|privateFacts|tokenHash|invitationHash|pendingInputs|traces|promptHash/,
+      /step-free entrance|accessible restroom|privateFacts|tokenHash|invitationHash|pendingInputs|traces|promptHash/,
     );
+  assert.equal(pat.contributions.filter((entry) => entry.visibility === "private").length, 1);
+  for (const snapshot of [alex, sam, jo])
+    assert.equal(snapshot.contributions.some((entry) => entry.visibility === "private"), false);
 });
 test("group questions are visible to each authorized synthetic viewer", async () => {
   const frames = await beach;
@@ -124,13 +132,14 @@ test("blocked analysis retains the last score and publishes no fabricated findin
   assert.deepEqual(snapshot.room.options, []);
   assert.deepEqual(snapshot.room.findings, []);
 });
-test("unevaluated room has no percentage and a completed kickoff is not unanimous approval", async () => {
+test("unevaluated room has no percentage and completed kickoff remains separate from approval", async () => {
   const empty = (await createPreviewFixture("empty")).initial.alex!;
-  const kickoff = (await createPreviewFixture("kickoff")).initial.alex!;
+  const kickoff = (await createPreviewFixture("kickoff")).review.alex!;
   assert.equal(empty.room.readiness, null);
   assert.equal(empty.history.length, 0);
   assert.equal(kickoff.room.readiness?.percentage, 100);
   assert.equal(kickoff.room.readiness?.status, "ready_for_human_review");
+  assert.equal(kickoff.room.loopState, "COMPLETED");
   assert.equal(kickoff.room.approved, false);
   assert.equal(kickoff.room.approvalCount, 0);
 });
@@ -153,6 +162,53 @@ test("all preview scenarios preserve six categories and publish schema-checked e
           );
       }
   }
+});
+test("the five judge demos provide a complete fictional journey without prefilled approvals", async () => {
+  const expectedEventTypes = {
+    beach: "Beach trip",
+    family: "Family reunion",
+    kickoff: "Project kickoff",
+    study: "Group project",
+    wedding: "Wedding planning",
+  } as const;
+  for (const [scenario, eventType] of Object.entries(expectedEventTypes)) {
+    const frames = await createPreviewFixture(scenario as keyof typeof expectedEventTypes);
+    const initial = frames.initial.alex!;
+    const updated = frames.updated.alex!;
+    const review = frames.review.alex!;
+    assert.equal(initial.room.eventType, eventType);
+    assert.equal(initial.room.participants.length, 4);
+    assert.equal(initial.contributions.filter((entry) => entry.visibility === "group").length, 4);
+    assert.ok(initial.room.questions.length > 0 ||
+      Object.values(frames.initial).some((snapshot) => snapshot?.room.questions.length));
+    assert.equal(initial.room.loopState, "WAIT_FOR_PARTICIPANT");
+    assert.ok((updated.room.readiness?.percentage ?? 0) > (initial.room.readiness?.percentage ?? 0));
+    assert.equal(review.room.loopState, "COMPLETED");
+    assert.equal(review.room.readiness?.status, "ready_for_human_review");
+    assert.equal(review.room.approvalCount, 0);
+    assert.equal(review.room.approved, false);
+    assert.equal(review.room.participants.some((person) => person.approved), false);
+    for (const frame of Object.values(frames))
+      for (const snapshot of Object.values(frame)) {
+        assert.ok(snapshot);
+        assert.equal(snapshot.room.approvalCount, 0);
+        assert.equal(snapshot.room.participants.some((person) => person.approved), false);
+      }
+  }
+});
+test("kickoff and group project mark irrelevant checks as not applicable", async () => {
+  const kickoff = (await createPreviewFixture("kickoff")).initial.alex!.room;
+  const study = (await createPreviewFixture("study")).initial.alex!.room;
+  const kickoffStatuses = new Map(
+    kickoff.readiness!.categories.map((category) => [category.category, category.status]),
+  );
+  const studyStatuses = new Map(
+    study.readiness!.categories.map((category) => [category.category, category.status]),
+  );
+  for (const category of ["Budget Check", "Logistics Check", "Safety Check"])
+    assert.equal(kickoffStatuses.get(category as never), "not_applicable");
+  for (const category of ["Logistics Check", "Safety Check"])
+    assert.equal(studyStatuses.get(category as never), "not_applicable");
 });
 test("Lab semantics reject the previous People Check and budget explanation mismatch", async () => {
   const records = await buildLabRecords();

@@ -1,0 +1,627 @@
+{
+  "initial": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "666f5f8b-945b-43af-b0f0-9591e68bc8f5",
+      "viewerId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+      "eventType": "Planning idea",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 4,
+      "analysisStatus": "idle",
+      "proposalVersion": 1,
+      "participants": [
+        {
+          "id": "26197af5-c654-4752-9fd0-74e24fc3100f",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "237b9ada-7f8a-42af-878c-2a18750600fb",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "Something worth getting together for.",
+        "values": {}
+      },
+      "readiness": null,
+      "analysisCurrent": false,
+      "analysisIncomplete": true,
+      "finalEvaluationAvailable": false,
+      "loopState": null,
+      "mascot": null,
+      "findings": [],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "237b9ada-7f8a-42af-878c-2a18750600fb",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+        "proposalVersion": 1,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "237b9ada-7f8a-42af-878c-2a18750600fb",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+        "summary": "Mika joined the plan.",
+        "category": null
+      }
+    ],
+    "history": []
+  },
+  "updated": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "666f5f8b-945b-43af-b0f0-9591e68bc8f5",
+      "viewerId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+      "eventType": "Planning idea",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 4,
+      "analysisStatus": "idle",
+      "proposalVersion": 1,
+      "participants": [
+        {
+          "id": "26197af5-c654-4752-9fd0-74e24fc3100f",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "237b9ada-7f8a-42af-878c-2a18750600fb",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "Something worth getting together for.",
+        "values": {}
+      },
+      "readiness": null,
+      "analysisCurrent": false,
+      "analysisIncomplete": true,
+      "finalEvaluationAvailable": false,
+      "loopState": null,
+      "mascot": null,
+      "findings": [],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "237b9ada-7f8a-42af-878c-2a18750600fb",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+        "proposalVersion": 1,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "237b9ada-7f8a-42af-878c-2a18750600fb",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+        "summary": "Mika joined the plan.",
+        "category": null
+      }
+    ],
+    "history": []
+  },
+  "revised": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "666f5f8b-945b-43af-b0f0-9591e68bc8f5",
+      "viewerId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+      "eventType": "Planning idea",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 4,
+      "analysisStatus": "idle",
+      "proposalVersion": 1,
+      "participants": [
+        {
+          "id": "26197af5-c654-4752-9fd0-74e24fc3100f",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "237b9ada-7f8a-42af-878c-2a18750600fb",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "Something worth getting together for.",
+        "values": {}
+      },
+      "readiness": null,
+      "analysisCurrent": false,
+      "analysisIncomplete": true,
+      "finalEvaluationAvailable": false,
+      "loopState": null,
+      "mascot": null,
+      "findings": [],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "237b9ada-7f8a-42af-878c-2a18750600fb",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+        "proposalVersion": 1,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "237b9ada-7f8a-42af-878c-2a18750600fb",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+        "summary": "Mika joined the plan.",
+        "category": null
+      }
+    ],
+    "history": []
+  },
+  "review": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "666f5f8b-945b-43af-b0f0-9591e68bc8f5",
+      "viewerId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+      "eventType": "Planning idea",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 4,
+      "analysisStatus": "idle",
+      "proposalVersion": 1,
+      "participants": [
+        {
+          "id": "26197af5-c654-4752-9fd0-74e24fc3100f",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "237b9ada-7f8a-42af-878c-2a18750600fb",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "Something worth getting together for.",
+        "values": {}
+      },
+      "readiness": null,
+      "analysisCurrent": false,
+      "analysisIncomplete": true,
+      "finalEvaluationAvailable": false,
+      "loopState": null,
+      "mascot": null,
+      "findings": [],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "237b9ada-7f8a-42af-878c-2a18750600fb",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+        "proposalVersion": 1,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "237b9ada-7f8a-42af-878c-2a18750600fb",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+        "summary": "Mika joined the plan.",
+        "category": null
+      }
+    ],
+    "history": []
+  },
+  "carpool": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "666f5f8b-945b-43af-b0f0-9591e68bc8f5",
+      "viewerId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+      "eventType": "Planning idea",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 4,
+      "analysisStatus": "idle",
+      "proposalVersion": 1,
+      "participants": [
+        {
+          "id": "26197af5-c654-4752-9fd0-74e24fc3100f",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "237b9ada-7f8a-42af-878c-2a18750600fb",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "Something worth getting together for.",
+        "values": {}
+      },
+      "readiness": null,
+      "analysisCurrent": false,
+      "analysisIncomplete": true,
+      "finalEvaluationAvailable": false,
+      "loopState": null,
+      "mascot": null,
+      "findings": [],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "237b9ada-7f8a-42af-878c-2a18750600fb",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+        "proposalVersion": 1,
+        "responded": false
+      },
+      {
+        "participantId": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+        "proposalVersion": 1,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "26197af5-c654-4752-9fd0-74e24fc3100f",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "237b9ada-7f8a-42af-878c-2a18750600fb",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "c70a5f75-5d31-45a2-a374-f6055416ffd1",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 4,
+        "proposalVersion": 1,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "b630c489-4e45-40a4-8308-a0bfd1d143d0",
+        "summary": "Mika joined the plan.",
+        "category": null
+      }
+    ],
+    "history": []
+  }
+}

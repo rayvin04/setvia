@@ -9,7 +9,7 @@ import {
 } from "../server/src/agents/fixtures.js";
 import { AgentEngine } from "../server/src/agents/engine.js";
 import { saveLab, type LabRecord } from "../server/src/agents/lab.js";
-import { buildLabRecords } from "../server/src/agents/lab-scenarios.js";
+import { buildLabRecords, labSemanticsMatch } from "../server/src/agents/lab-scenarios.js";
 import { runAllScenarioMocks } from "../server/src/agents/scenario-runner.js";
 import { fileURLToPath } from "node:url";
 
@@ -20,16 +20,16 @@ globalThis.fetch = async () => {
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const privateRoot = resolve(process.env.SETVIA_PRIVATE_ROOT ?? resolve(appRoot, "..", "setvia-local"));
 const records: LabRecord[] = await buildLabRecords();
-const foundationOffset = records.length;
+const foundationRecords: LabRecord[] = [];
 const complete = await fixture([{ role: "Judge", output: judge() }], "meeting");
-records.push({
+foundationRecords.push({
   scenario: "Project kickoff — unnecessary agents skipped",
   mode: "MOCK",
   cycle: await complete.engine.run(complete.roomId, complete.auth),
 });
 const negotiation = await fixture(negotiationSteps(), "trip");
 await addBudget(negotiation);
-records.push({
+foundationRecords.push({
   scenario: "Beach trip — invalid compromise and bounded revision",
   mode: "MOCK",
   cycle: await negotiation.engine.run(negotiation.roomId, negotiation.auth),
@@ -45,7 +45,14 @@ const q = {
   options: [],
 };
 const needsInput = judge({
-  findings: [finding({ id: "accessibility", category: "People Check" })],
+  findings: [
+    finding({
+      id: "accessibility",
+      category: "People Check",
+      message: "The reunion venue details still need confirmation.",
+      recommendedAction: "Ask the participant which venue details they authorize sharing.",
+    }),
+  ],
   next: "question",
   participantInputRequired: true,
 });
@@ -65,7 +72,7 @@ const questionEngine = new AgentEngine(
   questions.store,
   questionGateway.gateway,
 );
-records.push({
+foundationRecords.push({
   scenario: "Family reunion — targeted question, then wait",
   mode: "MOCK",
   cycle: await questionEngine.run(questions.roomId, questions.auth),
@@ -89,7 +96,7 @@ const safety = await fixture(
   ],
   "project",
 );
-records.push({
+foundationRecords.push({
   scenario: "Outdoor group project — critical Safety Check blocks readiness",
   mode: "MOCK",
   cycle: await safety.engine.run(safety.roomId, safety.auth),
@@ -98,7 +105,7 @@ const failure = await fixture(
   [{ role: "Judge", error: new Error("Synthetic upstream failure") }],
   "celebration",
 );
-records.push({
+foundationRecords.push({
   scenario: "Celebration — safe failure without a fabricated Judge",
   mode: "MOCK",
   cycle: await failure.engine.run(failure.roomId, failure.auth),
@@ -111,21 +118,23 @@ const expected = [
   "BLOCKED",
 ] as const;
 const specificChecks = [
-  records[foundationOffset].cycle.traces.length === 1,
-  records[foundationOffset + 1].cycle.traces.some((trace) =>
+  foundationRecords[0].cycle.traces.length === 1,
+  foundationRecords[1].cycle.traces.some((trace) =>
     trace.rejectedOptionIds.includes("expensive"),
   ),
-  records[foundationOffset + 2].cycle.questions.length === 1 &&
-    records[foundationOffset + 2].cycle.traces.at(-1)?.role === "Judge",
-  records[foundationOffset + 3].cycle.readiness?.status === "blocked",
-  records[foundationOffset + 4].cycle.finalEvaluation === null,
+  foundationRecords[2].cycle.questions.length === 1 &&
+    foundationRecords[2].cycle.traces.at(-1)?.role === "Judge",
+  foundationRecords[3].cycle.readiness?.status === "blocked",
+  foundationRecords[4].cycle.finalEvaluation === null,
 ];
-records.forEach((record, index) => {
-  const regressionIndex = index >= foundationOffset ? index - foundationOffset : index;
-  record.expectedOutcome = expected[regressionIndex];
+foundationRecords.forEach((record, index) => {
+  record.expectedOutcome = expected[index];
   record.passed =
-    record.cycle.outcome === expected[regressionIndex] && specificChecks[regressionIndex];
+    record.cycle.outcome === expected[index] &&
+    specificChecks[index] &&
+    labSemanticsMatch(record);
 });
+records.push(...foundationRecords);
 const realistic = await runAllScenarioMocks();
 records.push(...realistic.map(({ record }) => record));
 const passed = records.filter((record) => record.passed).length;

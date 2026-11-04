@@ -70,9 +70,9 @@ export async function buildLabRecords(): Promise<LabRecord[]> {
         id: "accessibility",
         category: "People Check",
         message:
-          "The reunion venue’s step-free access requirements need confirmation.",
+          "The reunion venue details still need confirmation.",
         recommendedAction:
-          "Ask the participant which venue access requirements they authorize sharing.",
+          "Ask the participant which venue details they authorize sharing.",
       }),
     ],
     next: "question",

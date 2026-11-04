@@ -1664,3 +1664,33 @@
     scroll-behavior: auto !important;
   }
 }
+.dashboard-refined .preview-stage-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  min-height: 32px;
+  margin: 2px 0 8px;
+  color: #a8bac6;
+  font-size: 11px;
+}
+.dashboard-refined .preview-stage-summary strong {
+  color: #dfe9ee;
+  font-size: 12px;
+  font-weight: 550;
+}
+.dashboard-refined .preview-alternative-note {
+  color: #f6ad93;
+  font-size: 11px;
+}
+@media (max-width: 700px) {
+  .dashboard-refined .preview-stage-summary {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 3px;
+    padding: 2px 0 6px;
+  }
+  .dashboard-refined .preview-control-fields {
+    flex-wrap: wrap;
+  }
+}

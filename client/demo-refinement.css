@@ -713,3 +713,24 @@
   padding: 0;
   background: transparent;
 }
+.demo-heading > div {
+  max-width: 70ch;
+}
+.demo-heading p {
+  max-width: 68ch;
+  line-height: 1.65;
+}
+.demo-primary-cta {
+  margin-top: 17px;
+  min-height: 46px;
+  gap: 11px;
+}
+.demo-story-action {
+  align-items: flex-start;
+}
+@media (max-width: 650px) {
+  .demo-primary-cta {
+    width: 100%;
+    justify-content: center;
+  }
+}

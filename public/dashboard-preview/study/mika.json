@@ -1,0 +1,2537 @@
+{
+  "initial": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "cfc3e50c-a78e-4dcd-8736-691a9e45ec24",
+      "viewerId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+      "eventType": "Group project",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 13,
+      "analysisStatus": "complete",
+      "proposalVersion": 6,
+      "participants": [
+        {
+          "id": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+          "name": "Ari",
+          "approved": false
+        },
+        {
+          "id": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+          "name": "Quinn",
+          "approved": false
+        },
+        {
+          "id": "076186d6-8e2c-490a-b858-419084ef909a",
+          "name": "Riley",
+          "approved": false
+        },
+        {
+          "id": "00bf54ae-f106-4776-9cee-52e2501be87b",
+          "name": "Charlie",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "A fair plan for the group project",
+        "values": {
+          "date": "Friday, 20 November",
+          "time": "6:00 PM – 7:00 PM",
+          "location": "Campus library · room to confirm",
+          "cost": 0,
+          "currency": "PHP",
+          "agenda": "Scope review, research, outline & peer review",
+          "preparation": "Laptop, source notes & shared outline"
+        }
+      },
+      "readiness": {
+        "percentage": 58,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 33,
+            "status": "incomplete"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 0,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "project_deadline",
+          "workload_owner"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "curious",
+      "findings": [
+        {
+          "id": "project_deadline",
+          "category": "Schedule Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The outline review is not aligned with the group’s exam week.",
+          "recommendedAction": "Confirm a review date that leaves time for exams and final edits."
+        },
+        {
+          "id": "workload_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The final slide deck still needs an owner.",
+          "recommendedAction": "Assign the slide deck to a participant with time before the deadline."
+        }
+      ],
+      "questions": [
+        {
+          "id": "project_deadline_question",
+          "findingId": "project_deadline",
+          "targetId": null,
+          "visibility": "group",
+          "kind": "choice",
+          "text": "When should the group review the outline before exams begin?",
+          "options": [
+            "Thursday evening",
+            "Friday afternoon",
+            "Choose another date",
+            "Still deciding"
+          ]
+        }
+      ],
+      "options": [
+        {
+          "id": "scope_trim",
+          "label": "Smaller scope, balanced review",
+          "values": {
+            "date": "Thursday, 19 November",
+            "time": "6:30 PM – 7:15 PM",
+            "location": "Campus library · room to confirm",
+            "cost": 0,
+            "currency": "PHP",
+            "agenda": "Research summary, outline & peer review",
+            "preparation": "Laptop, source notes & shared outline"
+          }
+        },
+        {
+          "id": "paired_work",
+          "label": "Pair on the outline, keep Friday review",
+          "values": {
+            "date": "Friday, 20 November",
+            "time": "6:00 PM – 7:00 PM",
+            "location": "Campus library · room to confirm",
+            "cost": 0,
+            "currency": "PHP",
+            "agenda": "Paired outline, source check & final slides",
+            "preparation": "Laptop, source notes & shared outline"
+          }
+        }
+      ],
+      "messages": [
+        {
+          "text": "When should the group review the outline before exams begin?",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": "project_deadline_question",
+          "proposalVersion": 6
+        },
+        {
+          "text": "The outline review is not aligned with the group’s exam week.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 6
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "proposalVersion": 6,
+        "responded": true
+      },
+      {
+        "participantId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "proposalVersion": 6,
+        "responded": true
+      },
+      {
+        "participantId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "proposalVersion": 6,
+        "responded": true
+      },
+      {
+        "participantId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "proposalVersion": 6,
+        "responded": true
+      }
+    ],
+    "contributions": [
+      {
+        "id": "fixture_study_alex_1",
+        "participantId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "participantName": "Ari",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I have exams next week, so Thursday is better than Wednesday.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.830Z",
+        "proposalVersion": 6
+      },
+      {
+        "id": "fixture_study_sam_2",
+        "participantId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "participantName": "Quinn",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can outline the report if the source review is shared fairly.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.830Z",
+        "proposalVersion": 6
+      },
+      {
+        "id": "fixture_study_jo_3",
+        "participantId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "participantName": "Riley",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I am free Tuesday and Thursday evenings.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.831Z",
+        "proposalVersion": 6
+      },
+      {
+        "id": "fixture_study_mika_4",
+        "participantId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "participantName": "Charlie",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can make the final slides once the draft is ready.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.832Z",
+        "proposalVersion": 6
+      }
+    ],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "summary": "Quinn joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "summary": "Riley joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "summary": "Charlie joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 10,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 11,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "summary": "Quinn added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 12,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "summary": "Riley added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "summary": "Charlie added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The outline review is not aligned with the group’s exam week.",
+        "category": "Schedule Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The final slide deck still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "question_asked",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "When should the group review the outline before exams begin?",
+        "category": null
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 58%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 58,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 33,
+              "status": "incomplete"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "project_deadline",
+            "workload_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The group has a draft scope. The exam-week review date and slide owner need confirmation."
+      }
+    ]
+  },
+  "updated": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 2,
+    "room": {
+      "roomId": "cfc3e50c-a78e-4dcd-8736-691a9e45ec24",
+      "viewerId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+      "eventType": "Group project",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 17,
+      "analysisStatus": "complete",
+      "proposalVersion": 9,
+      "participants": [
+        {
+          "id": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+          "name": "Ari",
+          "approved": false
+        },
+        {
+          "id": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+          "name": "Quinn",
+          "approved": false
+        },
+        {
+          "id": "076186d6-8e2c-490a-b858-419084ef909a",
+          "name": "Riley",
+          "approved": false
+        },
+        {
+          "id": "00bf54ae-f106-4776-9cee-52e2501be87b",
+          "name": "Charlie",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "A fair plan for the group project",
+        "values": {
+          "date": "Friday, 20 November",
+          "time": "6:00 PM – 7:00 PM",
+          "location": "Campus library · room to confirm",
+          "cost": 0,
+          "currency": "PHP",
+          "agenda": "Scope review, research, outline & peer review",
+          "preparation": "Laptop, source notes & shared outline"
+        }
+      },
+      "readiness": {
+        "percentage": 88,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          }
+        ],
+        "delta": 30,
+        "newIssueIds": [],
+        "resolvedIssueIds": [
+          "project_deadline"
+        ],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "curious",
+      "findings": [
+        {
+          "id": "project_deadline",
+          "category": "Schedule Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_deadline"
+          ],
+          "uncertainty": "none",
+          "message": "The outline review was moved ahead of exam week.",
+          "recommendedAction": "Review the project milestone dates."
+        },
+        {
+          "id": "workload_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The final slide deck still needs an owner.",
+          "recommendedAction": "Assign the slide deck to a participant with time before the deadline."
+        }
+      ],
+      "questions": [
+        {
+          "id": "workload_owner_question",
+          "findingId": "workload_owner",
+          "targetId": null,
+          "visibility": "group",
+          "kind": "choice",
+          "text": "Who can own the final slide deck before the submission deadline?",
+          "options": [
+            "Charlie can own the slides",
+            "Ari can own the slides",
+            "Still deciding"
+          ]
+        }
+      ],
+      "options": [
+        {
+          "id": "scope_trim",
+          "label": "Smaller scope, balanced review",
+          "values": {
+            "date": "Thursday, 19 November",
+            "time": "6:30 PM – 7:15 PM",
+            "location": "Campus library · room to confirm",
+            "cost": 0,
+            "currency": "PHP",
+            "agenda": "Research summary, outline & peer review",
+            "preparation": "Laptop, source notes & shared outline"
+          }
+        },
+        {
+          "id": "paired_work",
+          "label": "Pair on the outline, keep Friday review",
+          "values": {
+            "date": "Friday, 20 November",
+            "time": "6:00 PM – 7:00 PM",
+            "location": "Campus library · room to confirm",
+            "cost": 0,
+            "currency": "PHP",
+            "agenda": "Paired outline, source check & final slides",
+            "preparation": "Laptop, source notes & shared outline"
+          }
+        }
+      ],
+      "messages": [
+        {
+          "text": "Who can own the final slide deck before the submission deadline?",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": "workload_owner_question",
+          "proposalVersion": 9
+        },
+        {
+          "text": "The outline review was moved ahead of exam week.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 9
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "proposalVersion": 9,
+        "responded": false
+      },
+      {
+        "participantId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "proposalVersion": 9,
+        "responded": false
+      },
+      {
+        "participantId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "proposalVersion": 9,
+        "responded": false
+      },
+      {
+        "participantId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "proposalVersion": 9,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "summary": "Quinn joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "summary": "Riley joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "summary": "Charlie joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 10,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 11,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "summary": "Quinn added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 12,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "summary": "Riley added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "summary": "Charlie added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The outline review is not aligned with the group’s exam week.",
+        "category": "Schedule Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The final slide deck still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "question_asked",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "When should the group review the outline before exams begin?",
+        "category": null
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 58%.",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_14",
+        "kind": "constraint_confirmed",
+        "revision": 15,
+        "proposalVersion": 7,
+        "occurredAt": "2026-11-03T03:34:40.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "availability was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "constraint_confirmed",
+        "revision": 16,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "deadline was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "constraint_confirmed",
+        "revision": 17,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "equipment was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 88%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 58,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 33,
+              "status": "incomplete"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "project_deadline",
+            "workload_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The group has a draft scope. The exam-week review date and slide owner need confirmation."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 17,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 88,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 30,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "project_deadline"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      }
+    ]
+  },
+  "revised": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 3,
+    "room": {
+      "roomId": "cfc3e50c-a78e-4dcd-8736-691a9e45ec24",
+      "viewerId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+      "eventType": "Group project",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 20,
+      "analysisStatus": "complete",
+      "proposalVersion": 11,
+      "participants": [
+        {
+          "id": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+          "name": "Ari",
+          "approved": false
+        },
+        {
+          "id": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+          "name": "Quinn",
+          "approved": false
+        },
+        {
+          "id": "076186d6-8e2c-490a-b858-419084ef909a",
+          "name": "Riley",
+          "approved": false
+        },
+        {
+          "id": "00bf54ae-f106-4776-9cee-52e2501be87b",
+          "name": "Charlie",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "scope_trim",
+        "label": "Smaller scope, balanced review",
+        "values": {
+          "date": "Thursday, 19 November",
+          "time": "6:30 PM – 7:15 PM",
+          "location": "Campus library · room to confirm",
+          "cost": 0,
+          "currency": "PHP",
+          "agenda": "Research summary, outline & peer review",
+          "preparation": "Laptop, source notes & shared outline"
+        }
+      },
+      "readiness": {
+        "percentage": 100,
+        "status": "ready_for_human_review",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          }
+        ],
+        "delta": 12,
+        "newIssueIds": [],
+        "resolvedIssueIds": [
+          "workload_owner"
+        ],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "COMPLETED",
+      "mascot": null,
+      "findings": [
+        {
+          "id": "project_deadline",
+          "category": "Schedule Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_deadline"
+          ],
+          "uncertainty": "none",
+          "message": "The outline review was moved ahead of exam week.",
+          "recommendedAction": "Review the project milestone dates."
+        },
+        {
+          "id": "workload_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_owners"
+          ],
+          "uncertainty": "none",
+          "message": "The final slide deck has an assigned owner.",
+          "recommendedAction": "Review the workload split before the deadline."
+        }
+      ],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "proposalVersion": 11,
+        "responded": false
+      },
+      {
+        "participantId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "proposalVersion": 11,
+        "responded": false
+      },
+      {
+        "participantId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "proposalVersion": 11,
+        "responded": false
+      },
+      {
+        "participantId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "proposalVersion": 11,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "summary": "Quinn joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "summary": "Riley joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "summary": "Charlie joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 10,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 11,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "summary": "Quinn added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 12,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "summary": "Riley added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "summary": "Charlie added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The outline review is not aligned with the group’s exam week.",
+        "category": "Schedule Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The final slide deck still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "question_asked",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "When should the group review the outline before exams begin?",
+        "category": null
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 58%.",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_14",
+        "kind": "constraint_confirmed",
+        "revision": 15,
+        "proposalVersion": 7,
+        "occurredAt": "2026-11-03T03:34:40.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "availability was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "constraint_confirmed",
+        "revision": 16,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "deadline was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "constraint_confirmed",
+        "revision": 17,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "equipment was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 88%.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_19",
+        "kind": "proposal_revised",
+        "revision": 20,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:36:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "A revised fictional proposal is ready for participant review.",
+        "category": null
+      },
+      {
+        "id": "activity_20",
+        "kind": "readiness_changed",
+        "revision": 20,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:36:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 100%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 58,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 33,
+              "status": "incomplete"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "project_deadline",
+            "workload_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The group has a draft scope. The exam-week review date and slide owner need confirmation."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 17,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 88,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 30,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "project_deadline"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      },
+      {
+        "id": "evaluation_2",
+        "revision": 20,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:41:00.000Z",
+        "readiness": {
+          "percentage": 100,
+          "status": "ready_for_human_review",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 12,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "workload_owner"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "All required fictional planning details are confirmed. The proposal is ready for participants to review; no one has approved it yet."
+      }
+    ]
+  },
+  "review": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 4,
+    "room": {
+      "roomId": "cfc3e50c-a78e-4dcd-8736-691a9e45ec24",
+      "viewerId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+      "eventType": "Group project",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 20,
+      "analysisStatus": "complete",
+      "proposalVersion": 11,
+      "participants": [
+        {
+          "id": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+          "name": "Ari",
+          "approved": false
+        },
+        {
+          "id": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+          "name": "Quinn",
+          "approved": false
+        },
+        {
+          "id": "076186d6-8e2c-490a-b858-419084ef909a",
+          "name": "Riley",
+          "approved": false
+        },
+        {
+          "id": "00bf54ae-f106-4776-9cee-52e2501be87b",
+          "name": "Charlie",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "scope_trim",
+        "label": "Smaller scope, balanced review",
+        "values": {
+          "date": "Thursday, 19 November",
+          "time": "6:30 PM – 7:15 PM",
+          "location": "Campus library · room to confirm",
+          "cost": 0,
+          "currency": "PHP",
+          "agenda": "Research summary, outline & peer review",
+          "preparation": "Laptop, source notes & shared outline"
+        }
+      },
+      "readiness": {
+        "percentage": 100,
+        "status": "ready_for_human_review",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          }
+        ],
+        "delta": 12,
+        "newIssueIds": [],
+        "resolvedIssueIds": [
+          "workload_owner"
+        ],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "COMPLETED",
+      "mascot": null,
+      "findings": [
+        {
+          "id": "project_deadline",
+          "category": "Schedule Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_deadline"
+          ],
+          "uncertainty": "none",
+          "message": "The outline review was moved ahead of exam week.",
+          "recommendedAction": "Review the project milestone dates."
+        },
+        {
+          "id": "workload_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_owners"
+          ],
+          "uncertainty": "none",
+          "message": "The final slide deck has an assigned owner.",
+          "recommendedAction": "Review the workload split before the deadline."
+        }
+      ],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "proposalVersion": 11,
+        "responded": false
+      },
+      {
+        "participantId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "proposalVersion": 11,
+        "responded": false
+      },
+      {
+        "participantId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "proposalVersion": 11,
+        "responded": false
+      },
+      {
+        "participantId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "proposalVersion": 11,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "summary": "Quinn joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "summary": "Riley joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "summary": "Charlie joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 10,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 11,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "summary": "Quinn added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 12,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "summary": "Riley added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "summary": "Charlie added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The outline review is not aligned with the group’s exam week.",
+        "category": "Schedule Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The final slide deck still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "question_asked",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "When should the group review the outline before exams begin?",
+        "category": null
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 58%.",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_14",
+        "kind": "constraint_confirmed",
+        "revision": 15,
+        "proposalVersion": 7,
+        "occurredAt": "2026-11-03T03:34:40.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "availability was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "constraint_confirmed",
+        "revision": 16,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "deadline was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "constraint_confirmed",
+        "revision": 17,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "equipment was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 88%.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_19",
+        "kind": "proposal_revised",
+        "revision": 20,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:36:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "A revised fictional proposal is ready for participant review.",
+        "category": null
+      },
+      {
+        "id": "activity_20",
+        "kind": "readiness_changed",
+        "revision": 20,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:36:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 100%.",
+        "category": null
+      },
+      {
+        "id": "activity_21",
+        "kind": "analysis_completed",
+        "revision": 20,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:37:00.000Z",
+        "actorId": null,
+        "summary": "This proposal is ready for each participant to review.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 58,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 33,
+              "status": "incomplete"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "project_deadline",
+            "workload_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The group has a draft scope. The exam-week review date and slide owner need confirmation."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 17,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 88,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 30,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "project_deadline"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      },
+      {
+        "id": "evaluation_2",
+        "revision": 20,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:41:00.000Z",
+        "readiness": {
+          "percentage": 100,
+          "status": "ready_for_human_review",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 12,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "workload_owner"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "All required fictional planning details are confirmed. The proposal is ready for participants to review; no one has approved it yet."
+      }
+    ]
+  },
+  "carpool": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 5,
+    "room": {
+      "roomId": "cfc3e50c-a78e-4dcd-8736-691a9e45ec24",
+      "viewerId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+      "eventType": "Group project",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 21,
+      "analysisStatus": "complete",
+      "proposalVersion": 12,
+      "participants": [
+        {
+          "id": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+          "name": "Ari",
+          "approved": false
+        },
+        {
+          "id": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+          "name": "Quinn",
+          "approved": false
+        },
+        {
+          "id": "076186d6-8e2c-490a-b858-419084ef909a",
+          "name": "Riley",
+          "approved": false
+        },
+        {
+          "id": "00bf54ae-f106-4776-9cee-52e2501be87b",
+          "name": "Charlie",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "paired_work",
+        "label": "Pair on the outline, keep Friday review",
+        "values": {
+          "date": "Friday, 20 November",
+          "time": "6:00 PM – 7:00 PM",
+          "location": "Campus library · room to confirm",
+          "cost": 0,
+          "currency": "PHP",
+          "agenda": "Paired outline, source check & final slides",
+          "preparation": "Laptop, source notes & shared outline"
+        }
+      },
+      "readiness": {
+        "percentage": 95,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 80,
+            "status": "incomplete"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "not_applicable"
+          }
+        ],
+        "delta": -5,
+        "newIssueIds": [
+          "peer_review"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "COMPLETED",
+      "mascot": null,
+      "findings": [
+        {
+          "id": "project_deadline",
+          "category": "Schedule Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_deadline"
+          ],
+          "uncertainty": "none",
+          "message": "The outline review was moved ahead of exam week.",
+          "recommendedAction": "Review the project milestone dates."
+        },
+        {
+          "id": "workload_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_owners"
+          ],
+          "uncertainty": "none",
+          "message": "The final slide deck has an assigned owner.",
+          "recommendedAction": "Review the workload split before the deadline."
+        },
+        {
+          "id": "peer_review",
+          "category": "People Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The alternate work split needs a peer reviewer.",
+          "recommendedAction": "Choose a reviewer before the submission deadline."
+        }
+      ],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "proposalVersion": 12,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "summary": "Quinn joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "summary": "Riley joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 9,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "summary": "Charlie joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 10,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 11,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "b6be5ae2-9248-46c8-96c6-0ff6710d33d5",
+        "summary": "Quinn added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 12,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "076186d6-8e2c-490a-b858-419084ef909a",
+        "summary": "Riley added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "00bf54ae-f106-4776-9cee-52e2501be87b",
+        "summary": "Charlie added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "The outline review is not aligned with the group’s exam week.",
+        "category": "Schedule Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The final slide deck still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "question_asked",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "When should the group review the outline before exams begin?",
+        "category": null
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 58%.",
+        "category": null
+      },
+      {
+        "id": "activity_13",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_14",
+        "kind": "constraint_confirmed",
+        "revision": 15,
+        "proposalVersion": 7,
+        "occurredAt": "2026-11-03T03:34:40.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "availability was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "constraint_confirmed",
+        "revision": 16,
+        "proposalVersion": 8,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "deadline was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "constraint_confirmed",
+        "revision": 17,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "equipment was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 88%.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "Ari answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_19",
+        "kind": "proposal_revised",
+        "revision": 20,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:36:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "A revised fictional proposal is ready for participant review.",
+        "category": null
+      },
+      {
+        "id": "activity_20",
+        "kind": "readiness_changed",
+        "revision": 20,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:36:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 100%.",
+        "category": null
+      },
+      {
+        "id": "activity_21",
+        "kind": "analysis_completed",
+        "revision": 20,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:37:00.000Z",
+        "actorId": null,
+        "summary": "This proposal is ready for each participant to review.",
+        "category": null
+      },
+      {
+        "id": "activity_22",
+        "kind": "proposal_revised",
+        "revision": 21,
+        "proposalVersion": 12,
+        "occurredAt": "2026-11-03T03:37:20.000Z",
+        "actorId": "27c56e7d-e168-4549-956a-f1bc2e2b7a06",
+        "summary": "An alternative fictional proposal is open for review.",
+        "category": null
+      },
+      {
+        "id": "activity_23",
+        "kind": "readiness_changed",
+        "revision": 21,
+        "proposalVersion": 12,
+        "occurredAt": "2026-11-03T03:37:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 95%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 13,
+        "proposalVersion": 6,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 58,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 33,
+              "status": "incomplete"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "project_deadline",
+            "workload_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The group has a draft scope. The exam-week review date and slide owner need confirmation."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 17,
+        "proposalVersion": 9,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 88,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 30,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "project_deadline"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      },
+      {
+        "id": "evaluation_2",
+        "revision": 20,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:41:00.000Z",
+        "readiness": {
+          "percentage": 100,
+          "status": "ready_for_human_review",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": 12,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "workload_owner"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "All required fictional planning details are confirmed. The proposal is ready for participants to review; no one has approved it yet."
+      },
+      {
+        "id": "evaluation_3",
+        "revision": 21,
+        "proposalVersion": 12,
+        "occurredAt": "2026-11-03T03:46:00.000Z",
+        "readiness": {
+          "percentage": 95,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 80,
+              "status": "incomplete"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "not_applicable"
+            }
+          ],
+          "delta": -5,
+          "newIssueIds": [
+            "peer_review"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "This alternative has a follow-up item. Readiness is recalculated from its open finding; participant approval remains separate."
+      }
+    ]
+  }
+}

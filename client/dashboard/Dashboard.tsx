@@ -12,9 +12,11 @@ import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useReducedMotion } from "motion/react";
 import {
   Activity,
+  ArrowRight,
   CalendarDays,
   ChevronDown,
   CircleAlert,
+  CircleCheck,
   ClipboardList,
   FlaskConical,
   Home,
@@ -52,18 +54,19 @@ import { PreviewContributions } from "./PreviewContributions";
 import {
   createPreviewInteractions,
   type ContributionView,
-  type PreviewContribution,
 } from "./preview-interactions";
 import { currentQuestion, questionQuickReplies } from "./composer-model";
 import {
-  acceptDashboardUpdate,
   categoryPresentation,
   responseCount,
 } from "./model";
 import { Categories } from "../../server/src/agents/contracts";
 import {
   fetchPreview,
+  previewFrames,
+  publicDemoScenarios,
   scenarios,
+  technicalScenarios,
   viewers,
   type PreviewFrame,
   type ScenarioId,
@@ -386,12 +389,12 @@ function DashboardLoading({ intentional = false }: { intentional?: boolean }) {
       <h1>
         {intentional
           ? "The loading state, previewed."
-          : "Opening your planning room…"}
+          : "Opening the planning preview…"}
       </h1>
       <p>
         {intentional
           ? "This is an interface preview. No analysis is running."
-          : "Loading the authorized synthetic participant view."}
+          : "Loading this fictional participant’s offline view."}
       </p>
       <div className="dashboard-loading-bars" aria-hidden="true">
         <span />
@@ -429,16 +432,20 @@ export default function DashboardRoute() {
   const location = useLocation();
   const [params, setParams] = useSearchParams();
   const scenario = (
-    scenarios.some((s) => s.id === params.get("scenario"))
+    scenarios.some((item) => item.id === params.get("scenario"))
       ? params.get("scenario")
-      : "hike"
+      : "beach"
   ) as ScenarioId;
   const viewer = (
     viewers.includes(params.get("viewer") as ViewerId)
       ? params.get("viewer")
       : "alex"
   ) as ViewerId;
-  const requestKey = `${scenario}:${viewer}`;
+  const rawFrame = params.get("frame") as PreviewFrame | null;
+  const frame: PreviewFrame = previewFrames.includes(rawFrame as PreviewFrame)
+    ? (rawFrame as PreviewFrame)
+    : "initial";
+  const requestKey = scenario + ":" + viewer + ":" + frame;
   const [load, setLoad] = useState<{
     key: string;
     snapshot: DashboardSnapshot | null;
@@ -446,7 +453,6 @@ export default function DashboardRoute() {
   }>({ key: "", snapshot: null, error: null });
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState("");
-  const [frame, setFrame] = useState<PreviewFrame>("initial");
   const [retry, setRetry] = useState(0);
   const [section, setSection] = useState<SectionId>("overview");
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -473,16 +479,22 @@ export default function DashboardRoute() {
   useEffect(() => {
     const controller = new AbortController();
     updateAbort.current?.abort();
+    updateAbort.current = controller;
     setLoad({ key: requestKey, snapshot: null, error: null });
     setNotice("");
-    setFrame("initial");
-    setBusy(false);
+    setBusy(true);
     setSection("overview");
     if (!realRoute && scenario !== "loading")
-      void fetchPreview(scenario, viewer, "initial", controller.signal)
+      void fetchPreview(scenario, viewer, frame, controller.signal)
         .then((value) => {
-          if (!controller.signal.aborted)
+          if (!controller.signal.aborted) {
             setLoad({ key: requestKey, snapshot: value, error: null });
+            setNotice(
+              value.room.readiness?.status === "ready_for_human_review"
+                ? "This fictional proposal is ready for human review. Participant approvals remain separate."
+                : "This is a fictional, schema-validated preview. No live AI ran.",
+            );
+          }
         })
         .catch(() => {
           if (!controller.signal.aborted)
@@ -491,12 +503,16 @@ export default function DashboardRoute() {
               snapshot: null,
               error: "The dashboard preview couldn’t load. Try again.",
             });
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setBusy(false);
         });
+    else setBusy(false);
     return () => {
       controller.abort();
       updateAbort.current?.abort();
     };
-  }, [requestKey, scenario, viewer, retry, realRoute]);
+  }, [requestKey, scenario, viewer, frame, retry, realRoute]);
   const submit = useCallback<SubmitPlanningMessage>(
     async (input, signal) => {
       const receipt = await interactions.submit(
@@ -507,7 +523,7 @@ export default function DashboardRoute() {
       if (!signal.aborted) {
         setInteractionsVersion((version) => version + 1);
         setNotice(
-          "Response recorded in preview. Readiness and proposal approvals are unchanged.",
+          "Simulated response recorded for this participant. The preview does not run another analysis or change readiness.",
         );
       }
       return receipt;
@@ -517,48 +533,41 @@ export default function DashboardRoute() {
   const reset = () => {
     if (baseSnapshot) interactions.reset(baseSnapshot.room.roomId);
     setInteractionsVersion((version) => version + 1);
-    setRetry((value) => value + 1);
+    setNotice("The fictional scenario was reset to its starting point.");
+    if (frame === "initial") setRetry((value) => value + 1);
+    else setParams({ scenario, viewer, frame: "initial" }, { replace: true });
   };
-  async function advance(nextFrame: PreviewFrame) {
-    if (!baseSnapshot || scenario === "loading") return;
+  function advance(nextFrame: PreviewFrame) {
+    if (!snapshot || scenario === "loading") return;
     updateAbort.current?.abort();
-    const controller = new AbortController();
-    updateAbort.current = controller;
     setBusy(true);
     setNotice("");
+    setParams({ scenario, viewer, frame: nextFrame });
+  }
+  function approveCurrent() {
+    if (!snapshot || !activeViewer) return;
     try {
-      const incoming = await fetchPreview(
-        scenario,
-        viewer,
-        nextFrame,
-        controller.signal,
-      );
-      if (controller.signal.aborted) return;
-      const accepted = acceptDashboardUpdate(baseSnapshot, incoming);
-      if (accepted === baseSnapshot) {
-        setNotice("This update is outdated. The current plan was kept.");
-        return;
-      }
-      setLoad({ key: requestKey, snapshot: accepted, error: null });
-      setFrame(nextFrame);
+      interactions.approve(snapshot);
+      setInteractionsVersion((version) => version + 1);
       setNotice(
-        `Synthetic update loaded. ${accepted.room.readiness?.percentage ?? "Unevaluated"}${accepted.room.readiness ? "% readiness." : "."} Earlier approvals were cleared after the plan changed.`,
+        "Simulated approval recorded for " + activeViewer.name +
+          " on proposal v" + snapshot.room.proposalVersion +
+          ". No live room state changed.",
       );
-    } catch {
-      if (!controller.signal.aborted)
-        setNotice(
-          "The update couldn’t load. Your current preview is still here. Try again.",
-        );
-    } finally {
-      if (!controller.signal.aborted) setBusy(false);
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "This preview approval could not be recorded.");
     }
   }
   function act(input: DashboardAction) {
     if (!snapshot || busy) return;
     try {
       const action = validateDashboardAction(snapshot.room, input);
-      if (action.kind === "proposal")
-        void advance(action.optionId === "carpool" ? "carpool" : "revised");
+      if (action.kind === "proposal") {
+        const choiceIndex = snapshot.room.options.findIndex(
+          (option) => option.id === action.optionId,
+        );
+        advance(choiceIndex === 1 ? "carpool" : "revised");
+      }
     } catch {
       setNotice(
         "This decision changed. Review the current proposal before responding.",
@@ -604,6 +613,24 @@ export default function DashboardRoute() {
   }
   const activeViewer = snapshot?.room.participants.find(
     (person) => person.id === snapshot.room.viewerId,
+  );
+  const activeViewerName = activeViewer?.name ?? viewer;
+  const frameTitles: Record<PreviewFrame, string> = {
+    initial: "Initial discussion · conflicts identified",
+    updated: "Questions answered · checks recalculated",
+    revised: "Revised proposal · ready for review",
+    review: "Participant review · approvals are explicit",
+    carpool: "Alternative proposal · one follow-up remains",
+  };
+  const canApprove = Boolean(
+    snapshot &&
+      frame === "review" &&
+      snapshot.room.analysisCurrent &&
+      snapshot.room.finalEvaluationAvailable &&
+      snapshot.room.loopState === "COMPLETED" &&
+      snapshot.room.readiness?.status === "ready_for_human_review" &&
+      activeViewer &&
+      !activeViewer.approved,
   );
   return (
     <div
@@ -651,7 +678,7 @@ export default function DashboardRoute() {
           </Link>
           <span
             className="dashboard-viewer-avatar"
-            aria-label={`${viewer} synthetic viewer`}
+            aria-label={activeViewerName + " synthetic viewer"}
           >
             <Avatar index={viewers.indexOf(viewer)} />
           </span>
@@ -679,7 +706,8 @@ export default function DashboardRoute() {
               onClick={() => setSettingsOpen((open) => !open)}
             >
               <Settings2 size={16} aria-hidden="true" />
-              {viewer[0].toUpperCase() + viewer.slice(1)}
+              {activeViewerName}
+              <ChevronDown size={13} aria-hidden="true" />
             </button>
             <div className="preview-control-fields" id="preview-control-fields">
               <div className="preview-select">
@@ -689,14 +717,19 @@ export default function DashboardRoute() {
                     id="dashboard-scenario"
                     value={scenario}
                     onChange={(event) =>
-                      setParams({ scenario: event.target.value, viewer })
+                      setParams({ scenario: event.target.value, viewer, frame: "initial" })
                     }
                   >
-                    {scenarios.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.label}
-                      </option>
-                    ))}
+                    <optgroup label="Planning demos">
+                      {publicDemoScenarios.map((item) => (
+                        <option key={item.id} value={item.id}>{item.label}</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="Technical fixtures">
+                      {technicalScenarios.map((item) => (
+                        <option key={item.id} value={item.id}>{item.label}</option>
+                      ))}
+                    </optgroup>
                   </select>
                   <ChevronDown size={13} aria-hidden="true" />
                 </div>
@@ -708,12 +741,12 @@ export default function DashboardRoute() {
                     id="dashboard-viewer"
                     value={viewer}
                     onChange={(event) =>
-                      setParams({ scenario, viewer: event.target.value })
+                      setParams({ scenario, viewer: event.target.value, frame })
                     }
                   >
-                    {viewers.map((v) => (
-                      <option key={v} value={v}>
-                        {v[0].toUpperCase() + v.slice(1)}
+                    {viewers.map((id) => (
+                      <option key={id} value={id}>
+                        {snapshot?.room.participants.find((person) => person.id === id)?.name ?? id}
                       </option>
                     ))}
                   </select>
@@ -729,26 +762,62 @@ export default function DashboardRoute() {
                 aria-label="Reset preview"
               >
                 <RotateCcw size={14} aria-hidden="true" />
-                <span>Reset</span>
+                <span>Reset demo</span>
               </button>
-              <button
-                type="button"
-                className="dashboard-button primary"
-                disabled={
-                  !snapshot ||
-                  busy ||
-                  (scenario !== "beach" && scenario !== "hike") ||
-                  frame === "revised" ||
-                  frame === "carpool"
-                }
-                onClick={() =>
-                  void advance(frame === "initial" ? "updated" : "revised")
-                }
-              >
-                <Play size={12} aria-hidden="true" />
-                {busy ? "Loading update…" : "Next preview update"}
-              </button>
+              {frame === "review" ? (
+                <button
+                  type="button"
+                  className="dashboard-button primary"
+                  onClick={approveCurrent}
+                  disabled={!canApprove || busy}
+                  title={
+                    canApprove
+                      ? "Record a simulated approval for this participant and proposal version."
+                      : activeViewer?.approved
+                        ? "This participant has approved this proposal version."
+                        : "Approval opens when this proposal reaches participant review and passes the checks."
+                  }
+                >
+                  <CircleCheck size={14} aria-hidden="true" />
+                  {activeViewer?.approved ? "Approved in preview" : "Approve as " + activeViewerName}
+                </button>
+              ) : null}
+              {frame === "initial" || frame === "updated" || frame === "revised" ? (
+                <button
+                  type="button"
+                  className="dashboard-button primary"
+                  disabled={!snapshot || busy || scenario === "loading"}
+                  onClick={() =>
+                    advance(frame === "initial" ? "updated" : frame === "updated" ? "revised" : "review")
+                  }
+                >
+                  <Play size={12} aria-hidden="true" />
+                  {busy
+                    ? "Loading fixture…"
+                    : frame === "initial"
+                      ? "Continue to answered questions"
+                      : frame === "updated"
+                        ? "Continue to revised proposal"
+                        : "Continue to participant review"}
+                </button>
+              ) : frame === "review" ? (
+                <button
+                  type="button"
+                  className="dashboard-button subtle"
+                  disabled={!snapshot || busy}
+                  onClick={() => advance("carpool")}
+                >
+                  Compare an alternative
+                  <ArrowRight size={14} aria-hidden="true" />
+                </button>
+              ) : (
+                <span className="preview-alternative-note">Alternative selected · reset to replay the journey</span>
+              )}
             </div>
+          </div>
+          <div className="preview-stage-summary" aria-live="polite">
+            <span><strong>{frameTitles[frame]}</strong></span>
+            <span>Authored offline fixture · No login, API key, or model request</span>
           </div>
           {snapshot ? (
             <PlanningDashboard

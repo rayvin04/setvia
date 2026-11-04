@@ -110,24 +110,23 @@ export function Demos() {
       </Link>
       <div className="demo-heading">
         <div>
-          <h1>Find your starting point.</h1>
-          <p>Real-life planning problems. A clearer way through.</p>
-          <Link
-            className="text-link"
-            to={
-              "/dashboard?scenario=" +
-              (["beach", "family", "kickoff"].includes(selected.id)
-                ? selected.id
-                : "safety")
-            }
+          <h1>Explore Setvia in action.</h1>
+          <p>
+            Step into a fictional planning room, discover conflicting priorities,
+            and see how a group can move toward a shared decision. No account or
+            setup needed.
+          </p>
+          <ButtonLink
+            className="demo-primary-cta"
+            to={"/dashboard?scenario=" + selected.id}
           >
-            Explore the planning dashboard{" "}
-            <ArrowRight size={15} aria-hidden="true" />
-          </Link>
+            Try the {selected.title} Demo
+            <ArrowRight size={18} aria-hidden="true" />
+          </ButtonLink>
         </div>
         <span className="demo-mode">
           <span className="status-dot" />
-          Fictional demo · No live AI
+          Interactive demo · Fictional data · No live AI
         </span>
       </div>
       <nav className="world-tabs" aria-label="Demo scenarios">
@@ -178,7 +177,7 @@ export function Demos() {
             <div className="demo-cover">
               <CoverArt index={index} variant={cover} />
               <span className="cover-caption">
-                Selected cover · Concept {cover + 1}
+                Illustration concept {cover + 1}
               </span>
             </div>
             <div className="demo-story-intro">
@@ -209,18 +208,13 @@ export function Demos() {
                   <p>{detail.resolution}</p>
                 </div>
               </div>
-              <ButtonLink
-                to={"/start?title=" + encodeURIComponent(selected.idea)}
-              >
-                Use this starting point
-                <ArrowRight size={18} aria-hidden="true" />
-              </ButtonLink>
+
             </div>
           </div>
           <section className="sample-plan">
             <div className="sample-heading">
               <h3>Your plan, coming together.</h3>
-              <span>Illustrative output · Version 3</span>
+              <span>Fictional starting point</span>
             </div>
             <div className="sample-deliverables">
               <div>
@@ -236,7 +230,7 @@ export function Demos() {
               <div>
                 <CircleCheck size={20} aria-hidden="true" />
                 <h4>Participant approval</h4>
-                <p>2 of 4 approved this version</p>
+                <p>No approvals recorded. Each participant decides.</p>
               </div>
             </div>
             <div className="sample-open">
@@ -275,8 +269,7 @@ export function Demos() {
               ))}
             </fieldset>
             <p className="cover-disclosure">
-              Muse Image workflow preview · Authored mock designs, not
-              AI-generated results. Generation is not connected.
+              Authored cover concepts · No image-generation request is made.
             </p>
           </section>
         </motion.article>

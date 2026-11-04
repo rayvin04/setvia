@@ -58,6 +58,26 @@ flowchart LR
 
 The Vercel deployment serves the Vite frontend; it does not host the Express API. The separate API exposes health, text/image extraction, the bounded playground when enabled, and authenticated room routes when the live runtime is configured. Its API key and role prompts remain server-side.
 
+### Local judge-demo fixture path
+
+The current polish worktree uses a separate offline demo path. `npm run demo:fixtures` runs fictional rooms through the domain code with a scripted mock gateway, then writes one schema-validated JSON file per scenario and selected participant. The browser loads a chosen authored stage. Participant messages and approval clicks stay in local browser state and do not call the room API, SSE, or Meta. This path is not deployed by these local changes.
+
+```mermaid
+flowchart LR
+  Visitor["Browser: /demos"] -->|"select one of five fictional plans"| Dashboard["/dashboard?scenario=…&viewer=…&frame=…"]
+  Dashboard -->|"GET /dashboard-preview/{scenario}/{viewer}.json"| View["One participant's public static projection"]
+  View -->|"schema-validated authored stages"| Dashboard
+  Dashboard -->|"local answer or message"| BrowserState["Browser-only session state"]
+  BrowserState -.->|"does not update readiness or start inference"| Dashboard
+  Dashboard -->|"select next authored stage"| View
+  Engine["Offline fixture builder"] -->|"scripted mock gateway"| RoomDomain["RoomService + AgentEngine"]
+  RoomDomain -->|"authorized participant projections"| View
+  Dashboard -.->|"no request"| Express["Express / SSE"]
+  Dashboard -.->|"no request"| Muse["Muse Spark API"]
+```
+
+The per-viewer split protects the demo UI projection boundary; these assets are still publicly fetchable static files and therefore contain fictional material only. See the [judge demo guide](judge-guide.md#offline-judge-demo-in-this-worktree) for the states and limitations.
+
 ## B. Conditional multi-agent orchestration
 
 **Accessible description:** Pending input is interpreted by Listener in an owner-only context and becomes an unconfirmed private candidate. The owner can explicitly confirm and share a fact. Judge then chooses whether to negotiate, ask a question, present findings, or stop. Negotiator and Question Strategist run only when requested. Speaker selects validated references; the server renders their text and a final Judge reviews it. Bounded failures block the cycle.

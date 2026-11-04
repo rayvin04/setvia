@@ -1,0 +1,2345 @@
+{
+  "initial": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "1deb20d4-d413-4e29-8727-509b67c44efb",
+      "viewerId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+      "eventType": "Family reunion",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 17,
+      "analysisStatus": "complete",
+      "proposalVersion": 10,
+      "participants": [
+        {
+          "id": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+          "name": "Robin",
+          "approved": false
+        },
+        {
+          "id": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+          "name": "Chris",
+          "approved": false
+        },
+        {
+          "id": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+          "name": "Taylor",
+          "approved": false
+        },
+        {
+          "id": "55943445-1243-4315-8d39-9dafe9d12e6d",
+          "name": "Pat",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "The Sunday family reunion",
+        "values": {
+          "date": "Sunday, 22 November",
+          "time": "11:00 AM – 4:00 PM",
+          "location": "Family venue · access to confirm",
+          "cost": 750,
+          "currency": "PHP",
+          "transport": "Family carpools",
+          "preparation": "Potluck dishes & family photos"
+        }
+      },
+      "readiness": {
+        "percentage": 75,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "People Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "venue_access",
+          "meal_owner"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "curious",
+      "findings": [
+        {
+          "id": "venue_access",
+          "category": "People Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The venue details still need confirmation.",
+          "recommendedAction": "Review the venue’s features with the group before it is selected."
+        },
+        {
+          "id": "meal_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The potluck menu still needs an owner.",
+          "recommendedAction": "Choose who will coordinate the shared meal list."
+        }
+      ],
+      "questions": [],
+      "options": [
+        {
+          "id": "accessible_venue",
+          "label": "Accessible hall, shared potluck",
+          "values": {
+            "date": "Sunday, 22 November",
+            "time": "11:00 AM – 4:00 PM",
+            "location": "Accessible community hall · fictional venue",
+            "cost": 800,
+            "currency": "PHP",
+            "transport": "Family carpools",
+            "preparation": "Potluck dishes & family photos"
+          }
+        },
+        {
+          "id": "family_home",
+          "label": "Family home, smaller setup",
+          "values": {
+            "date": "Sunday, 22 November",
+            "time": "11:00 AM – 4:00 PM",
+            "location": "Family home · access to confirm",
+            "cost": 650,
+            "currency": "PHP",
+            "transport": "Family carpools",
+            "preparation": "Potluck dishes & family photos"
+          }
+        }
+      ],
+      "messages": [
+        {
+          "text": "The venue details still need confirmation.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 10
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "proposalVersion": 10,
+        "responded": true
+      },
+      {
+        "participantId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "proposalVersion": 10,
+        "responded": true
+      },
+      {
+        "participantId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "proposalVersion": 10,
+        "responded": true
+      },
+      {
+        "participantId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "proposalVersion": 10,
+        "responded": true
+      }
+    ],
+    "contributions": [
+      {
+        "id": "fixture_family_alex_1",
+        "participantId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "participantName": "Robin",
+        "visibility": "group",
+        "targetId": null,
+        "text": "Sunday lunch works for me; I can bring a vegetarian dish.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.549Z",
+        "proposalVersion": 10
+      },
+      {
+        "id": "fixture_family_sam_2",
+        "participantId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "participantName": "Chris",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can coordinate food, but I need the allergy list first.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.550Z",
+        "proposalVersion": 10
+      },
+      {
+        "id": "fixture_family_jo_3",
+        "participantId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "participantName": "Taylor",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can help with setup if we keep the travel plan simple.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.551Z",
+        "proposalVersion": 10
+      },
+      {
+        "id": "fixture_family_mika_4",
+        "participantId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "participantName": "Pat",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can confirm venue details after we settle the meal plan.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:35.553Z",
+        "proposalVersion": 10
+      }
+    ],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "summary": "Chris joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "summary": "Taylor joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "Pat joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "summary": "Chris added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "summary": "Taylor added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "Pat added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The venue details still need confirmation.",
+        "category": "People Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The potluck menu still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_13",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 75%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 75,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "venue_access",
+            "meal_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The fictional reunion has an access question for Pat and a shared meal plan to settle."
+      }
+    ]
+  },
+  "updated": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 2,
+    "room": {
+      "roomId": "1deb20d4-d413-4e29-8727-509b67c44efb",
+      "viewerId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+      "eventType": "Family reunion",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 18,
+      "analysisStatus": "complete",
+      "proposalVersion": 11,
+      "participants": [
+        {
+          "id": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+          "name": "Robin",
+          "approved": false
+        },
+        {
+          "id": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+          "name": "Chris",
+          "approved": false
+        },
+        {
+          "id": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+          "name": "Taylor",
+          "approved": false
+        },
+        {
+          "id": "55943445-1243-4315-8d39-9dafe9d12e6d",
+          "name": "Pat",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "The Sunday family reunion",
+        "values": {
+          "date": "Sunday, 22 November",
+          "time": "11:00 AM – 4:00 PM",
+          "location": "Family venue · access to confirm",
+          "cost": 750,
+          "currency": "PHP",
+          "transport": "Family carpools",
+          "preparation": "Potluck dishes & family photos"
+        }
+      },
+      "readiness": {
+        "percentage": 83,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": 8,
+        "newIssueIds": [],
+        "resolvedIssueIds": [
+          "venue_access"
+        ],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "curious",
+      "findings": [
+        {
+          "id": "venue_access",
+          "category": "People Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_access"
+          ],
+          "uncertainty": "none",
+          "message": "The venue was checked against the group’s shared requirements.",
+          "recommendedAction": "Review the venue information shared by the group."
+        },
+        {
+          "id": "meal_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The potluck menu still needs an owner.",
+          "recommendedAction": "Choose who will coordinate the shared meal list."
+        }
+      ],
+      "questions": [
+        {
+          "id": "meal_plan_question",
+          "findingId": "meal_owner",
+          "targetId": null,
+          "visibility": "group",
+          "kind": "choice",
+          "text": "Who can coordinate the vegetarian dishes and allergy list?",
+          "options": [
+            "Robin can coordinate the menu",
+            "Chris can coordinate the menu",
+            "Still deciding"
+          ]
+        }
+      ],
+      "options": [
+        {
+          "id": "accessible_venue",
+          "label": "Accessible hall, shared potluck",
+          "values": {
+            "date": "Sunday, 22 November",
+            "time": "11:00 AM – 4:00 PM",
+            "location": "Accessible community hall · fictional venue",
+            "cost": 800,
+            "currency": "PHP",
+            "transport": "Family carpools",
+            "preparation": "Potluck dishes & family photos"
+          }
+        },
+        {
+          "id": "family_home",
+          "label": "Family home, smaller setup",
+          "values": {
+            "date": "Sunday, 22 November",
+            "time": "11:00 AM – 4:00 PM",
+            "location": "Family home · access to confirm",
+            "cost": 650,
+            "currency": "PHP",
+            "transport": "Family carpools",
+            "preparation": "Potluck dishes & family photos"
+          }
+        }
+      ],
+      "messages": [
+        {
+          "text": "Who can coordinate the vegetarian dishes and allergy list?",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": "meal_plan_question",
+          "proposalVersion": 11
+        },
+        {
+          "text": "The venue was checked against the group’s shared requirements.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 11
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "proposalVersion": 11,
+        "responded": false
+      },
+      {
+        "participantId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "proposalVersion": 11,
+        "responded": false
+      },
+      {
+        "participantId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "proposalVersion": 11,
+        "responded": false
+      },
+      {
+        "participantId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "proposalVersion": 11,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "summary": "Chris joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "summary": "Taylor joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "Pat joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "summary": "Chris added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "summary": "Taylor added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "Pat added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The venue details still need confirmation.",
+        "category": "People Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The potluck menu still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_13",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 75%.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "constraint_confirmed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "access was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "readiness_changed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 75,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "venue_access",
+            "meal_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The fictional reunion has an access question for Pat and a shared meal plan to settle."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 8,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "venue_access"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      }
+    ]
+  },
+  "revised": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 3,
+    "room": {
+      "roomId": "1deb20d4-d413-4e29-8727-509b67c44efb",
+      "viewerId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+      "eventType": "Family reunion",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 22,
+      "analysisStatus": "complete",
+      "proposalVersion": 14,
+      "participants": [
+        {
+          "id": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+          "name": "Robin",
+          "approved": false
+        },
+        {
+          "id": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+          "name": "Chris",
+          "approved": false
+        },
+        {
+          "id": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+          "name": "Taylor",
+          "approved": false
+        },
+        {
+          "id": "55943445-1243-4315-8d39-9dafe9d12e6d",
+          "name": "Pat",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "accessible_venue",
+        "label": "Accessible hall, shared potluck",
+        "values": {
+          "date": "Sunday, 22 November",
+          "time": "11:00 AM – 4:00 PM",
+          "location": "Accessible community hall · fictional venue",
+          "cost": 800,
+          "currency": "PHP",
+          "transport": "Family carpools",
+          "preparation": "Potluck dishes & family photos"
+        }
+      },
+      "readiness": {
+        "percentage": 100,
+        "status": "ready_for_human_review",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": 17,
+        "newIssueIds": [],
+        "resolvedIssueIds": [
+          "meal_owner"
+        ],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "COMPLETED",
+      "mascot": null,
+      "findings": [
+        {
+          "id": "venue_access",
+          "category": "People Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_access"
+          ],
+          "uncertainty": "none",
+          "message": "The venue was checked against the group’s shared requirements.",
+          "recommendedAction": "Review the venue information shared by the group."
+        },
+        {
+          "id": "meal_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_owners"
+          ],
+          "uncertainty": "none",
+          "message": "A participant agreed to coordinate the shared potluck menu.",
+          "recommendedAction": "Review who is bringing each dish."
+        }
+      ],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "proposalVersion": 14,
+        "responded": false
+      },
+      {
+        "participantId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "proposalVersion": 14,
+        "responded": false
+      },
+      {
+        "participantId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "proposalVersion": 14,
+        "responded": false
+      },
+      {
+        "participantId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "proposalVersion": 14,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "summary": "Chris joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "summary": "Taylor joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "Pat joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "summary": "Chris added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "summary": "Taylor added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "Pat added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The venue details still need confirmation.",
+        "category": "People Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The potluck menu still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_13",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 75%.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "constraint_confirmed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "access was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "readiness_changed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "participant_responded",
+        "revision": 19,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "proposal_revised",
+        "revision": 22,
+        "proposalVersion": 14,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "A revised fictional proposal is ready for participant review.",
+        "category": null
+      },
+      {
+        "id": "activity_19",
+        "kind": "readiness_changed",
+        "revision": 22,
+        "proposalVersion": 14,
+        "occurredAt": "2026-11-03T03:36:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 100%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 75,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "venue_access",
+            "meal_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The fictional reunion has an access question for Pat and a shared meal plan to settle."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 8,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "venue_access"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      },
+      {
+        "id": "evaluation_2",
+        "revision": 22,
+        "proposalVersion": 14,
+        "occurredAt": "2026-11-03T03:41:00.000Z",
+        "readiness": {
+          "percentage": 100,
+          "status": "ready_for_human_review",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 17,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "meal_owner"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "All required fictional planning details are confirmed. The proposal is ready for participants to review; no one has approved it yet."
+      }
+    ]
+  },
+  "review": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 4,
+    "room": {
+      "roomId": "1deb20d4-d413-4e29-8727-509b67c44efb",
+      "viewerId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+      "eventType": "Family reunion",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 22,
+      "analysisStatus": "complete",
+      "proposalVersion": 14,
+      "participants": [
+        {
+          "id": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+          "name": "Robin",
+          "approved": false
+        },
+        {
+          "id": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+          "name": "Chris",
+          "approved": false
+        },
+        {
+          "id": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+          "name": "Taylor",
+          "approved": false
+        },
+        {
+          "id": "55943445-1243-4315-8d39-9dafe9d12e6d",
+          "name": "Pat",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "accessible_venue",
+        "label": "Accessible hall, shared potluck",
+        "values": {
+          "date": "Sunday, 22 November",
+          "time": "11:00 AM – 4:00 PM",
+          "location": "Accessible community hall · fictional venue",
+          "cost": 800,
+          "currency": "PHP",
+          "transport": "Family carpools",
+          "preparation": "Potluck dishes & family photos"
+        }
+      },
+      "readiness": {
+        "percentage": 100,
+        "status": "ready_for_human_review",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": 17,
+        "newIssueIds": [],
+        "resolvedIssueIds": [
+          "meal_owner"
+        ],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "COMPLETED",
+      "mascot": null,
+      "findings": [
+        {
+          "id": "venue_access",
+          "category": "People Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_access"
+          ],
+          "uncertainty": "none",
+          "message": "The venue was checked against the group’s shared requirements.",
+          "recommendedAction": "Review the venue information shared by the group."
+        },
+        {
+          "id": "meal_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_owners"
+          ],
+          "uncertainty": "none",
+          "message": "A participant agreed to coordinate the shared potluck menu.",
+          "recommendedAction": "Review who is bringing each dish."
+        }
+      ],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "proposalVersion": 14,
+        "responded": false
+      },
+      {
+        "participantId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "proposalVersion": 14,
+        "responded": false
+      },
+      {
+        "participantId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "proposalVersion": 14,
+        "responded": false
+      },
+      {
+        "participantId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "proposalVersion": 14,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "summary": "Chris joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "summary": "Taylor joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "Pat joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "summary": "Chris added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "summary": "Taylor added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "Pat added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The venue details still need confirmation.",
+        "category": "People Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The potluck menu still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_13",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 75%.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "constraint_confirmed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "access was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "readiness_changed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "participant_responded",
+        "revision": 19,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "proposal_revised",
+        "revision": 22,
+        "proposalVersion": 14,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "A revised fictional proposal is ready for participant review.",
+        "category": null
+      },
+      {
+        "id": "activity_19",
+        "kind": "readiness_changed",
+        "revision": 22,
+        "proposalVersion": 14,
+        "occurredAt": "2026-11-03T03:36:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 100%.",
+        "category": null
+      },
+      {
+        "id": "activity_20",
+        "kind": "analysis_completed",
+        "revision": 22,
+        "proposalVersion": 14,
+        "occurredAt": "2026-11-03T03:36:40.000Z",
+        "actorId": null,
+        "summary": "This proposal is ready for each participant to review.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 75,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "venue_access",
+            "meal_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The fictional reunion has an access question for Pat and a shared meal plan to settle."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 8,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "venue_access"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      },
+      {
+        "id": "evaluation_2",
+        "revision": 22,
+        "proposalVersion": 14,
+        "occurredAt": "2026-11-03T03:41:00.000Z",
+        "readiness": {
+          "percentage": 100,
+          "status": "ready_for_human_review",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 17,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "meal_owner"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "All required fictional planning details are confirmed. The proposal is ready for participants to review; no one has approved it yet."
+      }
+    ]
+  },
+  "carpool": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 5,
+    "room": {
+      "roomId": "1deb20d4-d413-4e29-8727-509b67c44efb",
+      "viewerId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+      "eventType": "Family reunion",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 23,
+      "analysisStatus": "complete",
+      "proposalVersion": 15,
+      "participants": [
+        {
+          "id": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+          "name": "Robin",
+          "approved": false
+        },
+        {
+          "id": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+          "name": "Chris",
+          "approved": false
+        },
+        {
+          "id": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+          "name": "Taylor",
+          "approved": false
+        },
+        {
+          "id": "55943445-1243-4315-8d39-9dafe9d12e6d",
+          "name": "Pat",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "family_home",
+        "label": "Family home, smaller setup",
+        "values": {
+          "date": "Sunday, 22 November",
+          "time": "11:00 AM – 4:00 PM",
+          "location": "Family home · access to confirm",
+          "cost": 650,
+          "currency": "PHP",
+          "transport": "Family carpools",
+          "preparation": "Potluck dishes & family photos"
+        }
+      },
+      "readiness": {
+        "percentage": 97,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 80,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": -3,
+        "newIssueIds": [
+          "meal_host"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "COMPLETED",
+      "mascot": null,
+      "findings": [
+        {
+          "id": "venue_access",
+          "category": "People Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_access"
+          ],
+          "uncertainty": "none",
+          "message": "The venue was checked against the group’s shared requirements.",
+          "recommendedAction": "Review the venue information shared by the group."
+        },
+        {
+          "id": "meal_owner",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "resolved",
+          "evidenceIds": [
+            "shared_owners"
+          ],
+          "uncertainty": "none",
+          "message": "A participant agreed to coordinate the shared potluck menu.",
+          "recommendedAction": "Review who is bringing each dish."
+        },
+        {
+          "id": "meal_host",
+          "category": "Preparation Check",
+          "severity": "warning",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "The potluck still needs a confirmed host.",
+          "recommendedAction": "Choose who will coordinate the shared meal list."
+        }
+      ],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "proposalVersion": 15,
+        "responded": false
+      },
+      {
+        "participantId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "proposalVersion": 15,
+        "responded": false
+      },
+      {
+        "participantId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "proposalVersion": 15,
+        "responded": false
+      },
+      {
+        "participantId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "proposalVersion": 15,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "summary": "Chris joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "summary": "Taylor joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 13,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "Pat joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 14,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "1b98c71d-9660-47ca-8274-e6bda5e93580",
+        "summary": "Chris added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "63297c6d-fc8f-4fd2-89fa-739e9f8d9aa6",
+        "summary": "Taylor added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "Pat added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The venue details still need confirmation.",
+        "category": "People Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The potluck menu still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_13",
+        "kind": "readiness_changed",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:34:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 75%.",
+        "category": null
+      },
+      {
+        "id": "activity_15",
+        "kind": "constraint_confirmed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:00.000Z",
+        "actorId": "55943445-1243-4315-8d39-9dafe9d12e6d",
+        "summary": "access was confirmed in the fictional plan.",
+        "category": null
+      },
+      {
+        "id": "activity_16",
+        "kind": "readiness_changed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      },
+      {
+        "id": "activity_17",
+        "kind": "participant_responded",
+        "revision": 19,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:35:40.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "Robin answered a planning question.",
+        "category": null
+      },
+      {
+        "id": "activity_18",
+        "kind": "proposal_revised",
+        "revision": 22,
+        "proposalVersion": 14,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "A revised fictional proposal is ready for participant review.",
+        "category": null
+      },
+      {
+        "id": "activity_19",
+        "kind": "readiness_changed",
+        "revision": 22,
+        "proposalVersion": 14,
+        "occurredAt": "2026-11-03T03:36:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 100%.",
+        "category": null
+      },
+      {
+        "id": "activity_20",
+        "kind": "analysis_completed",
+        "revision": 22,
+        "proposalVersion": 14,
+        "occurredAt": "2026-11-03T03:36:40.000Z",
+        "actorId": null,
+        "summary": "This proposal is ready for each participant to review.",
+        "category": null
+      },
+      {
+        "id": "activity_21",
+        "kind": "proposal_revised",
+        "revision": 23,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:37:00.000Z",
+        "actorId": "599677c8-58cb-4f97-bbe6-846da71d28c4",
+        "summary": "An alternative fictional proposal is open for review.",
+        "category": null
+      },
+      {
+        "id": "activity_22",
+        "kind": "readiness_changed",
+        "revision": 23,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:37:20.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 97%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 17,
+        "proposalVersion": 10,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 75,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "venue_access",
+            "meal_owner"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The fictional reunion has an access question for Pat and a shared meal plan to settle."
+      },
+      {
+        "id": "evaluation_1",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:36:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 8,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "venue_access"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "The first question was answered and confirmed details were added. One planning responsibility still needs an owner."
+      },
+      {
+        "id": "evaluation_2",
+        "revision": 22,
+        "proposalVersion": 14,
+        "occurredAt": "2026-11-03T03:41:00.000Z",
+        "readiness": {
+          "percentage": 100,
+          "status": "ready_for_human_review",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": 17,
+          "newIssueIds": [],
+          "resolvedIssueIds": [
+            "meal_owner"
+          ],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "All required fictional planning details are confirmed. The proposal is ready for participants to review; no one has approved it yet."
+      },
+      {
+        "id": "evaluation_3",
+        "revision": 23,
+        "proposalVersion": 15,
+        "occurredAt": "2026-11-03T03:46:00.000Z",
+        "readiness": {
+          "percentage": 97,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 80,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": -3,
+          "newIssueIds": [
+            "meal_host"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "This alternative has a follow-up item. Readiness is recalculated from its open finding; participant approval remains separate."
+      }
+    ]
+  }
+}

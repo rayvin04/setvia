@@ -30,8 +30,11 @@ export function createPreviewInteractions(
   options: PreviewInteractionOptions = {},
 ) {
   const records = new Map<string, PreviewContribution[]>();
+  const approvals = new Map<string, Set<string>>();
   const now = options.now ?? (() => new Date().toISOString());
   const createId = options.createId ?? (() => crypto.randomUUID());
+  const proposalKey = (snapshot: DashboardSnapshot) =>
+    snapshot.room.roomId + ":" + snapshot.room.proposalVersion;
   return {
     async submit(
       input: PlanningMessage,
@@ -77,9 +80,39 @@ export function createPreviewInteractions(
       const { text: _text, participantName: _name, ...receipt } = contribution;
       return receipt;
     },
+    approve(snapshot: DashboardSnapshot): void {
+      if (snapshot.source !== "synthetic")
+        throw new PlanningMessageError(
+          "Approvals are not available in this preview view.",
+        );
+      if (
+        !snapshot.room.analysisCurrent ||
+        !snapshot.room.finalEvaluationAvailable ||
+        snapshot.room.loopState !== "COMPLETED" ||
+        snapshot.room.readiness?.status !== "ready_for_human_review"
+      )
+        throw new PlanningMessageError(
+          "This proposal is not ready for participant review yet.",
+        );
+      const member = snapshot.room.participants.find(
+        (person) => person.id === snapshot.room.viewerId,
+      );
+      if (!member)
+        throw new PlanningMessageError(
+          "The preview participant could not be verified.",
+        );
+      const key = proposalKey(snapshot);
+      const current = approvals.get(key) ?? new Set<string>();
+      if (member.approved || current.has(member.id))
+        throw new PlanningMessageError(
+          "This participant already approved the current proposal.",
+        );
+      current.add(member.id);
+      approvals.set(key, current);
+    },
     project(snapshot: DashboardSnapshot): {
       snapshot: DashboardSnapshot;
-      contributions: PreviewContribution[];
+      contributions: ContributionView[];
     } {
       if (snapshot.source !== "synthetic")
         return { snapshot, contributions: [] };
@@ -87,7 +120,12 @@ export function createPreviewInteractions(
       const all = (records.get(snapshot.room.roomId) ?? []).filter((entry) =>
         members.has(entry.participantId),
       );
-      const visible = all.filter(
+      const localVisible = all.filter(
+        (entry) =>
+          entry.visibility === "group" ||
+          entry.participantId === snapshot.room.viewerId,
+      );
+      const fixtureVisible = snapshot.contributions.filter(
         (entry) =>
           entry.visibility === "group" ||
           entry.participantId === snapshot.room.viewerId,
@@ -102,21 +140,25 @@ export function createPreviewInteractions(
           )
           .map((entry) => entry.questionId),
       );
-      const responders = new Set(
-        all
-          .filter(
-            (entry) => entry.proposalVersion === snapshot.room.proposalVersion,
-          )
-          .map((entry) => entry.participantId),
-      );
+      const currentApprovals = approvals.get(proposalKey(snapshot)) ?? new Set();
+      const participants = snapshot.room.participants.map((person) => ({
+        ...person,
+        approved: person.approved || currentApprovals.has(person.id),
+      }));
+      const approvalCount = participants.filter((person) => person.approved).length;
       return {
-        contributions: visible,
+        // Put a participant's latest local action first so it is immediately
+        // visible in the preview transcript before the seeded room history.
+        contributions: [...localVisible, ...fixtureVisible],
         snapshot: {
           ...snapshot,
           room: {
             ...snapshot.room,
+            participants,
+            approvalCount,
+            approved: participants.length > 0 && approvalCount === participants.length,
             questions: snapshot.room.questions.filter(
-              (q) => !answered.has(q.id),
+              (question) => !answered.has(question.id),
             ),
             messages: snapshot.room.messages.filter(
               (message) =>
@@ -130,7 +172,13 @@ export function createPreviewInteractions(
                   ...response,
                   responded:
                     response.responded ||
-                    responders.has(response.participantId),
+                    all.some(
+                      (entry) =>
+                        entry.participantId === response.participantId &&
+                        entry.proposalVersion === snapshot.room.proposalVersion &&
+                        (entry.visibility === "group" ||
+                          entry.participantId === snapshot.room.viewerId),
+                    ),
                 }))
               : snapshot.responses,
         },
@@ -138,6 +186,8 @@ export function createPreviewInteractions(
     },
     reset(roomId: string) {
       records.delete(roomId);
+      for (const key of approvals.keys())
+        if (key.startsWith(roomId + ":")) approvals.delete(key);
     },
   };
 }

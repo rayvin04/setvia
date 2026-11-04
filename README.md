@@ -58,6 +58,26 @@ The homepage’s **Meet the minds** section has four role cards, each with three
 
 The public [scenario page](https://setvia.r4yv.tech/demos) and [planning dashboard](https://setvia.r4yv.tech/dashboard) use fictional preview data; those routes do not call a live model or create a shared planning room. The Vite frontend uses a separate Express API for model-backed actions. The Meta API key stays on the server. See the [judge guide](docs/judge-guide.md) for the public and local paths.
 
+### Offline judge-demo build in this worktree
+
+This local polish branch prepares a richer fictional journey for all five demo scenarios: Beach Trip, Family Reunion, Project Kickoff, Group Project, and Wedding Planning. The public deployment has not been changed by this worktree; the updated experience must be reviewed and released separately.
+
+To run the new offline demo locally, with no `.env`, account, model key, or server process:
+
+```powershell
+npm ci
+npm run demo:fixtures
+npm run dev
+```
+
+Open `http://127.0.0.1:5173/demos`. Each scenario’s **Try the … Demo** button opens its matching dashboard fixture. The dashboard can also be opened directly, for example `http://127.0.0.1:5173/dashboard?scenario=study&viewer=alex&frame=review`. Scenario, participant, and stage are reflected in the URL. **Continue** buttons move through scripted offline stages; a typed or suggested answer is recorded only in the current browser session and does not change the next analysis or readiness. A simulated approval is available only in the explicit review stage and remains local to that browser session and proposal version.
+
+The fixture builder runs the room-domain workflow against a scripted mock gateway, then writes schema-validated snapshots to `public/dashboard-preview/{scenario}/{viewer}.json`. The files contain one fictional participant projection each; they do not bundle private details into another participant’s UI view. Because they are static public assets, every file is still fetchable by URL. The content is entirely synthetic and contains no real participant data. The demo does not call the Express API, SSE, or Meta. Never use this public fixture format for real private data.
+
+Dashboard selectors also include technical fixtures for a mountain hike, critical safety blocker, blocked analysis, unevaluated room, and loading state. Those are additional UI states; the five planning demos above remain the judge-facing scenarios.
+
+Local verification for this unshipped polish worktree: `npm test` passed **168/168**; `npm run build` and `npm run lab:ui:build` completed; `npm run lab` passed **16/16** mock records with 55 mock calls and 0 live requests. Desktop and 390×844 mobile browser checks covered scenario navigation, the private family projection, one-click quick replies, review approvals, console errors, and horizontal overflow. No Meta request, deployment, or remote push was made.
+
 ## Meta model-to-source map
 
 The server uses Meta's Responses API at `https://api.meta.ai/v1/responses`, with the pinned Standard model ID `muse-spark-1.3`. All five named roles use this same Meta model with different role contracts; they are not five separate models. The API key is read by the server from `MODEL_API_KEY`; it is not sent to the browser. Model output is treated as an untrusted suggestion and parsed against typed schemas.

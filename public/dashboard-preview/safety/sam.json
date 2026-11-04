@@ -1,0 +1,1897 @@
+{
+  "initial": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "87ce55cb-0090-4eb5-8165-d58348576ca2",
+      "viewerId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+      "eventType": "Outdoor group project",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 20,
+      "analysisStatus": "complete",
+      "proposalVersion": 13,
+      "participants": [
+        {
+          "id": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "d53a7802-a8b6-4678-a5c6-c759029da756",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "The outdoor fieldwork plan",
+        "values": {
+          "date": "Saturday, 21 November",
+          "time": "8:00 AM – 2:00 PM",
+          "location": "Fieldwork site · final access to confirm",
+          "cost": 400,
+          "currency": "PHP",
+          "transport": "Campus shuttle",
+          "preparation": "Field notes, equipment & protective gear"
+        }
+      },
+      "readiness": {
+        "percentage": 83,
+        "status": "blocked",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "blocked"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "emergency_plan"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "concerned",
+      "findings": [
+        {
+          "id": "emergency_plan",
+          "category": "Safety Check",
+          "severity": "critical",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "Emergency communications are unconfirmed for the fieldwork site.",
+          "recommendedAction": "Verify emergency contacts, communications and local guidance before proceeding."
+        }
+      ],
+      "questions": [
+        {
+          "id": "emergency_question",
+          "findingId": "emergency_plan",
+          "targetId": null,
+          "visibility": "group",
+          "kind": "clarification",
+          "text": "Who can verify emergency communications before the fieldwork?",
+          "options": [
+            "I can verify the contacts",
+            "Name another field lead",
+            "Still deciding"
+          ]
+        }
+      ],
+      "options": [],
+      "messages": [
+        {
+          "text": "Who can verify emergency communications before the fieldwork?",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": "emergency_question",
+          "proposalVersion": 13
+        },
+        {
+          "text": "Emergency communications are unconfirmed for the fieldwork site.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 13
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "proposalVersion": 13,
+        "responded": true
+      }
+    ],
+    "contributions": [
+      {
+        "id": "fixture_safety_alex_1",
+        "participantId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "participantName": "Alex",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can attend, but I need the emergency contact plan first.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.147Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_sam_2",
+        "participantId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "participantName": "Sam",
+        "visibility": "group",
+        "targetId": null,
+        "text": "The shuttle pickup point needs to be accessible.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.148Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_jo_3",
+        "participantId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "participantName": "Jo",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can bring field notes and protective equipment.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.149Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_mika_4",
+        "participantId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "participantName": "Mika",
+        "visibility": "group",
+        "targetId": null,
+        "text": "Please confirm the field lead before we proceed.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.150Z",
+        "proposalVersion": 13
+      }
+    ],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "summary": "Mika joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "summary": "Alex added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "summary": "Sam added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 19,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "summary": "Jo added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "summary": "Mika added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "Emergency communications are unconfirmed for the fieldwork site.",
+        "category": "Safety Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "question_asked",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "Who can verify emergency communications before the fieldwork?",
+        "category": null
+      },
+      {
+        "id": "activity_11",
+        "kind": "readiness_changed",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "blocked",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "blocked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "emergency_plan"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "Five categories are applicable. Unconfirmed emergency communications keep Safety Check blocked."
+      }
+    ]
+  },
+  "updated": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "87ce55cb-0090-4eb5-8165-d58348576ca2",
+      "viewerId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+      "eventType": "Outdoor group project",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 20,
+      "analysisStatus": "complete",
+      "proposalVersion": 13,
+      "participants": [
+        {
+          "id": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "d53a7802-a8b6-4678-a5c6-c759029da756",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "The outdoor fieldwork plan",
+        "values": {
+          "date": "Saturday, 21 November",
+          "time": "8:00 AM – 2:00 PM",
+          "location": "Fieldwork site · final access to confirm",
+          "cost": 400,
+          "currency": "PHP",
+          "transport": "Campus shuttle",
+          "preparation": "Field notes, equipment & protective gear"
+        }
+      },
+      "readiness": {
+        "percentage": 83,
+        "status": "blocked",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "blocked"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "emergency_plan"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "concerned",
+      "findings": [
+        {
+          "id": "emergency_plan",
+          "category": "Safety Check",
+          "severity": "critical",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "Emergency communications are unconfirmed for the fieldwork site.",
+          "recommendedAction": "Verify emergency contacts, communications and local guidance before proceeding."
+        }
+      ],
+      "questions": [
+        {
+          "id": "emergency_question",
+          "findingId": "emergency_plan",
+          "targetId": null,
+          "visibility": "group",
+          "kind": "clarification",
+          "text": "Who can verify emergency communications before the fieldwork?",
+          "options": [
+            "I can verify the contacts",
+            "Name another field lead",
+            "Still deciding"
+          ]
+        }
+      ],
+      "options": [],
+      "messages": [
+        {
+          "text": "Who can verify emergency communications before the fieldwork?",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": "emergency_question",
+          "proposalVersion": 13
+        },
+        {
+          "text": "Emergency communications are unconfirmed for the fieldwork site.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 13
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "proposalVersion": 13,
+        "responded": true
+      }
+    ],
+    "contributions": [
+      {
+        "id": "fixture_safety_alex_1",
+        "participantId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "participantName": "Alex",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can attend, but I need the emergency contact plan first.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.147Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_sam_2",
+        "participantId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "participantName": "Sam",
+        "visibility": "group",
+        "targetId": null,
+        "text": "The shuttle pickup point needs to be accessible.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.148Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_jo_3",
+        "participantId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "participantName": "Jo",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can bring field notes and protective equipment.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.149Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_mika_4",
+        "participantId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "participantName": "Mika",
+        "visibility": "group",
+        "targetId": null,
+        "text": "Please confirm the field lead before we proceed.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.150Z",
+        "proposalVersion": 13
+      }
+    ],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "summary": "Mika joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "summary": "Alex added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "summary": "Sam added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 19,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "summary": "Jo added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "summary": "Mika added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "Emergency communications are unconfirmed for the fieldwork site.",
+        "category": "Safety Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "question_asked",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "Who can verify emergency communications before the fieldwork?",
+        "category": null
+      },
+      {
+        "id": "activity_11",
+        "kind": "readiness_changed",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "blocked",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "blocked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "emergency_plan"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "Five categories are applicable. Unconfirmed emergency communications keep Safety Check blocked."
+      }
+    ]
+  },
+  "revised": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "87ce55cb-0090-4eb5-8165-d58348576ca2",
+      "viewerId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+      "eventType": "Outdoor group project",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 20,
+      "analysisStatus": "complete",
+      "proposalVersion": 13,
+      "participants": [
+        {
+          "id": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "d53a7802-a8b6-4678-a5c6-c759029da756",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "The outdoor fieldwork plan",
+        "values": {
+          "date": "Saturday, 21 November",
+          "time": "8:00 AM – 2:00 PM",
+          "location": "Fieldwork site · final access to confirm",
+          "cost": 400,
+          "currency": "PHP",
+          "transport": "Campus shuttle",
+          "preparation": "Field notes, equipment & protective gear"
+        }
+      },
+      "readiness": {
+        "percentage": 83,
+        "status": "blocked",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "blocked"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "emergency_plan"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "concerned",
+      "findings": [
+        {
+          "id": "emergency_plan",
+          "category": "Safety Check",
+          "severity": "critical",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "Emergency communications are unconfirmed for the fieldwork site.",
+          "recommendedAction": "Verify emergency contacts, communications and local guidance before proceeding."
+        }
+      ],
+      "questions": [
+        {
+          "id": "emergency_question",
+          "findingId": "emergency_plan",
+          "targetId": null,
+          "visibility": "group",
+          "kind": "clarification",
+          "text": "Who can verify emergency communications before the fieldwork?",
+          "options": [
+            "I can verify the contacts",
+            "Name another field lead",
+            "Still deciding"
+          ]
+        }
+      ],
+      "options": [],
+      "messages": [
+        {
+          "text": "Who can verify emergency communications before the fieldwork?",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": "emergency_question",
+          "proposalVersion": 13
+        },
+        {
+          "text": "Emergency communications are unconfirmed for the fieldwork site.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 13
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "proposalVersion": 13,
+        "responded": true
+      }
+    ],
+    "contributions": [
+      {
+        "id": "fixture_safety_alex_1",
+        "participantId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "participantName": "Alex",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can attend, but I need the emergency contact plan first.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.147Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_sam_2",
+        "participantId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "participantName": "Sam",
+        "visibility": "group",
+        "targetId": null,
+        "text": "The shuttle pickup point needs to be accessible.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.148Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_jo_3",
+        "participantId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "participantName": "Jo",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can bring field notes and protective equipment.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.149Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_mika_4",
+        "participantId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "participantName": "Mika",
+        "visibility": "group",
+        "targetId": null,
+        "text": "Please confirm the field lead before we proceed.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.150Z",
+        "proposalVersion": 13
+      }
+    ],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "summary": "Mika joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "summary": "Alex added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "summary": "Sam added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 19,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "summary": "Jo added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "summary": "Mika added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "Emergency communications are unconfirmed for the fieldwork site.",
+        "category": "Safety Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "question_asked",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "Who can verify emergency communications before the fieldwork?",
+        "category": null
+      },
+      {
+        "id": "activity_11",
+        "kind": "readiness_changed",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "blocked",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "blocked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "emergency_plan"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "Five categories are applicable. Unconfirmed emergency communications keep Safety Check blocked."
+      }
+    ]
+  },
+  "review": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "87ce55cb-0090-4eb5-8165-d58348576ca2",
+      "viewerId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+      "eventType": "Outdoor group project",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 20,
+      "analysisStatus": "complete",
+      "proposalVersion": 13,
+      "participants": [
+        {
+          "id": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "d53a7802-a8b6-4678-a5c6-c759029da756",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "The outdoor fieldwork plan",
+        "values": {
+          "date": "Saturday, 21 November",
+          "time": "8:00 AM – 2:00 PM",
+          "location": "Fieldwork site · final access to confirm",
+          "cost": 400,
+          "currency": "PHP",
+          "transport": "Campus shuttle",
+          "preparation": "Field notes, equipment & protective gear"
+        }
+      },
+      "readiness": {
+        "percentage": 83,
+        "status": "blocked",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "blocked"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "emergency_plan"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "concerned",
+      "findings": [
+        {
+          "id": "emergency_plan",
+          "category": "Safety Check",
+          "severity": "critical",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "Emergency communications are unconfirmed for the fieldwork site.",
+          "recommendedAction": "Verify emergency contacts, communications and local guidance before proceeding."
+        }
+      ],
+      "questions": [
+        {
+          "id": "emergency_question",
+          "findingId": "emergency_plan",
+          "targetId": null,
+          "visibility": "group",
+          "kind": "clarification",
+          "text": "Who can verify emergency communications before the fieldwork?",
+          "options": [
+            "I can verify the contacts",
+            "Name another field lead",
+            "Still deciding"
+          ]
+        }
+      ],
+      "options": [],
+      "messages": [
+        {
+          "text": "Who can verify emergency communications before the fieldwork?",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": "emergency_question",
+          "proposalVersion": 13
+        },
+        {
+          "text": "Emergency communications are unconfirmed for the fieldwork site.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 13
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "proposalVersion": 13,
+        "responded": true
+      }
+    ],
+    "contributions": [
+      {
+        "id": "fixture_safety_alex_1",
+        "participantId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "participantName": "Alex",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can attend, but I need the emergency contact plan first.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.147Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_sam_2",
+        "participantId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "participantName": "Sam",
+        "visibility": "group",
+        "targetId": null,
+        "text": "The shuttle pickup point needs to be accessible.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.148Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_jo_3",
+        "participantId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "participantName": "Jo",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can bring field notes and protective equipment.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.149Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_mika_4",
+        "participantId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "participantName": "Mika",
+        "visibility": "group",
+        "targetId": null,
+        "text": "Please confirm the field lead before we proceed.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.150Z",
+        "proposalVersion": 13
+      }
+    ],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "summary": "Mika joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "summary": "Alex added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "summary": "Sam added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 19,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "summary": "Jo added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "summary": "Mika added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "Emergency communications are unconfirmed for the fieldwork site.",
+        "category": "Safety Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "question_asked",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "Who can verify emergency communications before the fieldwork?",
+        "category": null
+      },
+      {
+        "id": "activity_11",
+        "kind": "readiness_changed",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "blocked",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "blocked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "emergency_plan"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "Five categories are applicable. Unconfirmed emergency communications keep Safety Check blocked."
+      }
+    ]
+  },
+  "carpool": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "87ce55cb-0090-4eb5-8165-d58348576ca2",
+      "viewerId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+      "eventType": "Outdoor group project",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 20,
+      "analysisStatus": "complete",
+      "proposalVersion": 13,
+      "participants": [
+        {
+          "id": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "d53a7802-a8b6-4678-a5c6-c759029da756",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "The outdoor fieldwork plan",
+        "values": {
+          "date": "Saturday, 21 November",
+          "time": "8:00 AM – 2:00 PM",
+          "location": "Fieldwork site · final access to confirm",
+          "cost": 400,
+          "currency": "PHP",
+          "transport": "Campus shuttle",
+          "preparation": "Field notes, equipment & protective gear"
+        }
+      },
+      "readiness": {
+        "percentage": 83,
+        "status": "blocked",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 0,
+            "status": "blocked"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "emergency_plan"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": false,
+      "finalEvaluationAvailable": true,
+      "loopState": "WAIT_FOR_PARTICIPANT",
+      "mascot": "concerned",
+      "findings": [
+        {
+          "id": "emergency_plan",
+          "category": "Safety Check",
+          "severity": "critical",
+          "status": "open",
+          "evidenceIds": [],
+          "uncertainty": "missing",
+          "message": "Emergency communications are unconfirmed for the fieldwork site.",
+          "recommendedAction": "Verify emergency contacts, communications and local guidance before proceeding."
+        }
+      ],
+      "questions": [
+        {
+          "id": "emergency_question",
+          "findingId": "emergency_plan",
+          "targetId": null,
+          "visibility": "group",
+          "kind": "clarification",
+          "text": "Who can verify emergency communications before the fieldwork?",
+          "options": [
+            "I can verify the contacts",
+            "Name another field lead",
+            "Still deciding"
+          ]
+        }
+      ],
+      "options": [],
+      "messages": [
+        {
+          "text": "Who can verify emergency communications before the fieldwork?",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": "emergency_question",
+          "proposalVersion": 13
+        },
+        {
+          "text": "Emergency communications are unconfirmed for the fieldwork site.",
+          "visibility": "group",
+          "targetId": null,
+          "questionId": null,
+          "proposalVersion": 13
+        }
+      ],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "proposalVersion": 13,
+        "responded": true
+      },
+      {
+        "participantId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "proposalVersion": 13,
+        "responded": true
+      }
+    ],
+    "contributions": [
+      {
+        "id": "fixture_safety_alex_1",
+        "participantId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "participantName": "Alex",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can attend, but I need the emergency contact plan first.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.147Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_sam_2",
+        "participantId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "participantName": "Sam",
+        "visibility": "group",
+        "targetId": null,
+        "text": "The shuttle pickup point needs to be accessible.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.148Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_jo_3",
+        "participantId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "participantName": "Jo",
+        "visibility": "group",
+        "targetId": null,
+        "text": "I can bring field notes and protective equipment.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.149Z",
+        "proposalVersion": 13
+      },
+      {
+        "id": "fixture_safety_mika_4",
+        "participantId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "participantName": "Mika",
+        "visibility": "group",
+        "targetId": null,
+        "text": "Please confirm the field lead before we proceed.",
+        "questionId": null,
+        "recordedAt": "2026-11-04T17:13:36.150Z",
+        "proposalVersion": 13
+      }
+    ],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 16,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "summary": "Mika joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "b64cd207-74de-4240-a4c0-6c2011e0dba0",
+        "summary": "Alex added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "d53a7802-a8b6-4678-a5c6-c759029da756",
+        "summary": "Sam added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 19,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "08bd0907-8ebd-4101-a83d-ed69f1b0e35e",
+        "summary": "Jo added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "3c0d684f-0374-47ea-b77c-f868eb6c0965",
+        "summary": "Mika added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "Emergency communications are unconfirmed for the fieldwork site.",
+        "category": "Safety Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "question_asked",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "Who can verify emergency communications before the fieldwork?",
+        "category": null
+      },
+      {
+        "id": "activity_11",
+        "kind": "readiness_changed",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 83%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 20,
+        "proposalVersion": 13,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 83,
+          "status": "blocked",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 0,
+              "status": "blocked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "emergency_plan"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "Five categories are applicable. Unconfirmed emergency communications keep Safety Check blocked."
+      }
+    ]
+  }
+}

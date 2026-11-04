@@ -1,0 +1,1542 @@
+{
+  "initial": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "fd0a43ff-cf8c-4e53-b3c7-80ceb1edc5f0",
+      "viewerId": "66d23f59-698a-40d3-b683-2518012368ae",
+      "eventType": "Beach trip",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 19,
+      "analysisStatus": "blocked",
+      "proposalVersion": 12,
+      "participants": [
+        {
+          "id": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "66d23f59-698a-40d3-b683-2518012368ae",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "A little sun. All our people.",
+        "values": {
+          "date": "Saturday, 14 November",
+          "time": "7:00 AM – 6:00 PM",
+          "location": "Laiya, Batangas · venue to confirm",
+          "cost": 1800,
+          "currency": "PHP",
+          "transport": "Shared van · quote pending",
+          "preparation": "Picnic kit & beach essentials"
+        }
+      },
+      "readiness": {
+        "percentage": 72,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 80,
+            "status": "incomplete"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 0,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "meal_costs",
+          "van_quote",
+          "picnic_kit"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": true,
+      "finalEvaluationAvailable": false,
+      "loopState": "BLOCKED",
+      "mascot": null,
+      "findings": [],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "proposalVersion": 12,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "summary": "Mika joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "summary": "Alex added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "summary": "Sam added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "summary": "Jo added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "summary": "Mika added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "Shared meal costs still need confirmation.",
+        "category": "Budget Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The shared van quote is still outstanding.",
+        "category": "Logistics Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The picnic kit still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 72%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 72,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 80,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "meal_costs",
+            "van_quote",
+            "picnic_kit"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "A prior readiness result is retained while the latest analysis is blocked."
+      }
+    ]
+  },
+  "updated": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "fd0a43ff-cf8c-4e53-b3c7-80ceb1edc5f0",
+      "viewerId": "66d23f59-698a-40d3-b683-2518012368ae",
+      "eventType": "Beach trip",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 19,
+      "analysisStatus": "blocked",
+      "proposalVersion": 12,
+      "participants": [
+        {
+          "id": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "66d23f59-698a-40d3-b683-2518012368ae",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "A little sun. All our people.",
+        "values": {
+          "date": "Saturday, 14 November",
+          "time": "7:00 AM – 6:00 PM",
+          "location": "Laiya, Batangas · venue to confirm",
+          "cost": 1800,
+          "currency": "PHP",
+          "transport": "Shared van · quote pending",
+          "preparation": "Picnic kit & beach essentials"
+        }
+      },
+      "readiness": {
+        "percentage": 72,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 80,
+            "status": "incomplete"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 0,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "meal_costs",
+          "van_quote",
+          "picnic_kit"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": true,
+      "finalEvaluationAvailable": false,
+      "loopState": "BLOCKED",
+      "mascot": null,
+      "findings": [],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "proposalVersion": 12,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "summary": "Mika joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "summary": "Alex added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "summary": "Sam added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "summary": "Jo added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "summary": "Mika added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "Shared meal costs still need confirmation.",
+        "category": "Budget Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The shared van quote is still outstanding.",
+        "category": "Logistics Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The picnic kit still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 72%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 72,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 80,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "meal_costs",
+            "van_quote",
+            "picnic_kit"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "A prior readiness result is retained while the latest analysis is blocked."
+      }
+    ]
+  },
+  "revised": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "fd0a43ff-cf8c-4e53-b3c7-80ceb1edc5f0",
+      "viewerId": "66d23f59-698a-40d3-b683-2518012368ae",
+      "eventType": "Beach trip",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 19,
+      "analysisStatus": "blocked",
+      "proposalVersion": 12,
+      "participants": [
+        {
+          "id": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "66d23f59-698a-40d3-b683-2518012368ae",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "A little sun. All our people.",
+        "values": {
+          "date": "Saturday, 14 November",
+          "time": "7:00 AM – 6:00 PM",
+          "location": "Laiya, Batangas · venue to confirm",
+          "cost": 1800,
+          "currency": "PHP",
+          "transport": "Shared van · quote pending",
+          "preparation": "Picnic kit & beach essentials"
+        }
+      },
+      "readiness": {
+        "percentage": 72,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 80,
+            "status": "incomplete"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 0,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "meal_costs",
+          "van_quote",
+          "picnic_kit"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": true,
+      "finalEvaluationAvailable": false,
+      "loopState": "BLOCKED",
+      "mascot": null,
+      "findings": [],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "proposalVersion": 12,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "summary": "Mika joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "summary": "Alex added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "summary": "Sam added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "summary": "Jo added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "summary": "Mika added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "Shared meal costs still need confirmation.",
+        "category": "Budget Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The shared van quote is still outstanding.",
+        "category": "Logistics Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The picnic kit still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 72%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 72,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 80,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "meal_costs",
+            "van_quote",
+            "picnic_kit"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "A prior readiness result is retained while the latest analysis is blocked."
+      }
+    ]
+  },
+  "review": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "fd0a43ff-cf8c-4e53-b3c7-80ceb1edc5f0",
+      "viewerId": "66d23f59-698a-40d3-b683-2518012368ae",
+      "eventType": "Beach trip",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 19,
+      "analysisStatus": "blocked",
+      "proposalVersion": 12,
+      "participants": [
+        {
+          "id": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "66d23f59-698a-40d3-b683-2518012368ae",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "A little sun. All our people.",
+        "values": {
+          "date": "Saturday, 14 November",
+          "time": "7:00 AM – 6:00 PM",
+          "location": "Laiya, Batangas · venue to confirm",
+          "cost": 1800,
+          "currency": "PHP",
+          "transport": "Shared van · quote pending",
+          "preparation": "Picnic kit & beach essentials"
+        }
+      },
+      "readiness": {
+        "percentage": 72,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 80,
+            "status": "incomplete"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 0,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "meal_costs",
+          "van_quote",
+          "picnic_kit"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": true,
+      "finalEvaluationAvailable": false,
+      "loopState": "BLOCKED",
+      "mascot": null,
+      "findings": [],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "proposalVersion": 12,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "summary": "Mika joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "summary": "Alex added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "summary": "Sam added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "summary": "Jo added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "summary": "Mika added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "Shared meal costs still need confirmation.",
+        "category": "Budget Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The shared van quote is still outstanding.",
+        "category": "Logistics Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The picnic kit still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 72%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 72,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 80,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "meal_costs",
+            "van_quote",
+            "picnic_kit"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "A prior readiness result is retained while the latest analysis is blocked."
+      }
+    ]
+  },
+  "carpool": {
+    "schemaVersion": "dashboard-v1",
+    "source": "synthetic",
+    "sequence": 1,
+    "room": {
+      "roomId": "fd0a43ff-cf8c-4e53-b3c7-80ceb1edc5f0",
+      "viewerId": "66d23f59-698a-40d3-b683-2518012368ae",
+      "eventType": "Beach trip",
+      "eventAttendance": {
+        "estimatedAttendeeCount": null,
+        "confirmedAttendeeCount": null
+      },
+      "revision": 19,
+      "analysisStatus": "blocked",
+      "proposalVersion": 12,
+      "participants": [
+        {
+          "id": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+          "name": "Alex",
+          "approved": false
+        },
+        {
+          "id": "66d23f59-698a-40d3-b683-2518012368ae",
+          "name": "Sam",
+          "approved": false
+        },
+        {
+          "id": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+          "name": "Jo",
+          "approved": false
+        },
+        {
+          "id": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+          "name": "Mika",
+          "approved": false
+        }
+      ],
+      "candidates": [],
+      "privateAnalysisStatus": "idle",
+      "proposal": {
+        "id": "group_plan",
+        "label": "A little sun. All our people.",
+        "values": {
+          "date": "Saturday, 14 November",
+          "time": "7:00 AM – 6:00 PM",
+          "location": "Laiya, Batangas · venue to confirm",
+          "cost": 1800,
+          "currency": "PHP",
+          "transport": "Shared van · quote pending",
+          "preparation": "Picnic kit & beach essentials"
+        }
+      },
+      "readiness": {
+        "percentage": 72,
+        "status": "needs_input",
+        "categories": [
+          {
+            "category": "Schedule Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Budget Check",
+            "percentage": 80,
+            "status": "incomplete"
+          },
+          {
+            "category": "People Check",
+            "percentage": 100,
+            "status": "checked"
+          },
+          {
+            "category": "Logistics Check",
+            "percentage": 50,
+            "status": "incomplete"
+          },
+          {
+            "category": "Preparation Check",
+            "percentage": 0,
+            "status": "incomplete"
+          },
+          {
+            "category": "Safety Check",
+            "percentage": 100,
+            "status": "checked"
+          }
+        ],
+        "delta": null,
+        "newIssueIds": [
+          "meal_costs",
+          "van_quote",
+          "picnic_kit"
+        ],
+        "resolvedIssueIds": [],
+        "policyVersion": "readiness-v1"
+      },
+      "analysisCurrent": true,
+      "analysisIncomplete": true,
+      "finalEvaluationAvailable": false,
+      "loopState": "BLOCKED",
+      "mascot": null,
+      "findings": [],
+      "questions": [],
+      "options": [],
+      "messages": [],
+      "approved": false,
+      "approvalCount": 0
+    },
+    "responseTracking": "synthetic",
+    "responses": [
+      {
+        "participantId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "proposalVersion": 12,
+        "responded": false
+      },
+      {
+        "participantId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "proposalVersion": 12,
+        "responded": false
+      }
+    ],
+    "contributions": [],
+    "activity": [
+      {
+        "id": "activity_1",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:30:20.000Z",
+        "actorId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "summary": "Alex joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_2",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:30:40.000Z",
+        "actorId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "summary": "Sam joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_3",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "actorId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "summary": "Jo joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_4",
+        "kind": "participant_joined",
+        "revision": 14,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:20.000Z",
+        "actorId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "summary": "Mika joined the plan.",
+        "category": null
+      },
+      {
+        "id": "activity_5",
+        "kind": "participant_responded",
+        "revision": 15,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:40.000Z",
+        "actorId": "436239ab-b5ff-43e9-8599-19ea9eb66648",
+        "summary": "Alex added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_6",
+        "kind": "participant_responded",
+        "revision": 16,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:00.000Z",
+        "actorId": "66d23f59-698a-40d3-b683-2518012368ae",
+        "summary": "Sam added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_7",
+        "kind": "participant_responded",
+        "revision": 17,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:20.000Z",
+        "actorId": "b155b1bc-8c9b-437b-b2b9-b08eb63a5198",
+        "summary": "Jo added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_8",
+        "kind": "participant_responded",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:32:40.000Z",
+        "actorId": "83217d81-27c7-4305-8d3d-cd01d5ad871c",
+        "summary": "Mika added a planning detail.",
+        "category": null
+      },
+      {
+        "id": "activity_9",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:00.000Z",
+        "actorId": null,
+        "summary": "Shared meal costs still need confirmation.",
+        "category": "Budget Check"
+      },
+      {
+        "id": "activity_10",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:20.000Z",
+        "actorId": null,
+        "summary": "The shared van quote is still outstanding.",
+        "category": "Logistics Check"
+      },
+      {
+        "id": "activity_11",
+        "kind": "finding_detected",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:33:40.000Z",
+        "actorId": null,
+        "summary": "The picnic kit still needs an owner.",
+        "category": "Preparation Check"
+      },
+      {
+        "id": "activity_12",
+        "kind": "readiness_changed",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:34:00.000Z",
+        "actorId": null,
+        "summary": "Readiness evaluated at 72%.",
+        "category": null
+      }
+    ],
+    "history": [
+      {
+        "id": "evaluation_0",
+        "revision": 18,
+        "proposalVersion": 11,
+        "occurredAt": "2026-11-03T03:31:00.000Z",
+        "readiness": {
+          "percentage": 72,
+          "status": "needs_input",
+          "categories": [
+            {
+              "category": "Schedule Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Budget Check",
+              "percentage": 80,
+              "status": "incomplete"
+            },
+            {
+              "category": "People Check",
+              "percentage": 100,
+              "status": "checked"
+            },
+            {
+              "category": "Logistics Check",
+              "percentage": 50,
+              "status": "incomplete"
+            },
+            {
+              "category": "Preparation Check",
+              "percentage": 0,
+              "status": "incomplete"
+            },
+            {
+              "category": "Safety Check",
+              "percentage": 100,
+              "status": "checked"
+            }
+          ],
+          "delta": null,
+          "newIssueIds": [
+            "meal_costs",
+            "van_quote",
+            "picnic_kit"
+          ],
+          "resolvedIssueIds": [],
+          "policyVersion": "readiness-v1"
+        },
+        "explanation": "A prior readiness result is retained while the latest analysis is blocked."
+      }
+    ]
+  }
+}
