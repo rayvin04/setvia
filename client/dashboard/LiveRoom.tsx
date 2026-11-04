@@ -102,6 +102,13 @@ export default function LiveRoom() {
     play(sound);
   }, [play]);
 
+  useEffect(() => {
+    document.title = snapshot?.room.proposal.label.trim() || "Setvia";
+    return () => {
+      document.title = "Setvia";
+    };
+  }, [snapshot?.room.proposal.label]);
+
   const acceptSnapshot = useCallback((input: DashboardSnapshot) => {
     setSnapshot((current) => current ? acceptDashboardUpdate(current, input) : input);
   }, []);
