@@ -7,7 +7,7 @@ import {
   useState,
   useSyncExternalStore,
 } from "react";
-import type { CSSProperties, KeyboardEvent, MouseEvent } from "react";
+import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
 import { useReducedMotion } from "motion/react";
 import {
@@ -139,24 +139,30 @@ function MobileTabs({
   );
 }
 
-function MobileIdentity({ snapshot }: { snapshot: DashboardSnapshot }) {
+function MobileIdentity({ snapshot, live = false, titleActions, titleStatus }: {
+  snapshot: DashboardSnapshot;
+  live?: boolean;
+  titleActions?: ReactNode;
+  titleStatus?: ReactNode;
+}) {
   const responses = responseCount(snapshot);
   return (
     <div className="mobile-room-identity">
-      <h1>{snapshot.room.proposal.label}</h1>
-      <div>
+      {live ? <div className="mobile-event-heading"><h1>{snapshot.room.proposal.label}</h1>{titleActions}</div> : <h1>{snapshot.room.proposal.label}</h1>}
+      {titleStatus}
+      <div className="mobile-member-strip">
         <span className="identity-avatars" aria-hidden="true">
           {snapshot.room.participants.slice(0, 3).map((person, index) => (
             <Avatar key={person.id} index={index} />
           ))}
         </span>
         <span>{snapshot.room.participants.length} room members</span>
-        <span>·</span>
+        {!live ? <><span>·</span>
         <span>
           {responses === null
             ? "Responses unknown"
             : `${responses}/${snapshot.room.participants.length} responded`}
-        </span>
+        </span></> : null}
         <span className="identity-approvals">
           {snapshot.room.approvalCount} approved
         </span>
@@ -240,6 +246,8 @@ export function PlanningDashboard({
   contributions,
   contributionMode = "preview",
   speakerResponseKey = "",
+  titleActions,
+  titleStatus,
 }: {
   snapshot: DashboardSnapshot;
   onAction?: (action: DashboardAction) => void;
@@ -251,6 +259,8 @@ export function PlanningDashboard({
   contributions: ContributionView[];
   contributionMode?: "preview" | "room";
   speakerResponseKey?: string;
+  titleActions?: ReactNode;
+  titleStatus?: ReactNode;
 }) {
   const compact = useSyncExternalStore(
     subscribeViewport,
@@ -267,7 +277,7 @@ export function PlanningDashboard({
       </div>
       {compact ? (
         <>
-          <MobileIdentity snapshot={snapshot} />
+          <MobileIdentity snapshot={snapshot} live={contributionMode === "room"} titleActions={titleActions} titleStatus={titleStatus} />
           <MobileTabs active={activeSection} onChange={onSectionChange} />
           <div
             className="mobile-dashboard-panel"
@@ -334,7 +344,7 @@ export function PlanningDashboard({
             </div>
           </div>
           <div className="dashboard-column dashboard-center">
-            <ReadinessPanel snapshot={snapshot} />
+            <ReadinessPanel snapshot={snapshot} titleActions={titleActions} titleStatus={titleStatus} />
             <details className="advanced-plan dashboard-panel">
               <summary>
                 <Layers size={16} aria-hidden="true" />

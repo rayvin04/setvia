@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Check, CircleAlert, CircleCheck, CircleX, Sparkles, TriangleAlert, X } from "lucide-react";
+import { Check, CircleAlert, CircleCheck, CircleX, Info, Sparkles, TriangleAlert, X } from "lucide-react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { Header } from "../components";
 import { useSetviaSounds } from "../sound";
@@ -49,14 +50,6 @@ function liveStatusLabel(stream: StreamStatus | "loading" | "offline") {
   if (stream === "unauthorized") return "Session expired";
   if (stream === "offline") return "Server unavailable";
   return "Connecting";
-}
-
-function roomServiceLabel(health: RoomHealth | null) {
-  if (health?.mode === "offline-mock") return "Offline mock · no Meta requests";
-  if (health?.mode === "synthetic-live-demo") return "Synthetic live test";
-  if (health?.enabled) return "Live Muse Spark room";
-  if (health) return "Room service unavailable";
-  return "Private planning room";
 }
 
 export default function LiveRoom() {
@@ -353,8 +346,8 @@ export default function LiveRoom() {
   }
 
   if (!session) return (
-    <div className="dashboard-shell dashboard-refined room-access-shell">
-      <Header room={{ title: "Planning room", serviceLabel: "Private room", connectionLabel: "Session required", connectionState: "unauthorized", roomCode: roomCodeFromId(roomId), copied: false }} />
+    <div className="dashboard-shell dashboard-refined live-room-shell room-access-shell">
+      <Header room={{ roomCode: roomCodeFromId(roomId), copied: false }} />
       <div className="room-access-state"><CircleAlert size={30} aria-hidden="true" /><h1>This tab has no room session.</h1><p>Open the invitation link and join with your name. Participant sessions stay in this browser tab.</p><Link to="/join" className="dashboard-button primary">Open invitation</Link></div>
     </div>
   );
@@ -410,19 +403,40 @@ export default function LiveRoom() {
       : analysisActivityState === "blocked" ? "blocked"
         : "idle";
 
+  const approvalControl = snapshot ? (
+    <div className="live-approval-control">
+      {snapshot.room.participants.find((p) => p.id === snapshot.room.viewerId)?.approved ? (
+        <strong className="live-approved"><Check size={15} aria-hidden="true" /> You approved this version</strong>
+      ) : (
+        <button
+          type="button"
+          className="dashboard-button primary"
+          disabled={!readyToApprove || busy}
+          title={!readyToApprove ? "Approval is available after the current analysis is complete." : undefined}
+          onClick={() => void approve()}
+        >
+          Approve proposal
+        </button>
+      )}
+      <span>{snapshot.room.approvalCount} of {snapshot.room.participants.length} approved</span>
+    </div>
+  ) : null;
+  const analysisStatus = analysisLabel ? (
+    <div className="live-analysis-status" data-state={analysisVisualState} role="status" aria-live="polite" aria-atomic="true">
+      <span className="live-analysis-orbit" aria-hidden="true"><i /><i /><b /></span>
+      <strong>{analysisLabel}</strong>
+    </div>
+  ) : null;
+
   return (
     <div
       className="dashboard-shell dashboard-refined live-room-shell"
       data-finding-flash={findingFlash || undefined}
       onPointerDownCapture={unlockFromGesture}
       onKeyDownCapture={unlockFromGesture}
-      style={participant ? { paddingBottom: composerHeight + composerInset + 24 } : undefined}
+      style={{ "--composer-height": `${composerHeight}px`, "--composer-inset": `${composerInset}px` } as CSSProperties}
     >
       <Header room={{
-        title: snapshot?.room.proposal.label ?? "Planning room",
-        serviceLabel: roomServiceLabel(health),
-        connectionLabel: liveStatusLabel(streamStatus),
-        connectionState: streamStatus,
         roomCode: roomCodeFromId(roomId),
         inviteLink: inviteLink ?? undefined,
         copied,
@@ -431,32 +445,9 @@ export default function LiveRoom() {
         onLeave: participant ? () => void leave() : undefined,
         leaving,
       }} />
+      {snapshot && streamStatus !== "connected" ? <p className="live-connection-note" role="status"><CircleAlert size={15} aria-hidden="true" />{liveStatusLabel(streamStatus)}. Showing the last received room state.</p> : null}
       {budget ? <p className="live-budget-note">Live test budget · {budget.attempts}/{budget.attempts + budget.remainingAttempts} HTTP attempts used · ${(budget.reservedCostMicros / 1_000_000).toFixed(2)} reserved</p> : null}
       {error ? <div className="live-error" role="alert"><CircleAlert size={16} aria-hidden="true" /><span>{error}</span></div> : null}
-      {snapshot ? <div className="live-room-status-row">
-        {analysisLabel ? (
-          <div className="live-analysis-status" data-state={analysisVisualState} role="status" aria-live="polite" aria-atomic="true">
-            <span className="live-analysis-orbit" aria-hidden="true"><i /><i /><b /></span>
-            <span className="live-analysis-copy"><strong>{analysisLabel}</strong><span>{analysisVisualState === "active" ? "Current room state" : analysisVisualState === "queued" ? "Waiting to start" : "No agent activity is being reported"}</span></span>
-          </div>
-        ) : null}
-        <div className="live-approval-control">
-          <span>{snapshot.room.approvalCount} of {snapshot.room.participants.length} approved</span>
-          {snapshot.room.participants.find((p) => p.id === snapshot.room.viewerId)?.approved ? (
-            <strong className="live-approved"><Check size={14} aria-hidden="true" /> You approved this version</strong>
-          ) : (
-            <button
-              type="button"
-              className="dashboard-button primary"
-              disabled={!readyToApprove || busy}
-              title={!readyToApprove ? "Approval is available after the current analysis is complete." : undefined}
-              onClick={() => void approve()}
-            >
-              Approve proposal
-            </button>
-          )}
-        </div>
-      </div> : null}
       {snapshot && participant && isBeachTripDemo ? <FictionalParticipantsDemo
         roomId={roomId}
         organizer={session}
@@ -481,10 +472,11 @@ export default function LiveRoom() {
             contributions={contributions}
             contributionMode="room"
             speakerResponseKey={speakerResponseKey}
+            titleActions={approvalControl}
+            titleStatus={analysisStatus}
           />
           {participant && snapshot.source === "room" ? (
-            <details className="live-decision-receipt">
-              <summary>Decision Receipt</summary>
+            <section className="live-decision-receipt" aria-label="Decision Receipt">
               <DecisionReceipt
                 receipt={projectDecisionReceipt(snapshot)}
                 evidence={projectReceiptEvidence(snapshot)}
@@ -497,7 +489,7 @@ export default function LiveRoom() {
                   acceptSnapshot(next);
                 }}
               />
-            </details>
+            </section>
           ) : null}
           {participant ? <MessageComposer
             key={`${snapshot.room.roomId}-${snapshot.room.viewerId}`}
@@ -527,13 +519,13 @@ export default function LiveRoom() {
       )}
 
       <AnimatePresence initial={false}>
-        {notice ? <motion.div key={notice.id} className={`live-toast toast-${notice.tone}`} initial={{ opacity: 0, y: reduced ? 0 : 12, scale: reduced ? 1 : 0.985 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: reduced ? 0 : 7, scale: 0.99 }} transition={{ duration: reduced ? 0.12 : 0.24, ease: [0.16, 1, 0.3, 1] }} role={notice.tone === "failure" || notice.tone === "action" ? "alert" : "status"} aria-live={notice.tone === "failure" || notice.tone === "action" ? "assertive" : "polite"}>
+        {notice ? <motion.div key={notice.id} className={`live-toast toast-${notice.tone}`} initial={{ opacity: 0, x: reduced ? 0 : 16, scale: reduced ? 1 : 0.98 }} animate={{ opacity: 1, x: 0, scale: 1 }} exit={{ opacity: 0, x: reduced ? 0 : 16, scale: reduced ? 1 : 0.98 }} transition={{ type: "spring", bounce: 0, visualDuration: reduced ? 0.12 : 0.28 }} role={notice.tone === "failure" || notice.tone === "action" ? "alert" : "status"} aria-live={notice.tone === "failure" || notice.tone === "action" ? "assertive" : "polite"}>
           <button type="button" className="live-toast-main" onClick={() => jumpTo(notice.section)}>
             <span className="live-toast-icon" aria-hidden="true">
               {notice.tone === "success" ? <CircleCheck size={19} />
                 : notice.tone === "failure" ? <CircleX size={19} />
                   : notice.tone === "action" ? <Sparkles size={19} />
-                    : <TriangleAlert size={19} />}
+                    : notice.tone === "warning" ? <TriangleAlert size={19} /> : <Info size={19} />}
             </span>
             <span className="live-toast-copy">
               <strong>{notice.tone === "action" ? "Action needed" : notice.tone === "failure" ? "Couldn’t complete that" : notice.tone === "success" ? "Update complete" : notice.tone === "warning" ? "Needs attention" : "Room update"}</strong>

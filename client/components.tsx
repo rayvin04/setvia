@@ -55,10 +55,6 @@ export function Wordmark() {
   );
 }
 export type LiveRoomHeaderProps = {
-  title: string;
-  serviceLabel: string;
-  connectionLabel: string;
-  connectionState: string;
   roomCode: string;
   inviteLink?: string;
   copied: boolean;
@@ -101,10 +97,10 @@ export function Header({
         room && "live-room-site-header",
         view.compact && "is-scrolled",
       )}
-      data-hidden={view.hidden && !focused && !room}
+      data-hidden={view.hidden && !focused}
       animate={{
-        scale: reduced ? 1 : view.hidden && !focused && !room ? 0.96 : 1,
-        opacity: view.hidden && !focused && !room ? 0 : 1,
+        scale: reduced ? 1 : view.hidden && !focused ? 0.96 : 1,
+        opacity: view.hidden && !focused ? 0 : 1,
       }}
       transition={{
         scale: reduced
@@ -130,20 +126,6 @@ export function Header({
         </motion.div>
         {room ? (
           <>
-            <div className="live-room-identity" aria-label="Current planning room">
-              <div>
-                <strong title={room.title}>{room.title}</strong>
-                <span>{room.serviceLabel}</span>
-              </div>
-              <span
-                className="live-connection"
-                data-status={room.connectionState}
-                role="status"
-              >
-                <i aria-hidden="true" />
-                {room.connectionLabel}
-              </span>
-            </div>
             <motion.nav
               className="live-room-nav"
               layout={reduced ? false : "position"}

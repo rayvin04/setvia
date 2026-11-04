@@ -15,6 +15,7 @@ import {
   LoaderCircle,
   LockKeyhole,
   MessageCircle,
+  Send,
   Users,
   X,
 } from "lucide-react";
@@ -146,11 +147,14 @@ export const MessageComposer = forwardRef<
     growth.current?.cancel();
     input.style.height = "0px";
     const contentHeight = input.scrollHeight;
-    const next = composerInputHeight(
+    const desired = composerInputHeight(
       contentHeight,
       chrome,
       viewport.height ?? window.innerHeight,
     );
+    const next = mode === "room" && (viewport.width ?? window.innerWidth) <= 700
+      ? Math.min(desired, 132)
+      : desired;
     input.style.height = next + "px";
     input.style.overflowY = contentHeight > next ? "auto" : "hidden";
     input.dataset.overflow = String(contentHeight > next);
@@ -173,6 +177,7 @@ export const MessageComposer = forwardRef<
     question?.text,
     answering,
     selectedReply,
+    mode,
   ]);
   useLayoutEffect(() => {
     if (!dock.current || !onHeightChange) return;
@@ -268,8 +273,8 @@ export const MessageComposer = forwardRef<
         receipt.mode === "preview"
           ? `Response recorded in preview · ${receipt.visibility === "private" ? "Private answer" : "Shared with room members"}. No AI analysis ran.`
           : receipt.visibility === "private"
-            ? "Private response recorded. Only you can see it here; Meta will process it for your private analysis."
-            : "Response sent. Setvia is reviewing the shared plan with Meta.",
+            ? "Private response sent."
+            : "Message shared with the room.",
       );
     } catch (failure) {
       if (!controller.signal.aborted)
@@ -298,11 +303,28 @@ export const MessageComposer = forwardRef<
     } else void send(reply.label);
   }
 
+  const sendButton = (
+    <motion.button
+      className="sv-send"
+      whileHover={reducedMotion ? undefined : { scale: 1.04 }}
+      whileTap={reducedMotion ? { opacity: 0.8 } : { scale: 0.94 }}
+      transition={{ type: "spring", bounce: 0, visualDuration: 0.22 }}
+      type="submit"
+      disabled={disabled || busy || !text.trim() || !choices.length}
+      aria-label={busy ? mode === "preview" ? "Recording preview response" : "Sending response" : mode === "preview" ? "Send preview message" : "Send message"}
+      title={busy ? "Sending…" : "Send message"}
+    >
+      {busy ? <LoaderCircle size={20} className="sv-sending-icon" aria-hidden="true" />
+        : mode === "room" ? <Send size={21} strokeWidth={1.8} aria-hidden="true" /> : <span>Send</span>}
+    </motion.button>
+  );
+
   const content = (
     <section
       ref={dock}
       className="sv-composer-dock"
-        data-mode={mode}
+      data-mode={mode}
+      data-has-question={Boolean(question)}
       data-keyboard={viewport.keyboard}
       aria-label="Planning room composer"
       style={{
@@ -326,7 +348,7 @@ export const MessageComposer = forwardRef<
           <div className="sv-question-block">
             <div className="sv-question-heading">
               <MessageCircle size={15} aria-hidden="true" />
-              <p id={`${id}-question`}>{question.text}</p>
+              <p id={`${id}-question`} tabIndex={mode === "room" ? 0 : undefined}>{question.text}</p>
               <button
                 type="button"
                 className="sv-thought-toggle"
@@ -364,6 +386,7 @@ export const MessageComposer = forwardRef<
             </div>
           </div>
         ) : null}
+        <div className="sv-entry-layer">
         {selectedReply && answering ? (
           <div className="sv-reply-context">
             <span>{selectedReply} · add your alternative</span>
@@ -419,6 +442,7 @@ export const MessageComposer = forwardRef<
               }
             }}
           />
+          {mode === "room" ? sendButton : null}
         </div>
         <div className="sv-composer-footer">
           <div className="sv-visibility-control">
@@ -458,33 +482,7 @@ export const MessageComposer = forwardRef<
           {mode === "preview" ? (
             <span className="sv-composer-mode">Preview only · no live AI</span>
           ) : null}
-          <motion.button
-            className="sv-send"
-            whileHover={reducedMotion ? undefined : { scale: 1.04 }}
-            whileTap={reducedMotion ? { opacity: 0.8 } : { scale: 0.94 }}
-            transition={{ type: "spring", bounce: 0, visualDuration: 0.22 }}
-            type="submit"
-            disabled={disabled || busy || !text.trim() || !choices.length}
-            aria-label={
-              busy
-                ? mode === "preview"
-                  ? "Recording preview response"
-                  : "Sending response"
-                : mode === "preview"
-                  ? "Send preview message"
-                  : "Send message"
-            }
-          >
-            {busy ? (
-              <LoaderCircle
-                size={20}
-                className="sv-sending-icon"
-                aria-hidden="true"
-              />
-            ) : (
-              <span>Send</span>
-            )}
-          </motion.button>
+          {mode === "preview" ? sendButton : null}
         </div>
         <p
           className="sv-privacy-copy"
@@ -505,7 +503,7 @@ export const MessageComposer = forwardRef<
         <p className="sv-composer-error" id={`${id}-error`} role="alert">
           {error}
         </p>
-        <p className="sv-composer-status" role="status" aria-live="polite">
+        <p className={`sv-composer-status${mode === "room" && acknowledgment && !busy && !disabled ? " sr-only" : ""}`} role="status" aria-live="polite">
           {disabled
             ? disabledReason
             : busy
@@ -514,6 +512,7 @@ export const MessageComposer = forwardRef<
                 : "Sending your response…"
               : acknowledgment}
         </p>
+        </div>
       </form>
     </section>
   );
