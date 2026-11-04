@@ -35,6 +35,10 @@ export const DashboardRoomSchema = z
       .default({ estimatedAttendeeCount: null, confirmedAttendeeCount: null }),
     revision: z.number().int().nonnegative(),
     analysisStatus: z.enum(["idle", "queued", "running", "blocked", "complete"]).default("idle"),
+    analysisRoles: z.array(z.object({
+      role: z.enum(["Listener", "Judge", "Negotiator", "Question Strategist", "Speaker"]),
+      status: z.enum(["idle", "running", "complete", "failed", "not_required"]),
+    }).strict()).max(5).default([]),
     proposalVersion: z.number().int().positive(),
     participants: z
       .array(

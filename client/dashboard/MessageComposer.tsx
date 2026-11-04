@@ -109,15 +109,14 @@ export const MessageComposer = forwardRef<
     width: null as number | null,
   });
   const busy = sending || pending;
-  const privateQuestion = answering && question?.visibility === "private";
-  const choices = privateQuestion
-    ? allowedVisibilities.filter((choice) => choice === "private")
+  const choices = answering && question
+    ? allowedVisibilities.filter((choice) => choice === question.visibility)
     : allowedVisibilities;
   const effectiveVisibility = choices.includes(visibility)
     ? visibility
     : (choices[0] ?? "private");
   const error = validationError || submissionError || externalError;
-  const canCollapse = mode === "room" && !focusWithin && !text.trim() && !busy && !privacyOpen && !selectedReply && !error && !viewport.keyboard;
+  const canCollapse = mode === "room" && !question && !focusWithin && !text.trim() && !busy && !privacyOpen && !selectedReply && !error && !viewport.keyboard;
   const canCollapseRef = useRef(canCollapse);
   canCollapseRef.current = canCollapse;
   const scheduleIdleCollapse = useCallback(() => {
@@ -290,9 +289,12 @@ export const MessageComposer = forwardRef<
           ? question.id
           : null,
       replyOption: quickOption ?? (answering ? selectedReply : null),
+      // An answer inherits the audience of the question. This ensures a
+      // suggested reply to a group question enters the shared cycle, while a
+      // private question can never be disclosed through its answer control.
       visibility:
-        quickOption !== undefined && question?.visibility === "private"
-          ? "private"
+        quickOption !== undefined && question
+          ? question.visibility
           : effectiveVisibility,
       text: rawText,
     });
@@ -565,7 +567,7 @@ export const MessageComposer = forwardRef<
             : mode === "preview"
               ? "Your message is visible to other room members in this preview. No AI processing runs here."
               : "Your message is shared with room members and sent to Meta’s Model API for analysis."}
-          {privateQuestion
+          {answering && question?.visibility === "private"
             ? " This targeted question accepts private answers only."
             : ""}
         </p>

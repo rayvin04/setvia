@@ -208,6 +208,14 @@ export async function reviseRoomProposal(session: ParticipantSession, expectedRe
   return readResponse(response, DashboardSnapshotSchema);
 }
 
+export async function retryRoomAnalysis(session: ParticipantSession, expectedRevision: number) {
+  const response = await fetch(apiEndpoint(`/rooms/${encodeURIComponent(session.roomId)}/analysis/retry`), {
+    method: "POST", headers: { ...authHeaders(session), "Content-Type": "application/json" },
+    body: JSON.stringify({ expectedRevision }), cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer",
+  });
+  return readResponse(response, DashboardSnapshotSchema);
+}
+
 export async function approveRoomProposal(session: ParticipantSession, version: number) {
   const response = await fetch(apiEndpoint(`/rooms/${encodeURIComponent(session.roomId)}/approve`), {
     method: "POST",

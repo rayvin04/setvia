@@ -107,7 +107,13 @@ export function ReadinessPanel({
             {titleStatus}
           </div>
           <ul className="agent-team-roles">
-            {["Question Strategist", "Negotiator", "Judge", "Speaker"].map((role) => <li key={role}><span aria-hidden="true" />{role}</li>)}
+            {["Listener", "Judge", "Negotiator", "Question Strategist", "Speaker"].map((role) => {
+              const status = room.analysisRoles.find((entry) => entry.role === role)?.status ?? "idle";
+              return <li key={role} data-state={status}><span aria-hidden="true" /><span>{role}<small>{
+                status === "running" ? "Working" : status === "complete" ? "Done" : status === "failed" ? "Needs retry"
+                  : status === "not_required" ? "Not needed this cycle" : "Not started"
+              }</small></span></li>;
+            })}
           </ul>
         </section>
       ) : null}

@@ -5,7 +5,7 @@ import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { basename, join, resolve, sep } from "node:path";
 import { Categories, RoleSchemas, RoomSchema, type Question } from "./contracts.js";
-import { AgentEngine, MOCK_LIMITS, annotateInfeasibleQuestionOptions, validateJudge } from "./engine.js";
+import { AgentEngine, MOCK_LIMITS, annotateInfeasibleQuestionOptions, requirePlanningFollowUp, validateJudge } from "./engine.js";
 import {
   fixture,
   judge,
@@ -51,6 +51,32 @@ test("unnecessary agents are skipped and completed analysis stops without anothe
     f.calls.map((c) => c.role),
     ["Judge"],
   );
+});
+
+test("below 70 percent reviews every missing planning area then asks a validated participant question", async () => {
+  const f = await fixture([]);
+  await f.store.transaction(f.roomId, (room) => { if (room) room.facts = []; });
+  const initial = requirePlanningFollowUp(await f.store.read(f.roomId), judge(), 70, false);
+  assert.equal(initial.next, "negotiate");
+  assert.equal(initial.taskFindingIds.length, 6);
+  const policyFindingId = "policy_missing_budget_check";
+  const question: Question = { id: "budget_question", findingId: policyFindingId, targetId: null,
+    visibility: "group", kind: "choice", text: "What per-person budget works?", options: ["₱1,000", "₱1,500"] };
+  const scripted = scriptedGateway([
+    { role: "Judge", output: judge() },
+    { role: "Negotiator", output: { options: [{ id: "lower_cost", label: "Lower cost", values: { cost: 100 } }] } },
+    { role: "Judge", output: judge({ verdicts: [{ optionId: "lower_cost", accepted: true }] }) },
+    { role: "Question Strategist", output: { questions: [question] } },
+    { role: "Speaker", output: { mascot: "curious", replies: [{ questionId: question.id, findingId: null, text: question.text }] } },
+    { role: "Judge", output: judge({ next: "question", participantInputRequired: true, acceptedQuestionIds: [question.id] }) },
+  ]);
+  const engine = new AgentEngine(f.store, scripted.gateway, { ...MOCK_LIMITS, questionBelowReadiness: 70 });
+  const result = await engine.run(f.roomId, f.auth);
+  assert.deepEqual(scripted.calls.map((call) => call.role),
+    ["Judge", "Negotiator", "Judge", "Question Strategist", "Speaker", "Judge"]);
+  assert.equal(result.outcome, "WAIT_FOR_PARTICIPANT");
+  assert.ok((result.readiness?.percentage ?? 100) < 70);
+  assert.equal((await engine.rooms.view(f.roomId, f.auth)).questions[0]?.text, question.text);
 });
 
 test("choice options that conflict with confirmed shared hard constraints require explicit reconsideration", async () => {
@@ -151,7 +177,31 @@ test("targeted questions wait without polling and are hidden from other particip
     /UNAUTHORIZED_ANSWER/,
   );
 });
-test("a private answer stays private while its extracted planning details are shared", async () => {
+test("a private reply to a group question keeps it open for other planners", async () => {
+  const f = await questionFixture();
+  const cycle = await f.engine.run(f.roomId, f.auth);
+  await f.store.transaction(f.roomId, (room) => {
+    if (room) room.questions = room.questions.map((question) => ({ ...question, visibility: "group", targetId: null }));
+  });
+  const room = await f.store.read(f.roomId);
+  await f.engine.rooms.submit(f.roomId, f.auth, {
+    messageId: "private_group_question_answer",
+    expectedRevision: room.revision + (room.privateRevisions[f.auth.participantId] ?? 0),
+    proposalVersion: room.proposalVersion,
+    text: "I want to discuss this privately first.",
+    visibility: "private",
+    questionId: f.question.id,
+    replyOption: null,
+  });
+  const ownerView = await f.engine.rooms.view(f.roomId, f.auth);
+  const otherView = await f.engine.rooms.view(f.roomId, f.other);
+  assert.equal((await f.store.read(f.roomId)).privatePendingInputs.length, 1);
+  assert.deepEqual(ownerView.questions.map((question) => question.id), [f.question.id]);
+  assert.deepEqual(otherView.questions.map((question) => question.id), [f.question.id]);
+  assert.equal(JSON.stringify(otherView.responses).includes("discuss this privately"), false);
+  assert.equal((await f.store.read(f.roomId)).lastCycle?.id, cycle.id);
+});
+test("private extraction stays owner-only until explicit sharing", async () => {
   const f = await questionFixture();
   const first = await f.engine.run(f.roomId, f.auth);
   await f.engine.rooms.submit(
@@ -165,16 +215,17 @@ test("a private answer stays private while its extracted planning details are sh
   const [privateResult] = await f.engine.processPrivate(f.roomId, f.auth.participantId);
   assert.equal(privateResult?.cycle.outcome, "COMPLETED");
   const afterPublish = await f.store.read(f.roomId);
-  assert.equal(afterPublish.revision, beforePublish.revision + 1);
-  assert.equal(afterPublish.proposalVersion, beforePublish.proposalVersion + 1);
+  assert.equal(afterPublish.revision, beforePublish.revision);
+  assert.equal(afterPublish.proposalVersion, beforePublish.proposalVersion);
   assert.deepEqual(afterPublish.approvals, {});
   assert.equal(f.calls.length, 5);
   assert.equal((await f.engine.rooms.view(f.roomId, f.auth)).approvalCount, 0);
   const roomView = await f.engine.rooms.view(f.roomId, f.other);
-  assert.equal(roomView.candidates.length, 1);
-  assert.equal(roomView.candidates[0]?.visibility, "group");
-  assert.equal(roomView.candidates[0]?.confirmed, false);
-  assert.equal(roomView.candidates[0]?.value, 200);
+  assert.equal(roomView.candidates.length, 0);
+  const ownerView = await f.engine.rooms.view(f.roomId, f.auth);
+  assert.equal(ownerView.candidates[0]?.value, 200);
+  await f.engine.rooms.shareCandidate(f.roomId, f.auth, ownerView.revision, ownerView.candidates[0]!.id);
+  assert.equal((await f.engine.rooms.view(f.roomId, f.other)).facts.some((fact) => fact.value === 200 && fact.confirmed), true);
   assert.equal(
     JSON.stringify(f.calls.filter((c) => c.role !== "Listener")).includes(
       "SYNTHETIC_PRIVATE_BUDGET",
@@ -590,7 +641,10 @@ test("private raw answers and facts stay private while extracted planning detail
   await f.engine.processPrivate(f.roomId, f.auth.participantId);
   room = await f.store.read(f.roomId);
   const ownerView = await f.engine.rooms.view(f.roomId, f.auth);
-  await f.engine.rooms.confirmFact(f.roomId, f.auth, ownerView.revision, {
+  const privateSuggestion = ownerView.candidates.find((candidate) => candidate.value === "Northside Park")!;
+  await f.engine.rooms.shareCandidate(f.roomId, f.auth, ownerView.revision, privateSuggestion.id);
+  const afterShare = await f.engine.rooms.view(f.roomId, f.auth);
+  await f.engine.rooms.confirmFact(f.roomId, f.auth, afterShare.revision, {
     id: "shared_canary",
     key: "meetingLocation",
     value: "GROUP_CONTEXT_CANARY",
@@ -1202,8 +1256,8 @@ test("simultaneous private submissions are queued without overwriting either par
   assert.equal((await f.store.read(f.roomId)).privatePendingInputs.length, 0);
   const firstView = await f.engine.rooms.view(f.roomId, f.auth);
   const secondView = await f.engine.rooms.view(f.roomId, f.other);
-  assert.deepEqual(firstView.candidates.map((candidate) => candidate.value).sort(), ["FIRST_PRIVATE", "SECOND_PRIVATE"]);
-  assert.deepEqual(secondView.candidates.map((candidate) => candidate.value).sort(), ["FIRST_PRIVATE", "SECOND_PRIVATE"]);
+  assert.deepEqual(firstView.candidates.map((candidate) => candidate.value), ["FIRST_PRIVATE"]);
+  assert.deepEqual(secondView.candidates.map((candidate) => candidate.value), ["SECOND_PRIVATE"]);
   assert.equal(
     JSON.stringify(f.calls[0].input).includes("SECOND_PRIVATE"),
     false,

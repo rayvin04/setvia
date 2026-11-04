@@ -2,7 +2,7 @@
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
-import { AgentEngine } from "../server/src/agents/engine.js";
+import { AgentEngine, MOCK_LIMITS } from "../server/src/agents/engine.js";
 import type { AgentGateway, Finding, Question } from "../server/src/agents/contracts.js";
 import { MemoryPersistence, RoomStore } from "../server/src/agents/store.js";
 import { RoomRuntime } from "../server/src/rooms/runtime.js";
@@ -11,6 +11,7 @@ import { META_API_BASE_URL, META_SPARK_MODEL } from "../server/src/ai/meta-clien
 
 if (!process.env.SETVIA_PRIVATE_ROOT) throw new Error("SETVIA_PRIVATE_ROOT is required for offline Lab records.");
 const privateRoot = resolve(process.env.SETVIA_PRIVATE_ROOT);
+const apiPort = Number(process.env.SETVIA_OFFLINE_PORT ?? 3001);
 await mkdir(resolve(privateRoot, "lab"), { recursive: true });
 const issue: Finding = { id: "departure_gap", category: "Schedule Check", severity: "critical", status: "open",
   evidenceIds: [], uncertainty: "missing", message: "The departure time needs confirmation.",
@@ -22,11 +23,14 @@ const gateway: AgentGateway = {
   mode: "MOCK", promptVersion: "agents-v6",
   async call(role, raw, context) {
     await context.reserveAttempt();
+    await new Promise((done) => setTimeout(done, 180));
     const input = raw as { task?: string; draftQuestions?: Question[]; questions?: Question[];
       participants?: Array<{ id: string }>; proposedOptions?: Array<{ id: string }>;
+      groupInput?: { replyOption?: string | null };
+      facts?: Array<{ id: string; key: string; confirmed: boolean }>;
       groupResponses?: Array<{ replyOption: string | null }> };
     let output: unknown;
-    if (role === "Listener") output = { candidates: [{ key: "note", value: "Await participant confirmation before sharing." }] };
+    if (role === "Listener") output = { candidates: input.groupInput?.replyOption ? [{ key: "time", value: input.groupInput.replyOption }] : [] };
     else if (role === "Judge") {
       if (input.task === "final") output = review({ next: "question", participantInputRequired: true,
         acceptedQuestionIds: input.draftQuestions?.map((question) => question.id) ?? [] });
@@ -35,12 +39,15 @@ const gateway: AgentGateway = {
       else output = review({ next: "question", participantInputRequired: true,
         verdicts: input.proposedOptions.map((option) => ({ optionId: option.id, accepted: true })) });
     } else if (role === "Negotiator") output = { options: [{ id: "later_departure", label: "Later departure", values: { time: "09:00" } }] };
-    else if (role === "Question Strategist") output = { questions: [
-      { id: "departure_choice", findingId: issue.id, targetId: null, visibility: "group", kind: "choice",
-        text: "Which departure time works for everyone?", options: ["08:00", "09:00"] },
-      { id: "owner_availability", findingId: issue.id, targetId: input.participants?.[0]?.id, visibility: "private", kind: "clarification",
-        text: "Would you like to share an availability window?", options: [] },
-    ] };
+    else if (role === "Question Strategist") {
+      const answered = input.groupResponses?.some((response) => response.replyOption) ?? false;
+      output = { questions: [
+        { id: answered ? "departure_followup" : "departure_choice", findingId: issue.id, targetId: null,
+          visibility: "group", kind: answered ? "clarification" : "choice",
+          text: answered ? "Would 9 AM still leave enough time for the group’s plans?" : "Which departure time works for everyone?",
+          options: answered ? ["Yes, 9 AM works", "No, choose another time"] : ["08:00", "09:00"] },
+      ] };
+    }
     else output = { mascot: "curious", replies: [
       ...(input.questions ?? []).map((question) => ({ questionId: question.id, findingId: null, text: question.text })),
       { questionId: null, findingId: issue.id, text: "We still need to confirm the departure time." },
@@ -49,16 +56,16 @@ const gateway: AgentGateway = {
   },
 };
 let runtime!: RoomRuntime;
-const engine = new AgentEngine(new RoomStore(new MemoryPersistence()), gateway, undefined,
+const engine = new AgentEngine(new RoomStore(new MemoryPersistence()), gateway, { ...MOCK_LIMITS, questionBelowReadiness: 70 },
   (id) => { void runtime.events.publishGroup(id); }, (id, owner) => { void runtime.events.publishPrivate(id, owner); });
 runtime = new RoomRuntime({ engine, privateRoot, publicRoot: process.cwd(), syntheticDemo: true,
   persistenceLock: async () => {}, journal: { runId: randomUUID(), attemptsFor: async () => [],
-    snapshot: async () => ({ runId: "offline", attempts: 0, runAttempts: 0, estimatedCostMicros: 0, budgetMicros: 0 }),
+    snapshot: async () => ({ runId: "offline", attempts: 0, runAttempts: 0, estimatedCostMicros: 0, budgetMicros: 0, tokensAtRisk: 0 }),
     release: async () => {} } as never });
-const server = createApp({ rooms: runtime, roomOrigins: ["http://127.0.0.1:5175"], client: {
+const server = createApp({ rooms: runtime, roomOrigins: ["http://127.0.0.1:5175", "http://127.0.0.1:5176"], client: {
   baseUrl: META_API_BASE_URL, model: META_SPARK_MODEL, getRequestCount: () => 0,
   createResponse: async () => { throw new Error("Inference is disabled in this offline harness."); },
-} }).listen(3001, "127.0.0.1", () => console.log("Offline room harness on http://127.0.0.1:3001 — MOCK responses, zero Meta requests."));
+} }).listen(apiPort, "127.0.0.1", () => console.log(`Offline room harness on http://127.0.0.1:${apiPort} — MOCK responses, zero Meta requests.`));
 let closing = false;
 const close = () => {
   if (closing) return;

@@ -31,6 +31,7 @@ export interface Limits {
   // Conservative per-attempt estimates kept for accounting only.
   callTokens: number;
   callCostMicros: number;
+  questionBelowReadiness?: number;
 }
 export const MOCK_LIMITS: Limits = {
   maxRevisions: 2,
@@ -53,6 +54,30 @@ const fingerprint = (value: unknown) => {
     .update(JSON.stringify(canonical(value)))
     .digest("hex");
 };
+
+// Runtime policy, independent of model confidence. A low score with known
+// evidence gaps must lead to an answerable next step rather than silent completion.
+export function requirePlanningFollowUp(room: Room, evaluation: JudgeEvaluation, threshold: number, negotiated: boolean): JudgeEvaluation {
+  const readiness = calculateReadiness(room, evaluation.findings);
+  if (readiness.percentage >= threshold) return evaluation;
+  const findings = [...evaluation.findings];
+  for (const policy of room.policy.filter((entry) => entry.enabled)) {
+    const category = readiness.categories.find((entry) => entry.category === policy.category);
+    const alreadyOpen = findings.some((finding) => finding.category === policy.category && finding.status !== "resolved");
+    if (category?.status === "checked" || alreadyOpen || findings.length >= 40) continue;
+    const categoryId = policy.category.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+    findings.push({ id: `policy_missing_${categoryId}`,
+      category: policy.category, severity: "warning", status: "open", evidenceIds: [], uncertainty: "missing",
+      message: `The ${policy.category.toLowerCase()} requirements still need review against confirmed group details.`,
+      recommendedAction: "Ask a participant one specific, safe question about this planning area." });
+  }
+  const openFindingIds = findings.filter((finding) => finding.status !== "resolved").map((finding) => finding.id);
+  if (!openFindingIds.length) return evaluation;
+  return { ...evaluation, findings,
+    next: negotiated ? "question" : "negotiate",
+    taskFindingIds: negotiated ? [] : openFindingIds,
+    participantInputRequired: negotiated, anotherPassUseful: !negotiated, canStop: negotiated };
+}
 function unique(ids: string[]) {
   if (new Set(ids).size !== ids.length) throw new StateError("INVALID_HANDOFF");
 }
@@ -615,7 +640,10 @@ export class AgentEngine {
                 cycle.reservedTokens += tokens;
                 cycle.reservedCostMicros += costMicros;
                 state.lastCycle = structuredClone(cycle);
+                state.publicSequence++;
+                state.eventSequence++;
               });
+              this.publishRoom(roomId);
             },
           }),
           signal,
@@ -671,6 +699,10 @@ export class AgentEngine {
         draftFindingReplies: [...authoredFindingTexts].map(([findingId, text]) => ({ findingId, text })),
         draftMascot,
         task: phase,
+        planningPolicy: this.limits.questionBelowReadiness ? {
+          questionBelowReadiness: this.limits.questionBelowReadiness,
+          instruction: "Below this readiness score, inspect the actual evidence gaps and conflicts, propose feasible alternatives, and ask a specific question with safe contextual choices. Wait for the participant after publishing a validated question.",
+        } : undefined,
       };
       const judge = validateJudge(
         room,
@@ -729,6 +761,10 @@ export class AgentEngine {
           scope: "participant",
           candidates: parsed.candidates.map(({ key, value }) => ({ key, value })),
         });
+        candidates = [...candidates, ...parsed.candidates.map((candidate) => ({
+          ...candidate, id: randomUUID(), ownerId: pendingInput.actorId,
+          confirmed: false, visibility: "group" as const, scope: "participant" as const,
+        }))].slice(-200);
         handledInputIds.add(pendingInput.id);
       }
       let judge = await judgePass("review", "orchestrator");
@@ -736,6 +772,10 @@ export class AgentEngine {
       const seen = new Set<string>();
       for (;;) {
         await assertCurrent();
+        if (this.limits.questionBelowReadiness) {
+          judge = requirePlanningFollowUp(room, judge, this.limits.questionBelowReadiness, revisions > 0);
+          previousFindings = judge.findings;
+        }
         if (judge.next === "negotiate") {
           if (revisions > this.limits.maxRevisions)
             throw new StateError("REVISION_LIMIT");
@@ -854,6 +894,12 @@ export class AgentEngine {
             judge.acceptedQuestionIds.includes(q.id),
           );
         }
+        if (
+          this.limits.questionBelowReadiness &&
+          calculateReadiness(room, judge.findings).percentage < this.limits.questionBelowReadiness &&
+          judge.findings.some((finding) => finding.status !== "resolved") &&
+          !draftQuestions.length
+        ) throw new StateError("QUESTION_REQUIRED");
         if (
           !judge.canStop ||
           (judge.anotherPassUseful && !judge.participantInputRequired)

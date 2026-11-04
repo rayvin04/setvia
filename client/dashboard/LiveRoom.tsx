@@ -14,7 +14,7 @@ import {
   projectReceiptEvidence,
 } from "./decision-receipt";
 import { currentQuestion, questionQuickReplies } from "./composer-model";
-import { acceptDashboardUpdate } from "./model";
+import { acceptDashboardUpdate, readinessPresentation } from "./model";
 import { validateDashboardAction, type DashboardAction, type DashboardSnapshot } from "../../shared/dashboard";
 import { roomCodeFromId } from "../../shared/room-code";
 import type { SubmitPlanningMessage } from "../../shared/planning-message";
@@ -29,6 +29,8 @@ import {
   getRoomSnapshot,
   leaveRoom,
   reviseRoomProposal,
+  retryRoomAnalysis,
+  sharePrivateCandidate,
   streamRoom,
   submitRoomMessage,
   RoomApiError,
@@ -382,8 +384,11 @@ export default function LiveRoom() {
     : analysisActivityState === "queued"
       ? "Setvia analysis is queued"
       : analysisActivityState === "blocked"
-        ? "Analysis is waiting for an update"
-        : "";
+        ? "Analysis needs attention."
+        : snapshot?.room.loopState === "WAIT_FOR_PARTICIPANT"
+          ? question ? "Setvia needs an answer." : "Waiting for a participant."
+          : snapshot?.room.analysisStatus === "complete" ? "Analysis complete."
+            : "Preparing the first review.";
   const analysisVisualState = analysisActivityState === "running" ? "active"
     : analysisActivityState === "queued" ? "queued"
       : analysisActivityState === "blocked" ? "blocked"
@@ -411,6 +416,15 @@ export default function LiveRoom() {
     <div className="live-analysis-status" data-state={analysisVisualState} role="status" aria-live="polite" aria-atomic="true">
       <span className="live-analysis-orbit" aria-hidden="true"><i /><i /><b /></span>
       <strong>{analysisLabel}</strong>
+      {snapshot?.room.analysisStatus === "blocked" ? <>
+        <span>{readinessPresentation(snapshot.room).detail}</span>
+        <button type="button" className="dashboard-button subtle" disabled={busy} onClick={async () => {
+          setBusy(true);
+          try { acceptSnapshot(await retryRoomAnalysis(session, snapshot.room.revision)); }
+          catch (failure) { setError(failure instanceof Error ? failure.message : "Analysis could not be retried."); }
+          finally { setBusy(false); }
+        }}>Retry analysis</button>
+      </> : null}
     </div>
   ) : null;
 
@@ -445,10 +459,6 @@ export default function LiveRoom() {
 
       {snapshot ? (
         <>
-          {snapshot.room.candidates.length ? <section className="shared-detail-strip" aria-label="Shared planning details">
-            <div><strong>Shared planning details</strong><span>Setvia shares extracted details with the room. Your original private response stays private.</span></div>
-            {snapshot.room.candidates.map((candidate) => <article key={candidate.id}><p><strong>{candidate.key.replaceAll("_", " ")}</strong><span>{String(candidate.value)}</span></p><span className="shared-detail-status">Shared</span></article>)}
-          </section> : null}
           <PlanningDashboard
             snapshot={snapshot}
             onAction={(input) => void action(input)}
@@ -464,6 +474,22 @@ export default function LiveRoom() {
             titleStatus={analysisStatus}
             agentActivity={streamStatus !== "connected" ? "idle" : snapshot.room.analysisStatus === "running" ? "active" : snapshot.room.analysisStatus === "queued" ? "queued" : "idle"}
           />
+          {snapshot.room.candidates.some((candidate) => candidate.ownerId === session.participantId) ? (
+            <details className="live-suggestion-review">
+              <summary>Review your extracted suggestions</summary>
+              <p>Suggestions remain tentative. Confirm only details you want to share with the group.</p>
+              {snapshot.room.candidates.filter((candidate) => candidate.ownerId === session.participantId).map((candidate) => (
+                <div key={candidate.id}><span>{candidate.key}: {String(candidate.value)}</span>
+                  <button type="button" className="dashboard-button subtle" disabled={busy} onClick={async () => {
+                    setBusy(true);
+                    try { acceptSnapshot(await sharePrivateCandidate(session, candidate.id, snapshot.room.revision)); }
+                    catch (failure) { setError(failure instanceof Error ? failure.message : "The detail could not be confirmed."); }
+                    finally { setBusy(false); }
+                  }}>{candidate.visibility === "private" ? "Confirm and share" : "Confirm detail"}</button>
+                </div>
+              ))}
+            </details>
+          ) : null}
           {participant && snapshot.source === "room" ? (
             <section className="live-decision-receipt" aria-label="Decision Receipt">
               <DecisionReceipt

@@ -5,6 +5,7 @@ import type { PlanDraft } from "../plan-mapping";
 import { useSetviaSounds } from "../sound";
 import { createRoom, getRoomHealth, RoomApiError, type RoomHealth } from "./room-api";
 import { beachTripDemoRequest, BEACH_TRIP_DEMO_QUERY } from "./beach-trip-demo";
+import { ReviewedDraftKeySchema } from "../../shared/room-api";
 
 export function RoomLaunch({ draft }: { draft: PlanDraft }) {
   const navigate = useNavigate();
@@ -60,6 +61,8 @@ export function RoomLaunch({ draft }: { draft: PlanDraft }) {
       const created = await createRoom({
         creatorName: nickname.trim(),
         eventType,
+        reviewedKeys: ReviewedDraftKeySchema.options.filter((key) =>
+          values[key] !== undefined && values[key] !== "not-stated"),
         proposal: {
           id: `plan-${crypto.randomUUID()}`,
           label: draft.title.trim().slice(0, 120),

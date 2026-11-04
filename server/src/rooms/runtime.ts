@@ -209,6 +209,21 @@ export class RoomRuntime {
     );
     const joined = await this.rooms.join(created.roomId, created.invitation, creatorName);
     const auth = { participantId: joined.participantId, token: joined.token };
+    await this.rooms.acceptReviewedDraft(created.roomId, auth, input.reviewedKeys ?? []);
+    const state = await this.options.engine.store.read(created.roomId);
+    const details = Object.entries(input.proposal.values)
+      .filter(([, value]) => value !== null && value !== "")
+      .map(([key, value]) => `${key}: ${value}`).join("\n");
+    // The submitted draft is group-visible. Use the same authorized domain
+    // submission path as subsequent answers, with a durable pending input.
+    if (input.reviewedKeys !== undefined) await this.rooms.submit(created.roomId, auth, {
+      messageId: randomUUID(), expectedRevision: state.revision,
+      proposalVersion: state.proposalVersion, visibility: "group",
+      questionId: null, replyOption: null,
+      text: `Organizer submitted the draft: ${input.proposal.label}\n${details}`.slice(0, 1000),
+    });
+    else await this.rooms.queueAnalysis(created.roomId, auth);
+    this.scheduleGroup(created.roomId, auth);
     return {
       roomId: created.roomId,
       invitation: created.invitation,
@@ -291,6 +306,15 @@ export class RoomRuntime {
     return this.snapshot(roomId, auth);
   }
 
+  async retryAnalysis(roomId: string, auth: Auth, expectedRevision: number) {
+    // Authenticate before consulting the inference guard so room membership
+    // cannot be used to distinguish budget or kill-switch state.
+    await this.rooms.view(roomId, auth);
+    await this.options.beforeAttempt?.();
+    if (await this.rooms.queueAnalysis(roomId, auth, expectedRevision)) this.scheduleGroup(roomId, auth);
+    return this.snapshot(roomId, auth);
+  }
+
   async leave(roomId: string, auth: Auth, expectedRevision: number) {
     const prior = await this.options.engine.store.read(roomId);
     const privateTimerKey = roomId + ":" + auth.participantId;
@@ -309,6 +333,11 @@ export class RoomRuntime {
 
   private resumePending(roomId: string, auth: Auth) {
     void this.options.engine.store.read(roomId).then((room) => {
+      if (room.analysisStatus === "idle" && !room.lastCycle) {
+        void this.rooms.queueAnalysis(roomId, auth).then((queued) => {
+          if (queued) this.scheduleGroup(roomId, auth);
+        }).catch(() => {});
+      }
       if (room.analysisStatus === "queued" && room.pendingInputs.length && !this.groupTimers.has(roomId))
         this.scheduleGroup(roomId, auth);
       if (room.privatePendingInputs.some((input) => input.actorId === auth.participantId) &&
@@ -513,6 +542,7 @@ export async function createLocalRoomRuntime(options: {
     const gateway: AgentGateway = base;
     const limits: Limits = {
       maxRevisions: 2,
+      questionBelowReadiness: 70,
       timeoutMs: 120_000,
       callTokens: CALL_TOKEN_ALLOWANCE,
       callCostMicros: CALL_COST_MICROS,

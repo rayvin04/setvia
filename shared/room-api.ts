@@ -3,12 +3,18 @@ import { OptionSchema } from "../server/src/agents/contracts.js";
 import { DashboardSnapshotSchema } from "./dashboard.js";
 
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/);
+// Only fields explicitly reviewed in intake can seed confirmed shared facts.
+export const ReviewedDraftKeySchema = z.enum([
+  "date", "time", "duration", "location", "budgetAmount", "budgetScope",
+  "budgetCurrency", "objective",
+]);
 
 export const CreateRoomRequestSchema = z
   .object({
     creatorName: z.string().trim().min(1).max(40),
     eventType: z.string().trim().min(1).max(80),
     proposal: OptionSchema,
+    reviewedKeys: z.array(ReviewedDraftKeySchema).max(8).optional(),
     estimatedAttendeeCount: z.number().int().min(1).max(100_000).nullable().default(null),
     confirmedAttendeeCount: z.number().int().min(0).max(100_000).nullable().default(null),
   })
@@ -87,6 +93,10 @@ export const ReviseProposalRequestSchema = z
 export const ApproveProposalRequestSchema = z
   .object({ version: z.number().int().positive() })
   .strict();
+
+export const RetryAnalysisRequestSchema = z.object({
+  expectedRevision: z.number().int().nonnegative(),
+}).strict();
 
 export const LeaveRoomRequestSchema = z
   .object({ expectedRevision: z.number().int().nonnegative() })

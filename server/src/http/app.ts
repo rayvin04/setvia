@@ -26,6 +26,7 @@ import {
   JoinRoomRequestSchema,
   LeaveRoomRequestSchema,
   ReviseProposalRequestSchema,
+  RetryAnalysisRequestSchema,
   ShareCandidateRequestSchema,
   SubmitRoomMessageSchema,
 } from "../../../shared/room-api.js";
@@ -343,6 +344,18 @@ export function createApp(options: AppOptions) {
     try {
       const auth = roomAuthFromHeaders(request.headers as Record<string, unknown>);
       response.json(await options.rooms.revise(roomId!, auth, parsed.data.expectedRevision, parsed.data.proposal));
+    } catch (error) { sendRoomFailure(response, error); }
+  });
+
+  app.post<{ roomId: string }>("/api/rooms/:roomId/analysis/retry", createRateLimiter(3, 60_000, now), async (request, response) => {
+    if (!options.rooms) return response.status(503).json({ error: "Live planning is unavailable." });
+    const roomId = request.params.roomId;
+    const parsed = RetryAnalysisRequestSchema.safeParse(request.body);
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(roomId ?? "") || !parsed.success)
+      return response.status(400).json({ error: "Refresh the room before retrying analysis." });
+    try {
+      const auth = roomAuthFromHeaders(request.headers as Record<string, unknown>);
+      response.json(await options.rooms.retryAnalysis(roomId!, auth, parsed.data.expectedRevision));
     } catch (error) { sendRoomFailure(response, error); }
   });
 

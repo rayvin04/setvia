@@ -17,15 +17,16 @@ import { DashboardSnapshotSchema, type DashboardSnapshot } from "../../../shared
 import { SubmitRoomMessageResultSchema } from "../../../shared/room-api.js";
 import { createApp } from "../http/app.js";
 
-test("creating and joining an idle room authenticates sessions without spending model calls", async () => {
+test("creating a room automatically starts analysis without an unrelated message", async () => {
   const directory = await mkdtemp(resolve(process.cwd(), `.setvia-room-runtime-${randomUUID()}-`));
   let calls = 0;
   const gateway: AgentGateway = {
     mode: "MOCK",
     promptVersion: "agents-v5",
-    async call() {
+    async call(_role, _input, context) {
+      await context.reserveAttempt();
       calls++;
-      throw new Error("Room creation and joining must not trigger inference.");
+      return { output: judge(), usage: null };
     },
   };
   const engine = new AgentEngine(new RoomStore(new MemoryPersistence()), gateway);
@@ -57,6 +58,10 @@ test("creating and joining an idle room authenticates sessions without spending 
     assert.equal(joined.snapshot.room.participants.length, 2);
     assert.notEqual(created.session.token, joined.session.token);
     assert.equal(calls, 0);
+    for (let i = 0; i < 50 && !(await engine.store.read(created.roomId)).lastCycle?.finalEvaluation; i++)
+      await new Promise((done) => setTimeout(done, 25));
+    assert.equal(calls, 1);
+    assert.equal((await runtime.snapshot(created.roomId, created.session)).room.loopState, "COMPLETED");
   } finally {
     await runtime.close();
     await rm(directory, { recursive: true, force: true });
@@ -428,10 +433,8 @@ test("mock Meta HTTP responses drive the actual two-participant runtime, SSE, qu
     await waitFor(async () => (await runtime.snapshot(created.roomId, auth)).room.privateAnalysisStatus === "complete");
     assert.equal((await runtime.snapshot(created.roomId, auth)).room.candidates.length, 1);
     const sharedSuggestions = (await runtime.snapshot(created.roomId, other)).room.candidates;
-    assert.equal(sharedSuggestions.length, 1);
-    assert.equal(sharedSuggestions[0]?.visibility, "group");
-    assert.equal(sharedSuggestions[0]?.confirmed, false);
-    assert.equal(sharedSuggestions[0]?.value, "owner_only");
+    assert.equal(sharedSuggestions.length, 0);
+    assert.equal((await runtime.snapshot(created.roomId, auth)).room.candidates[0]?.visibility, "private");
     assert.equal((await runtime.snapshot(created.roomId, other)).room.readiness, null);
     await submit(other, "group_initial", "Could we leave at 08:00 or 09:00?", "group");
     await waitFor(async () => (await runtime.snapshot(created.roomId, auth)).room.loopState === "WAIT_FOR_PARTICIPANT");
