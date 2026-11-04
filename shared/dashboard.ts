@@ -210,12 +210,13 @@ export const DashboardSnapshotSchema = z
     if (
       room.candidates.some(
         (candidate) =>
-          candidate.ownerId !== room.viewerId || candidate.visibility !== "private",
+          (candidate.visibility === "private" && candidate.ownerId !== room.viewerId) ||
+          (candidate.visibility === "group" && !people.has(candidate.ownerId)),
       )
     )
       context.addIssue({
         code: "custom",
-        message: "Only the owner may receive unconfirmed private candidates.",
+        message: "Private suggestions must stay owner-only and shared details must belong to room members.",
       });
     if (
       snapshot.contributions.some(

@@ -162,7 +162,7 @@ test("targeted questions wait without polling and are hidden from other particip
     /UNAUTHORIZED_ANSWER/,
   );
 });
-test("a private answer is analyzed only for its owner and does not trigger shared readiness", async () => {
+test("a private answer stays private while its extracted planning details are shared", async () => {
   const f = await questionFixture();
   const first = await f.engine.run(f.roomId, f.auth);
   await f.engine.rooms.submit(
@@ -172,23 +172,20 @@ test("a private answer is analyzed only for its owner and does not trigger share
     "SYNTHETIC_PRIVATE_BUDGET",
     f.question.id,
   );
-  const publicRevision = (await f.store.read(f.roomId)).revision;
+  const beforePublish = await f.store.read(f.roomId);
   const [privateResult] = await f.engine.processPrivate(f.roomId, f.auth.participantId);
   assert.equal(privateResult?.cycle.outcome, "COMPLETED");
-  const second = await f.engine.run(f.roomId, f.auth);
-  assert.equal(second.id, first.id);
-  assert.equal(second.baseRevision, publicRevision);
-  assert.equal((await f.store.read(f.roomId)).revision, publicRevision);
+  const afterPublish = await f.store.read(f.roomId);
+  assert.equal(afterPublish.revision, beforePublish.revision + 1);
+  assert.equal(afterPublish.proposalVersion, beforePublish.proposalVersion + 1);
+  assert.deepEqual(afterPublish.approvals, {});
   assert.equal(f.calls.length, 5);
   assert.equal((await f.engine.rooms.view(f.roomId, f.auth)).approvalCount, 0);
-  assert.equal(
-    (await f.engine.rooms.view(f.roomId, f.other)).candidates.length,
-    0,
-  );
-  assert.equal(
-    JSON.stringify(second).includes("SYNTHETIC_PRIVATE_BUDGET"),
-    false,
-  );
+  const roomView = await f.engine.rooms.view(f.roomId, f.other);
+  assert.equal(roomView.candidates.length, 1);
+  assert.equal(roomView.candidates[0]?.visibility, "group");
+  assert.equal(roomView.candidates[0]?.confirmed, false);
+  assert.equal(roomView.candidates[0]?.value, 200);
   assert.equal(
     JSON.stringify(f.calls.filter((c) => c.role !== "Listener")).includes(
       "SYNTHETIC_PRIVATE_BUDGET",
@@ -603,11 +600,11 @@ test("joining during analysis cancels stale output and keeps the proposal versio
   assert.equal(current.participants.some((participant) => participant.id === joined.participantId), true);
   assert.equal(current.readiness, before.readiness);
 });
-test("private facts and Listener output never enter shared roles, traces or another participant's projection", async () => {
+test("private raw answers and facts stay private while extracted planning details are shared", async () => {
   const f = await fixture([
     {
       role: "Listener",
-      output: { candidates: [{ key: "medical", value: "PRIVATE_CANARY" }] },
+      output: { candidates: [{ key: "meetingLocation", value: "Northside Park" }] },
     },
     { role: "Judge", output: judge() },
   ]);
@@ -615,7 +612,7 @@ test("private facts and Listener output never enter shared roles, traces or anot
   await f.engine.rooms.confirmFact(f.roomId, f.auth, room.revision, {
     id: "secret",
     key: "medical",
-    value: "PRIVATE_CANARY",
+    value: "PRIVATE_FACT_CANARY",
     visibility: "private",
     confirmed: true,
     ownerId: f.auth.participantId,
@@ -625,7 +622,7 @@ test("private facts and Listener output never enter shared roles, traces or anot
     f.roomId,
     f.auth,
     room.revision,
-    "PRIVATE_CANARY",
+    "PRIVATE_RESPONSE_CANARY",
   );
   await f.engine.processPrivate(f.roomId, f.auth.participantId);
   room = await f.store.read(f.roomId);
@@ -643,31 +640,26 @@ test("private facts and Listener output never enter shared roles, traces or anot
   const listenerInput = f.calls.find((call) => call.role === "Listener")?.input as
     | { privateInput?: { text?: string }; privateFacts?: unknown[]; facts?: unknown[]; participants?: unknown[] }
     | undefined;
-  assert.deepEqual(listenerInput?.privateInput, { text: "PRIVATE_CANARY" });
+  assert.deepEqual(listenerInput?.privateInput, { text: "PRIVATE_RESPONSE_CANARY" });
   assert.equal(listenerInput?.privateFacts?.length, 1);
   assert.equal("facts" in (listenerInput ?? {}), false);
   assert.equal("participants" in (listenerInput ?? {}), false);
   assert.equal(JSON.stringify(listenerInput).includes("GROUP_CONTEXT_CANARY"), false);
-  assert.equal(
-    JSON.stringify(f.calls.filter((c) => c.role !== "Listener")).includes(
-      "PRIVATE_CANARY",
-    ),
-    false,
-  );
-  assert.equal(JSON.stringify(result).includes("PRIVATE_CANARY"), false);
-  assert.equal(
-    JSON.stringify(await f.engine.rooms.view(f.roomId, f.auth)).includes("PRIVATE_CANARY"),
-    true,
-  );
-  assert.equal(
-    JSON.stringify(await f.engine.rooms.view(f.roomId, f.other)).includes(
-      "PRIVATE_CANARY",
-    ),
-    false,
-  );
+  const sharedCalls = JSON.stringify(f.calls.filter((c) => c.role !== "Listener"));
+  const ownerViewJson = JSON.stringify(await f.engine.rooms.view(f.roomId, f.auth));
+  const otherView = JSON.stringify(await f.engine.rooms.view(f.roomId, f.other));
+  assert.equal(sharedCalls.includes("PRIVATE_RESPONSE_CANARY"), false);
+  assert.equal(sharedCalls.includes("PRIVATE_FACT_CANARY"), false);
+  assert.equal(sharedCalls.includes("Northside Park"), true);
+  assert.equal(JSON.stringify(result).includes("PRIVATE_RESPONSE_CANARY"), false);
+  assert.equal(ownerViewJson.includes("PRIVATE_RESPONSE_CANARY"), true);
+  assert.equal(ownerViewJson.includes("PRIVATE_FACT_CANARY"), true);
+  assert.equal(otherView.includes("PRIVATE_RESPONSE_CANARY"), false);
+  assert.equal(otherView.includes("PRIVATE_FACT_CANARY"), false);
+  assert.equal(otherView.includes("Northside Park"), true);
   assert.equal(
     renderLab([{ mode: "MOCK", scenario: "privacy", cycle: result }]).includes(
-      "PRIVATE_CANARY",
+      "PRIVATE_RESPONSE_CANARY",
     ),
     false,
   );
@@ -1245,14 +1237,10 @@ test("simultaneous private submissions are queued without overwriting either par
   await f.engine.processPrivate(f.roomId, f.auth.participantId);
   await f.engine.processPrivate(f.roomId, f.other.participantId);
   assert.equal((await f.store.read(f.roomId)).privatePendingInputs.length, 0);
-  assert.equal(
-    (await f.engine.rooms.view(f.roomId, f.auth)).candidates[0].value,
-    "FIRST_PRIVATE",
-  );
-  assert.equal(
-    (await f.engine.rooms.view(f.roomId, f.other)).candidates[0].value,
-    "SECOND_PRIVATE",
-  );
+  const firstView = await f.engine.rooms.view(f.roomId, f.auth);
+  const secondView = await f.engine.rooms.view(f.roomId, f.other);
+  assert.deepEqual(firstView.candidates.map((candidate) => candidate.value).sort(), ["FIRST_PRIVATE", "SECOND_PRIVATE"]);
+  assert.deepEqual(secondView.candidates.map((candidate) => candidate.value).sort(), ["FIRST_PRIVATE", "SECOND_PRIVATE"]);
   assert.equal(
     JSON.stringify(f.calls[0].input).includes("SECOND_PRIVATE"),
     false,

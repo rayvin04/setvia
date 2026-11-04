@@ -29,7 +29,6 @@ import {
   getRoomSnapshot,
   leaveRoom,
   reviseRoomProposal,
-  sharePrivateCandidate,
   streamRoom,
   submitRoomMessage,
   RoomApiError,
@@ -275,19 +274,6 @@ export default function LiveRoom() {
     } finally { setBusy(false); }
   }
 
-  async function shareCandidate(candidateId: string) {
-    if (!snapshot || !session || busy) return;
-    setBusy(true);
-    setError("");
-    try {
-      const next = await sharePrivateCandidate(session, candidateId, snapshot.room.revision);
-      acceptSnapshot(next);
-      showNotice({ id: `share-${next.sequence}`, text: "You shared this confirmed detail with the planning room.", section: "people", tone: "success" }, "check");
-    } catch (failure) {
-      showNotice({ id: `share-failed-${Date.now()}`, text: failure instanceof RoomApiError ? failure.message : "This detail could not be shared. Review the latest room state.", section: "people", tone: "failure" }, "error");
-    } finally { setBusy(false); }
-  }
-
   async function approve() {
     if (!snapshot || !session || busy) return;
     setBusy(true);
@@ -459,9 +445,9 @@ export default function LiveRoom() {
 
       {snapshot ? (
         <>
-          {snapshot.room.candidates.length ? <section className="private-candidate-strip" aria-label="Your private suggestions">
-            <div><strong>Suggestions only you can see</strong><span>They stay private until you share one with the group.</span></div>
-            {snapshot.room.candidates.map((candidate) => <article key={candidate.id}><p><strong>{candidate.key.replaceAll("_", " ")}</strong><span>{String(candidate.value)}</span></p><button type="button" className="dashboard-button subtle" disabled={busy} onClick={() => void shareCandidate(candidate.id)}>Share this detail</button></article>)}
+          {snapshot.room.candidates.length ? <section className="shared-detail-strip" aria-label="Shared planning details">
+            <div><strong>Shared planning details</strong><span>Setvia shares extracted details with the room. Your original private response stays private.</span></div>
+            {snapshot.room.candidates.map((candidate) => <article key={candidate.id}><p><strong>{candidate.key.replaceAll("_", " ")}</strong><span>{String(candidate.value)}</span></p><span className="shared-detail-status">Shared</span></article>)}
           </section> : null}
           <PlanningDashboard
             snapshot={snapshot}

@@ -549,7 +549,11 @@ test("mock Meta HTTP responses drive the actual two-participant runtime, SSE, qu
     await submit(auth, "private_initial", "PRIVATE_RUNTIME_CANARY", "private");
     await waitFor(async () => (await runtime.snapshot(created.roomId, auth)).room.privateAnalysisStatus === "complete");
     assert.equal((await runtime.snapshot(created.roomId, auth)).room.candidates.length, 1);
-    assert.equal((await runtime.snapshot(created.roomId, other)).room.candidates.length, 0);
+    const sharedSuggestions = (await runtime.snapshot(created.roomId, other)).room.candidates;
+    assert.equal(sharedSuggestions.length, 1);
+    assert.equal(sharedSuggestions[0]?.visibility, "group");
+    assert.equal(sharedSuggestions[0]?.confirmed, false);
+    assert.equal(sharedSuggestions[0]?.value, "owner_only");
     assert.equal((await runtime.snapshot(created.roomId, other)).room.readiness, null);
     await submit(other, "group_initial", "Could we leave at 08:00 or 09:00?", "group");
     await waitFor(async () => (await runtime.snapshot(created.roomId, auth)).room.loopState === "WAIT_FOR_PARTICIPANT");

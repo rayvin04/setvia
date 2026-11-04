@@ -321,7 +321,7 @@ export const MessageComposer = forwardRef<
         receipt.mode === "preview"
           ? `Response recorded in preview · ${receipt.visibility === "private" ? "Private answer" : "Shared with room members"}. No AI analysis ran.`
           : receipt.visibility === "private"
-            ? "Private response sent."
+            ? "Private response sent. Extracted planning details are shared with the room."
             : "Message shared with the room.",
       );
     } catch (failure) {
@@ -561,7 +561,7 @@ export const MessageComposer = forwardRef<
           {effectiveVisibility === "private"
             ? mode === "preview"
               ? "Only you can see this response in the preview. No AI processing runs here. In a live room, private answers are still sent to Meta’s Model API for analysis."
-              : "Only you can see this response among room members. Setvia sends the text to Meta’s Model API for private analysis."
+              : "Only you can see this response among room members. Setvia sends the text to Meta’s Model API for private analysis and shares only the planning details it extracts with the room."
             : mode === "preview"
               ? "Your message is visible to other room members in this preview. No AI processing runs here."
               : "Your message is shared with room members and sent to Meta’s Model API for analysis."}

@@ -66,7 +66,7 @@
 .live-invite-field,
 .live-budget-note,
 .live-error,
-.private-candidate-strip,
+.shared-detail-strip,
 .live-room-actions {
   width: min(1840px, calc(100% - 36px));
   margin-inline: auto;
@@ -152,7 +152,7 @@
 }
 .live-error svg { flex: 0 0 16px; margin-top: 1px; }
 
-.private-candidate-strip {
+.shared-detail-strip {
   display: grid;
   grid-template-columns: minmax(190px, .8fr) minmax(0, 1.5fr);
   align-items: center;
@@ -163,14 +163,14 @@
   border-radius: 11px;
   background: #0b1715;
 }
-.private-candidate-strip > div { display: grid; gap: 4px; }
-.private-candidate-strip > div strong { color: #d7ebdf; font-size: 11px; font-weight: 550; }
-.private-candidate-strip > div span { color: #9db3a7; font-size: 9px; line-height: 1.5; }
-.private-candidate-strip article { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding-left: 15px; border-left: 1px solid #30463c; }
-.private-candidate-strip article p { display: grid; min-width: 0; gap: 3px; margin: 0; }
-.private-candidate-strip article p strong { color: #9ab9a6; font-size: 9px; font-weight: 500; text-transform: capitalize; }
-.private-candidate-strip article p span { overflow-wrap: anywhere; color: #e0eae2; font-size: 11px; }
-.private-candidate-strip article .dashboard-button { flex: 0 0 auto; }
+.shared-detail-strip > div { display: grid; gap: 4px; }
+.shared-detail-strip > div strong { color: #d7ebdf; font-size: 11px; font-weight: 550; }
+.shared-detail-strip > div span { color: #9db3a7; font-size: 9px; line-height: 1.5; }
+.shared-detail-strip article { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; padding-left: 15px; border-left: 1px solid #30463c; }
+.shared-detail-strip article p { display: grid; min-width: 0; gap: 3px; margin: 0; }
+.shared-detail-strip article p strong { color: #9ab9a6; font-size: 9px; font-weight: 500; text-transform: capitalize; }
+.shared-detail-strip article p span { overflow-wrap: anywhere; color: #e0eae2; font-size: 11px; }
+.shared-detail-status { flex: 0 0 auto; color: #83d7b0; font-size: 9px; font-weight: 550; }
 
 .live-room-actions {
   display: flex;
@@ -286,15 +286,15 @@
   .live-demo-status { max-width: none; }
   .live-room-header .dashboard-viewer-avatar { display: none; }
   .live-invite-field,
-  .private-candidate-strip,
+  .shared-detail-strip,
   .live-room-actions,
   .live-budget-note,
   .live-error { width: calc(100% - 28px); }
   .live-invite-field { grid-template-columns: minmax(0, 1fr) auto; padding: 8px 10px; }
   .live-invite-field label { grid-column: 1 / -1; }
   .live-invite-field > span { grid-column: 1 / -1; }
-  .private-candidate-strip { grid-template-columns: 1fr; gap: 9px; }
-  .private-candidate-strip article { padding: 9px 0 0; border-top: 1px solid #30463c; border-left: 0; }
+  .shared-detail-strip { grid-template-columns: 1fr; gap: 9px; }
+  .shared-detail-strip article { padding: 9px 0 0; border-top: 1px solid #30463c; border-left: 0; }
   .live-room-actions { margin-top: 8px; padding: 10px 2px; }
   .live-toast { top: 12px; right: max(12px, env(safe-area-inset-right)); width: min(390px, calc(100vw - 24px)); }
 }
@@ -305,7 +305,7 @@
   .live-room-header .live-copy-invite { gap: 5px; padding-inline: 8px; font-size: 10px; }
   .live-room-mode { flex: 1 1 100%; order: 3; justify-content: center; }
   .live-invite-field,
-  .private-candidate-strip,
+  .shared-detail-strip,
   .live-room-actions,
   .live-budget-note,
   .live-error { width: calc(100% - 20px); }

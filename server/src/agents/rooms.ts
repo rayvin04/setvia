@@ -126,6 +126,35 @@ export class RoomService {
     room.privateSequences[ownerId] = (room.privateSequences[ownerId] ?? 0) + 1;
     room.eventSequence++;
   }
+  private publishCandidates(room: Room, candidates: Room["candidates"]) {
+    const published = candidates
+      .filter((candidate) => candidate.value !== null)
+      .map((candidate) => ({
+        ...candidate,
+        visibility: "group" as const,
+        // Sharing a suggestion makes it visible to the room, not a verified fact.
+        confirmed: false,
+        scope: "participant" as const,
+      }));
+    if (!published.length) return false;
+
+    const ids = new Set(published.map((candidate) => candidate.id));
+    room.facts = [
+      ...room.facts.filter((fact) => !ids.has(fact.id)),
+      ...published,
+    ].slice(-200);
+    room.candidates = [
+      ...room.candidates.filter((candidate) => !ids.has(candidate.id)),
+      ...published,
+    ].slice(-200);
+    room.proposalVersion++;
+    room.approvals = {};
+    room.questions = [];
+    room.activeCycleId = null;
+    room.analysisStatus = "idle";
+    this.bumpGroup(room);
+    return true;
+  }
   async create(
     eventType: string,
     policy: PolicyInput,
@@ -567,8 +596,25 @@ export class RoomService {
     });
   }
   async view(roomId: string, auth: Auth) {
-    const room = await this.store.read(roomId);
+    let room = await this.store.read(roomId);
     authorize(room, auth);
+    if (room.candidates.some((candidate) => candidate.visibility === "private" && candidate.value !== null)) {
+      let published = false;
+      await this.store.transaction(roomId, (current) => {
+        if (!current) throw new StateError("ROOM_NOT_FOUND");
+        authorize(current, auth);
+        published = this.publishCandidates(
+          current,
+          current.candidates.filter(
+            (candidate) => candidate.visibility === "private" && candidate.value !== null,
+          ),
+        );
+        if (published) RoomSchema.parse(current);
+      });
+      if (published) this.onGroupChange(roomId);
+      room = await this.store.read(roomId);
+      authorize(room, auth);
+    }
     const latest = room.lastCycle?.baseRevision === room.revision && room.activeCycleId === null;
     const viewerRevision = room.revision + (room.privateRevisions[auth.participantId] ?? 0);
     return {
@@ -591,7 +637,7 @@ export class RoomService {
         (f) => f.ownerId === auth.participantId && f.visibility === "private",
       ),
       candidates: room.candidates.filter(
-        (f) => f.ownerId === auth.participantId,
+        (f) => f.visibility === "group" || (f.ownerId === auth.participantId && f.value !== null),
       ),
       responses: room.responses.filter(
         (response) =>
@@ -659,6 +705,7 @@ export class RoomService {
     inputId: string,
     analysis: Room["privateAnalyses"][number],
   ) {
+    let published = false;
     await this.store.transaction(roomId, (room) => {
       if (!room) throw new StateError("ROOM_NOT_FOUND");
       const input = room.privatePendingInputs.find(
@@ -672,11 +719,10 @@ export class RoomService {
         ...candidate,
         ownerId,
         confirmed: false,
-        visibility: "private" as const,
+        visibility: "group" as const,
         scope: "participant" as const,
       }));
-      const seen = new Set(room.candidates.map((candidate) => candidate.id));
-      room.candidates = [...room.candidates, ...candidates.filter((candidate) => !seen.has(candidate.id))].slice(-200);
+      published = this.publishCandidates(room, candidates);
       room.privateAnalyses = [...room.privateAnalyses, analysis].slice(-100);
       room.privatePendingInputs = room.privatePendingInputs.filter(
         (item) => item.id !== inputId,
@@ -693,6 +739,7 @@ export class RoomService {
       });
       RoomSchema.parse(room);
     });
+    if (published) this.onGroupChange(roomId);
     this.onPrivateChange(roomId, ownerId);
   }
 
