@@ -147,8 +147,9 @@ function safeFailure(error: unknown): { status: number; message: string } {
       case "forbidden":
         return { status: 503, message: "Meta extraction is not available for this server." };
       case "rate_limit":
-      case "request_budget_exhausted":
         return { status: 429, message: "Meta is busy. Please wait and try again." };
+      case "request_limit":
+        return { status: 503, message: "Planning inference needs to restart. Please try again." };
       case "timeout":
         return { status: 504, message: "Meta took too long to respond. Please try again." };
       case "connection":
@@ -160,6 +161,8 @@ function safeFailure(error: unknown): { status: number; message: string } {
           status: 502,
           message: "Meta could not return a complete planning extraction. Please try again.",
         };
+      case "accounting":
+        return { status: 503, message: "The planning service could not record this request. Please try again." };
       case "request":
         return { status: 400, message: "Meta could not process this request." };
       default:
@@ -187,10 +190,6 @@ function roomErrorMessage(code: string) {
     INPUT_QUEUE_LIMIT: "Setvia is still processing earlier responses. Try again shortly.",
     RESPONSE_LIMIT: "This room has reached its response limit.",
     PARTICIPANT_COOLDOWN: "Please wait a moment before sending another planning response.",
-    INTEGRATION_RUN_BUDGET_LIMIT: "The remaining live-analysis allowance cannot cover this operation. Developer approval is required for more requests.",
-    LIVE_HTTP_ATTEMPT_LIMIT: "The remaining request allowance cannot cover a complete analysis. Developer approval is required for more requests.",
-    ROOM_BUDGET_LIMIT: "This room has reached its live-analysis budget.",
-    PRIVATE_REQUEST_BUDGET_LIMIT: "The private analysis budget has been reached.",
   };
   return messages[code] ?? "This room action could not be completed.";
 }
@@ -248,7 +247,7 @@ export function createApp(options: AppOptions) {
   app.use("/api/ai", restrictBrowserOrigin);
   app.use("/api/playground", restrictBrowserOrigin);
   if (options.playgroundRouter) app.use("/api/playground", options.playgroundRouter);
-  app.get("/api/rooms/health", (_request, response) => {
+  app.get("/api/rooms/health", async (_request, response) => {
     const health = {
       enabled: Boolean(options.rooms),
       mode: options.rooms?.inferenceMode === "MOCK"
@@ -262,7 +261,7 @@ export function createApp(options: AppOptions) {
     response.json(
       process.env.NODE_ENV === "production" || !options.rooms
         ? health
-        : { ...health, budget: options.rooms.budget },
+        : { ...health, budget: await options.rooms.budget },
     );
   });
   app.use("/api/rooms", createRateLimiter(40, 60_000, now));
@@ -376,10 +375,10 @@ export function createApp(options: AppOptions) {
       response.status(503).json({ error: "Planning inference is temporarily disabled." });
       return;
     }
-    // The standalone extractor does not reserve from the room evaluation
-    // ledgers. A valid server key must not make that a path around live caps.
+    // Preserve request accounting when rooms are live; do not route extraction
+    // around the private attempt journal.
     if (options.rooms && !options.meteredExtractionClient) {
-      response.status(503).json({ error: "Planning extraction is unavailable during the bounded room evaluation. Enter the starting plan manually." });
+      response.status(503).json({ error: "Planning extraction is temporarily unavailable on this server." });
       return;
     }
     next();

@@ -149,7 +149,7 @@ app.post("/api/demo-studio/generate", async (request, response) => {
     if (!upstream.ok) {
       const error = payload && typeof payload === "object" && "error" in payload && typeof payload.error === "string"
         ? payload.error.slice(0, 300)
-        : "Muse Spark scenario generation is unavailable. Confirm the shared-budget generator route is mounted on Setvia's API server.";
+        : "Muse Spark scenario generation is unavailable. Confirm the request-accounted generator route is mounted on Setvia's API server.";
       return response.status(upstream.status).json({ error, attempts: payload && typeof payload === "object" && "attempts" in payload ? payload.attempts : 0, playbackStarted: false });
     }
     const generated = GenerationResponseSchema.safeParse(payload);

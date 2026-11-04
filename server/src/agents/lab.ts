@@ -90,13 +90,13 @@ export interface LabRecord {
     runId: string;
     attempts: number;
     runAttempts: number;
-    attemptBudget?: number;
-    remainingAttempts?: number;
+    attemptBudget?: number | null;
+    remainingAttempts?: number | null;
     estimatedCostMicros: number;
-    budgetMicros: number;
+    budgetMicros: number | null;
     tokensAtRisk?: number;
-    tokenBudget?: number;
-    remainingTokens?: number;
+    tokenBudget?: number | null;
+    remainingTokens?: number | null;
   };
   eventAttendance?: {
     estimatedAttendeeCount: number;
@@ -317,7 +317,7 @@ export function renderLab(records: LabRecord[]) {
             ? "<p>Legacy fixture counts: " + record.dashboardCounts.responding + " responses · " + record.dashboardCounts.confirmed + " confirmed · " + record.dashboardCounts.unconfirmed + " unconfirmed · " + record.dashboardCounts.noResponse + " not received</p>"
             : "") +
         (record.liveBudgetSnapshot
-          ? "<p><strong>Cumulative estimated spend at risk:</strong> $" + (record.liveBudgetSnapshot.estimatedCostMicros / 1e6).toFixed(4) + " of $" + (record.liveBudgetSnapshot.budgetMicros / 1e6).toFixed(2) + (record.liveBudgetSnapshot.attemptBudget === undefined ? "" : " · " + record.liveBudgetSnapshot.attempts + " of " + record.liveBudgetSnapshot.attemptBudget + " attempts used; " + (record.liveBudgetSnapshot.remainingAttempts ?? 0) + " remain") + (record.liveBudgetSnapshot.tokensAtRisk === undefined ? "" : " · " + record.liveBudgetSnapshot.tokensAtRisk.toLocaleString() + " tokens used or reserved of " + (record.liveBudgetSnapshot.tokenBudget ?? 0).toLocaleString() + "; " + (record.liveBudgetSnapshot.remainingTokens ?? 0).toLocaleString() + " remain") + "</p>"
+          ? "<p><strong>Recorded cumulative request usage:</strong> " + record.liveBudgetSnapshot.attempts.toLocaleString() + " HTTP attempts · $" + (record.liveBudgetSnapshot.estimatedCostMicros / 1e6).toFixed(4) + " estimated or reserved" + (record.liveBudgetSnapshot.tokensAtRisk === undefined ? "" : " · " + record.liveBudgetSnapshot.tokensAtRisk.toLocaleString() + " tokens recorded or reserved") + "</p>"
           : "") +
         httpAttemptSection +
         (timelineRows ? "<div class=scroll><table><caption>Simulation readiness timeline · deterministically calculated</caption><thead><tr><th>Stage</th><th>Readiness</th><th>Event</th></tr></thead><tbody>" + timelineRows + "</tbody></table></div>" : "") +
@@ -332,7 +332,7 @@ export function renderLab(records: LabRecord[]) {
   return (
     "<!doctype html><html lang=en><meta charset=utf-8><meta name=viewport content=\"width=device-width, initial-scale=1\"><meta http-equiv=Content-Security-Policy content=\"default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'\"><title>" + escapeHtml(pageTitle) + "</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#02070a;color:#ecf3f5;font:16px/1.6 system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:40px 24px}h1,h2,h3{line-height:1.2;text-wrap:balance}h1{font-size:42px}p{text-wrap:pretty}a{color:#75cafa}article{border:1px solid #344853;border-radius:16px;padding:28px;margin:32px 0;background:#09141b}.kicker{color:#75cafa;font-size:13px}.status{font-weight:700}.readiness-blocked{display:inline-block;color:#ffaba8;background:#451b23;border:1px solid #b95c67;border-radius:6px;padding:3px 8px;font-size:16px;margin-right:5px}dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:16px}dt,small{color:#b5c6d0}dd{margin:4px 0;font-size:23px;font-variant-numeric:tabular-nums}.path{display:flex;gap:10px;flex-wrap:wrap;padding:0;list-style:none}.path li{border:1px solid #344853;padding:10px 14px;border-radius:8px}.path span{display:block;font-size:12px;color:#b5c6d0}.scroll{overflow:auto}table{border-collapse:collapse;width:100%;font-size:14px;margin:22px 0}caption{text-align:left;font-weight:700}th,td{text-align:left;padding:10px;border-bottom:1px solid #344853;vertical-align:top}summary{cursor:pointer;padding:10px}summary:focus-visible{outline:2px solid #75cafa;outline-offset:2px}pre{white-space:pre-wrap;overflow-wrap:anywhere;font:13px/1.6 ui-monospace,monospace;background:#02070a;padding:16px}footer{color:#b5c6d0}@media(max-width:600px){main{padding:24px 14px}article{padding:18px}h1{font-size:32px}}</style><main><header><p class=kicker>SETVIA / DEVELOPER EVALUATION</p><h1>The reasoning loop, inspected.</h1><p>" + escapeHtml(headerCopy) + "</p></header>" +
     content +
-    "<footer>Prompts, credentials, hidden model reasoning, and Listener-only participant text are excluded. Reserved allowances are conservative bounds, not actual bills. Standard-price estimates do not apply cached-input discounts. Mock outputs test orchestration and validation; live outputs require manual review and do not establish safety or approval.</footer></main></html>"
+    "<footer>Prompts, credentials, hidden model reasoning, and Listener-only participant text are excluded. Per-attempt allowances are accounting estimates, not application spending limits or actual bills. Standard-price estimates do not apply cached-input discounts. Mock outputs test orchestration and validation; live outputs require manual review and do not establish safety or approval.</footer></main></html>"
   );
 }
 export async function saveLab(

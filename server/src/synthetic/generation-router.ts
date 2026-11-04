@@ -21,7 +21,7 @@ export interface ScenarioGenerationRouterOptions {
 
 function statusFor(error: unknown) {
   if (error instanceof MetaConfigurationError) return 503;
-  if (error instanceof ScenarioGenerationError && error.budgetRejected) return 429;
+  if (error instanceof ScenarioGenerationError && error.accountingFailed) return 503;
   if (error instanceof ScenarioGenerationError) return error.attempts > 0 ? 502 : 400;
   return 500;
 }
@@ -34,7 +34,7 @@ function safeMessage(error: unknown) {
 
 /**
  * Mount on the Setvia API process with RoomRuntime.getAuxiliaryInferenceHooks().
- * This router intentionally has no standalone budget or direct HTTP bypass.
+ * This router intentionally has no direct HTTP bypass and records every attempt.
  */
 export function createScenarioGenerationRouter(options: ScenarioGenerationRouterOptions) {
   if (!/^[A-Za-z0-9_-]{43,256}$/.test(options.internalToken)) {
@@ -45,7 +45,7 @@ export function createScenarioGenerationRouter(options: ScenarioGenerationRouter
   const expectedTokenDigest = createHash("sha256").update(options.internalToken).digest();
 
   router.use((request: Request, response: Response, next) => {
-    // Only the private Studio service may use this budgeted route. Browser
+    // Only the private Studio service may use this request-accounted route. Browser
     // requests are rejected even if a hostile page attempts a direct POST.
     if (request.header("origin")) {
       response.status(403).json({ error: "This internal endpoint does not accept browser requests." });

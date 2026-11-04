@@ -263,7 +263,7 @@ export const CycleSchema = z
     reason: z.string().regex(/^[A-Z_]+$/),
     finalEvaluation: JudgeSchema.nullable(),
     readiness: ReadinessSchema.nullable(),
-    traces: z.array(TraceSchema).max(30),
+    traces: z.array(TraceSchema),
     attempts: z.number().int().nonnegative(),
     reservedTokens: z.number().int().nonnegative(),
     reservedCostMicros: z.number().int().nonnegative(),
@@ -454,12 +454,6 @@ export interface AgentGateway {
   mode: "MOCK" | "META";
   promptVersion?: string;
   promptHashes?: Partial<Record<Role, string>>;
-  // Live adapters hold the complete bounded cycle allowance before its first
-  // request. Unused capacity is released when the cycle settles.
-  openCycle?(maxRequests: number): Promise<{
-    call: AgentGateway["call"];
-    release(): Promise<void>;
-  }>;
   call(role: Role, input: unknown, context: CallContext): Promise<AgentResult>;
 }
 // Extension boundary only. No image generation or model request is made here.

@@ -6,8 +6,8 @@ import { validateJudge, validateSpeaker } from "../server/src/agents/engine.js";
 import { JsonPersistence, StateError } from "../server/src/agents/store.js";
 import { digest, sharedContext } from "../server/src/agents/rooms.js";
 import { saveLab } from "../server/src/agents/lab.js";
-import { createRoomMetaGateway, IntegrationRunBudget, DEFAULT_ROOM_PROMPT_VERSION } from "../server/src/rooms/runtime.js";
-import { LiveBudgetJournal, LIVE_MAX_HTTP_ATTEMPTS, LIVE_ATTEMPT_RESERVATION_TOKENS, LIVE_ATTEMPT_RESERVATION_MICROS } from "./live-budget-journal.js";
+import { createRoomMetaGateway, DEFAULT_ROOM_PROMPT_VERSION } from "../server/src/rooms/runtime.js";
+import { LiveBudgetJournal, LIVE_ATTEMPT_RESERVATION_TOKENS, LIVE_ATTEMPT_RESERVATION_MICROS } from "./live-budget-journal.js";
 
 if (!process.argv.includes("--execute") || process.env.SETVIA_LIVE_BILLING_CHECKED !== "1")
   throw new Error("Explicit execution and the existing manual billing check are required.");
@@ -18,15 +18,10 @@ const publicRoot = resolve(process.cwd());
 const persistence = new JsonPersistence(resolve(privateRoot, "room-state"), publicRoot);
 const unlock = await persistence.acquireRuntimeLock();
 let journal: LiveBudgetJournal | undefined;
-let budget: IntegrationRunBudget | undefined;
-let hold: Awaited<ReturnType<IntegrationRunBudget["holdCycle"]>> | undefined;
 try {
   const room = await persistence.load(process.env.SETVIA_VERIFY_ROOM_ID!);
   if (!room?.syntheticDemo || room.participants.length !== 2) throw new Error("A synthetic two-participant room is required.");
   journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["F"]);
-  budget = await IntegrationRunBudget.open(resolve(privateRoot, "room-state", "integration-budget.ndjson"));
-  if ((await journal.snapshot()).attempts + 3 > LIVE_MAX_HTTP_ATTEMPTS) throw new StateError("LIVE_HTTP_ATTEMPT_LIMIT");
-  hold = await budget.holdCycle(3, { tokens: LIVE_ATTEMPT_RESERVATION_TOKENS, costMicros: LIVE_ATTEMPT_RESERVATION_MICROS });
   const gateway = await createRoomMetaGateway(privateRoot, process.env.SETVIA_PROMPT_VERSION ?? DEFAULT_ROOM_PROMPT_VERSION, (event) => journal!.handle(event, "F"));
   const cycle: Cycle = { id: randomUUID(), baseRevision: room.revision, outcome: "CONTINUE", reason: "CONTRACT_CHECKS_ONLY",
     finalEvaluation: null, readiness: null, traces: [], attempts: 0, reservedTokens: 0, reservedCostMicros: 0,
@@ -41,12 +36,14 @@ try {
     const started = performance.now();
     try {
       const response = await gateway.call(role, input, { signal: AbortSignal.timeout(30_000), reserveAttempt: async (allowance) => {
-        if (!allowance) throw new StateError("CALL_ALLOWANCE_REQUIRED");
-        await hold!.reserve(allowance);
+        const accountedAllowance = allowance ?? {
+          tokens: LIVE_ATTEMPT_RESERVATION_TOKENS,
+          costMicros: LIVE_ATTEMPT_RESERVATION_MICROS,
+        };
         trace.attempts++;
         cycle.attempts++;
-        cycle.reservedTokens += allowance.tokens;
-        cycle.reservedCostMicros += allowance.costMicros;
+        cycle.reservedTokens += accountedAllowance.tokens;
+        cycle.reservedCostMicros += accountedAllowance.costMicros;
       } });
       // Only synthetic, group-authorized input is used here. Keep the actual
       // response in this private record even when local validation rejects it.
@@ -105,11 +102,9 @@ try {
   console.log(JSON.stringify({ targetedContractsPassed: passed, fullLiveCycle: false, reason: cycle.reason,
     attempts: cycle.attempts, tokens: cycle.traces.reduce((sum, trace) => sum + (trace.totalTokens ?? 0), 0),
     estimatedCostMicros: cycle.traces.reduce((sum, trace) => sum + (trace.estimatedCostMicros ?? 0), 0),
-    budget: budget.snapshot(), globalAttempts: (await journal.snapshot()).attempts, report }, null, 2));
+    requestAccounting: await journal.snapshot(), report }, null, 2));
   if (!passed) process.exitCode = 1;
 } finally {
-  await hold?.release();
-  await budget?.close();
   await journal?.release();
   await unlock();
 }

@@ -82,7 +82,7 @@ flowchart TD
   FinalJudge -->|"another negotiation needed"| Negotiator
   FinalJudge --> Publish["Publish approved questions/findings<br/>to authorized projections"]
   Judge -->|"stop without participant input"| Publish
-  Judge -.->|"invalid output, stale revision, timeout, cancellation, or budget limit"| Blocked["BLOCKED"]
+  Judge -.->|"invalid output, stale revision, timeout, cancellation, or provider failure"| Blocked["BLOCKED"]
   FinalJudge -.->|"invalid or rejected handoff"| Blocked
 ```
 
@@ -93,7 +93,7 @@ The scheduler follows the typed Judge decision. It does not always run five role
 - [`contracts.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/contracts.ts) defines strict Zod contracts for facts, constraints, findings, options, questions, readiness, traces, cycles, and rooms. The Meta gateway converts role contracts to JSON Schema for structured output.
 - [`engine.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/engine.ts) parses each role handoff, checks evidence IDs against known group facts and constraints, validates option verdicts against hard constraints, checks question targets/consent/repetition, and renders messages from validated questions and findings.
 - [`readiness.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/readiness.ts) calculates readiness deterministically. The Judge may report an assessment, but its percentage is not accepted as the readiness score.
-- Role invocation, revision, elapsed-time, request, token, and cost limits are supplied by application configuration. The engine reserves a request allowance before the gateway sends an HTTP attempt. The agent Meta gateway disables automatic retries. Stale room revisions, cancellation, schema failures, unsupported evidence, request-budget exhaustion, and interrupted work fail closed.
+- Revision and elapsed-time safeguards keep each planning cycle responsive. Agent calls have a per-request timeout, automatic retries are disabled, and every HTTP attempt plus reported usage is recorded in the private journal. The application does not enforce per-room, per-cycle, or cumulative attempt, token, or spending ceilings. Stale room revisions, cancellation, schema failures, unsupported evidence, and interrupted work fail closed.
 - A model recommendation is not an enforcement action. The server owns validation, readiness, privacy projection, and human approvals.
 
 The five-role integration has a material live limitation. A historical synthetic live-call evaluation is recorded in [agent-foundation.md](agent-foundation.md). A newer, separate Stage B worktree has three targeted live contract checks recorded as passing, but its full real planning-room cycle remains unverified. That worktree is unpublished and not part of this commit.

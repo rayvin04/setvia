@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
@@ -9,7 +9,7 @@ import { createMetaGateway } from "../agents/meta-gateway.js";
 import { META_API_BASE_URL, META_SPARK_MODEL } from "../ai/meta-client.js";
 import { MemoryPersistence, RoomStore } from "../agents/store.js";
 import { CreateRoomRequestSchema } from "../../../shared/room-api.js";
-import { IntegrationRunBudget, RoomRuntime, LIVE_CAP, LIVE_CYCLE_CAP } from "./runtime.js";
+import { RoomRuntime } from "./runtime.js";
 import { finding, judge, scriptedGateway } from "../agents/fixtures.js";
 import { SubmitRoomMessageSchema } from "../../../shared/room-api.js";
 import type { Response as ExpressResponse } from "express";
@@ -17,119 +17,8 @@ import { DashboardSnapshotSchema, type DashboardSnapshot } from "../../../shared
 import { SubmitRoomMessageResultSchema } from "../../../shared/room-api.js";
 import { createApp } from "../http/app.js";
 
-async function withLedger(run: (path: string) => Promise<void>) {
-  const directory = await mkdtemp(resolve(process.cwd(), `.setvia-room-budget-${randomUUID()}-`));
-  try {
-    await run(join(directory, "integration-budget.ndjson"));
-  } finally {
-    await rm(directory, { recursive: true, force: true });
-  }
-}
-
-test("integration budget persists reservations across runtime restarts", async () => {
-  await withLedger(async (path) => {
-    const cap = { attempts: 2, tokens: 100, costMicros: 100 };
-    const first = await IntegrationRunBudget.open(path, cap);
-    await first.reserve({ tokens: 30, costMicros: 40 });
-    assert.deepEqual(first.snapshot(), {
-      attempts: 1,
-      remainingAttempts: 1,
-      reservedTokens: 30,
-      remainingTokens: 70,
-      reservedCostMicros: 40,
-      remainingCostMicros: 60,
-    });
-    await first.close();
-
-    const resumed = await IntegrationRunBudget.open(path, cap);
-    assert.equal(resumed.snapshot().attempts, 1);
-    await resumed.reserve({ tokens: 70, costMicros: 60 });
-    await assert.rejects(
-      resumed.reserve({ tokens: 1, costMicros: 1 }),
-      (error: unknown) => (error as { code?: string }).code === "INTEGRATION_RUN_BUDGET_LIMIT",
-    );
-    assert.equal(resumed.snapshot().attempts, 2);
-    await resumed.close();
-  });
-});
-
-test("concurrent reservations cannot exceed the persistent run cap", async () => {
-  await withLedger(async (path) => {
-    const budget = await IntegrationRunBudget.open(path, { attempts: 1, tokens: 10, costMicros: 10 });
-    const results = await Promise.allSettled([
-      budget.reserve({ tokens: 10, costMicros: 10 }),
-      budget.reserve({ tokens: 10, costMicros: 10 }),
-    ]);
-    assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
-    assert.equal(budget.snapshot().attempts, 1);
-    await budget.close();
-  });
-});
-
-test("committed cumulative authorization preserves prior reservations and keeps each cycle bounded", async () => {
-  await withLedger(async (path) => {
-    const allowance = { tokens: 64_000, costMicros: 104_000 };
-    const original = await IntegrationRunBudget.open(path, { attempts: 10, tokens: 640_000, costMicros: 2_000_000 });
-    for (let i = 0; i < 10; i++) await original.reserve(allowance);
-    await original.close();
-    const priorContents = await readFile(path, "utf8");
-    const expanded = await IntegrationRunBudget.open(path);
-    assert.equal(await readFile(path, "utf8"), priorContents);
-    assert.equal(expanded.snapshot().attempts, 10);
-    assert.equal(expanded.snapshot().remainingAttempts, 21);
-    assert.equal(expanded.snapshot().remainingTokens, 1_344_000);
-    assert.equal(expanded.snapshot().remainingCostMicros, 2_184_000);
-    assert.equal(LIVE_CAP.attempts, 31);
-    assert.equal(LIVE_CAP.tokens, 1_984_000);
-    assert.equal(LIVE_CAP.costMicros, 3_224_000);
-    assert.equal(LIVE_CYCLE_CAP.attempts, 10);
-    const first = await expanded.holdCycle(LIVE_CYCLE_CAP.attempts, allowance);
-    for (let index = 0; index < LIVE_CYCLE_CAP.attempts; index++) await first.reserve(allowance);
-    await first.release();
-    assert.equal(expanded.snapshot().attempts, 20);
-    assert.equal(expanded.snapshot().remainingAttempts, 11);
-    assert.equal(expanded.snapshot().remainingTokens, 704_000);
-    assert.equal(expanded.snapshot().remainingCostMicros, 1_144_000);
-    assert.ok((await readFile(path, "utf8")).startsWith(priorContents));
-    await expanded.close();
-  });
-});
-
-test("an incomplete private budget ledger fails closed", async () => {
-  await withLedger(async (path) => {
-    await writeFile(path, "{\"tokens\":1,\"costMicros\":1}", { encoding: "utf8", mode: 0o600 });
-    await assert.rejects(
-      IntegrationRunBudget.open(path),
-      (error: unknown) => (error as { code?: string }).code === "INTEGRATION_BUDGET_CORRUPT",
-    );
-  });
-});
-
-test("a whole-cycle hold rejects insufficient admission and protects capacity from concurrent callers", async () => {
-  await withLedger(async (path) => {
-    const budget = await IntegrationRunBudget.open(path, { attempts: 3, tokens: 30, costMicros: 30 });
-    const allowance = { tokens: 10, costMicros: 10 };
-    await assert.rejects(budget.holdCycle(4, allowance), /INTEGRATION_RUN_BUDGET_LIMIT/);
-    assert.equal(budget.attempts, 0);
-    const hold = await budget.holdCycle(3, allowance);
-    await assert.rejects(budget.reserve(allowance), /INTEGRATION_RUN_BUDGET_LIMIT/);
-    await assert.rejects(budget.holdCycle(1, allowance), /INTEGRATION_RUN_BUDGET_LIMIT/);
-    await hold.reserve(allowance);
-    await hold.release();
-    await assert.rejects(hold.reserve(allowance), /INTEGRATION_BUDGET_UNAVAILABLE/);
-    await budget.reserve(allowance);
-    assert.equal(budget.attempts, 2, "only actual attempts persist; unused hold capacity is returned");
-    await budget.close();
-    const restored = await IntegrationRunBudget.open(path, { attempts: 3, tokens: 30, costMicros: 30 });
-    await restored.reserve(allowance);
-    assert.equal(restored.attempts, 3);
-    await restored.close();
-  });
-});
-
 test("creating and joining an idle room authenticates sessions without spending model calls", async () => {
   const directory = await mkdtemp(resolve(process.cwd(), `.setvia-room-runtime-${randomUUID()}-`));
-  const budget = await IntegrationRunBudget.open(join(directory, "room-state", "integration-budget.ndjson"));
   let calls = 0;
   const gateway: AgentGateway = {
     mode: "MOCK",
@@ -149,7 +38,6 @@ test("creating and joining an idle room authenticates sessions without spending 
   const runtime = new RoomRuntime({
     engine,
     journal: journal as never,
-    budget,
     persistenceLock: async () => {},
     privateRoot: directory,
     publicRoot: resolve(directory, "public"),
@@ -169,7 +57,6 @@ test("creating and joining an idle room authenticates sessions without spending 
     assert.equal(joined.snapshot.room.participants.length, 2);
     assert.notEqual(created.session.token, joined.session.token);
     assert.equal(calls, 0);
-    assert.equal(runtime.budget.attempts, 0);
   } finally {
     await runtime.close();
     await rm(directory, { recursive: true, force: true });
@@ -178,7 +65,6 @@ test("creating and joining an idle room authenticates sessions without spending 
 
 test("room submissions enforce scope and per-participant cooldown while allowing idempotent receipt retries", async () => {
   const directory = await mkdtemp(resolve(process.cwd(), `.setvia-room-cooldown-${randomUUID()}-`));
-  const budget = await IntegrationRunBudget.open(join(directory, "integration-budget.ndjson"));
   const engine = new AgentEngine(new RoomStore(new MemoryPersistence()), scriptedGateway([]).gateway);
   const journal = {
     runId: randomUUID(),
@@ -189,7 +75,6 @@ test("room submissions enforce scope and per-participant cooldown while allowing
   const runtime = new RoomRuntime({
     engine,
     journal: journal as never,
-    budget,
     persistenceLock: async () => {},
     privateRoot: directory,
     publicRoot: join(directory, "public"),
@@ -228,7 +113,6 @@ test("room submissions enforce scope and per-participant cooldown while allowing
       runtime.submit(created.roomId, auth, request("second_private", "I can bring water.")),
       (error: unknown) => (error as { code?: string }).code === "PARTICIPANT_COOLDOWN",
     );
-    assert.equal(runtime.budget.attempts, 0);
   } finally {
     await runtime.close();
     await rm(directory, { recursive: true, force: true });
@@ -237,13 +121,12 @@ test("room submissions enforce scope and per-participant cooldown while allowing
 
 test("HTTP message receipts match the browser contract and idempotent retries do not queue another inference", async () => {
   const directory = await mkdtemp(resolve(process.cwd(), `.setvia-room-http-${randomUUID()}-`));
-  const budget = await IntegrationRunBudget.open(join(directory, "integration-budget.ndjson"));
   const scripted = scriptedGateway([
     { role: "Listener", output: { candidates: [] } },
     { role: "Judge", output: judge() },
   ]);
   const engine = new AgentEngine(new RoomStore(new MemoryPersistence()), scripted.gateway);
-  const runtime = new RoomRuntime({ engine, budget, privateRoot: directory, publicRoot: join(directory, "public"),
+  const runtime = new RoomRuntime({ engine, privateRoot: directory, publicRoot: join(directory, "public"),
     syntheticDemo: false, persistenceLock: async () => {}, journal: { release: async () => {} } as never });
   const server = createApp({ rooms: runtime, client: {
     baseUrl: META_API_BASE_URL, model: META_SPARK_MODEL, getRequestCount: () => 0,
@@ -287,7 +170,6 @@ test("HTTP message receipts match the browser contract and idempotent retries do
 
 test("joining after completed analysis schedules a fresh cycle without changing proposal version", async () => {
   const directory = await mkdtemp(resolve(process.cwd(), `.setvia-room-runtime-join-${randomUUID()}-`));
-  const budget = await IntegrationRunBudget.open(join(directory, "room-state", "integration-budget.ndjson"));
   const scripted = scriptedGateway([
     { role: "Judge", output: judge() },
     { role: "Judge", output: judge() },
@@ -296,13 +178,12 @@ test("joining after completed analysis schedules a fresh cycle without changing 
   const journal = {
     runId: randomUUID(),
     attemptsFor: async () => [],
-    snapshot: async () => ({ runId: "test", attempts: 0, runAttempts: 0, estimatedCostMicros: 0, budgetMicros: 10_000_000 }),
+    snapshot: async () => ({ runId: "test", attempts: 0, runAttempts: 0, estimatedCostMicros: 0 }),
     release: async () => {},
   };
   const runtime = new RoomRuntime({
     engine,
     journal: journal as never,
-    budget,
     persistenceLock: async () => {},
     privateRoot: directory,
     publicRoot: join(directory, "public"),
@@ -355,7 +236,6 @@ test("joining after completed analysis schedules a fresh cycle without changing 
 
 test("synthetic room Lab records redact every Listener trace before saving", async () => {
   const directory = await mkdtemp(resolve(process.cwd(), `.setvia-room-runtime-lab-${randomUUID()}-`));
-  const budget = await IntegrationRunBudget.open(join(directory, "room-state", "integration-budget.ndjson"));
   const scripted = scriptedGateway([
     { role: "Listener", output: { candidates: [{ key: "availability", value: "08:00" }] } },
     { role: "Judge", output: judge() },
@@ -365,13 +245,12 @@ test("synthetic room Lab records redact every Listener trace before saving", asy
   const journal = {
     runId: randomUUID(),
     attemptsFor: async () => [],
-    snapshot: async () => ({ runId: "test", attempts: 0, runAttempts: 0, estimatedCostMicros: 0, budgetMicros: 10_000_000 }),
+    snapshot: async () => ({ runId: "test", attempts: 0, runAttempts: 0, estimatedCostMicros: 0 }),
     release: async () => {},
   };
   const runtime = new RoomRuntime({
     engine,
     journal: journal as never,
-    budget,
     persistenceLock: async () => {},
     privateRoot: directory,
     publicRoot: join(directory, "public"),
@@ -454,7 +333,6 @@ test("synthetic room Lab records redact every Listener trace before saving", asy
 
 test("mock Meta HTTP responses drive the actual two-participant runtime, SSE, quick replies and fail-closed publication", async () => {
   const directory = await mkdtemp(resolve(process.cwd(), `.setvia-room-full-cycle-${randomUUID()}-`));
-  const budget = await IntegrationRunBudget.open(join(directory, "room-state", "integration-budget.ndjson"));
   const issue = finding({ id: "departure_gap", category: "Schedule Check", severity: "critical" });
   const groupQuestion = { id: "departure_choice", findingId: issue.id, targetId: null,
     visibility: "group", kind: "choice", text: "Choose a time", options: ["08:00", "09:00"] } as const;
@@ -504,10 +382,10 @@ test("mock Meta HTTP responses drive the actual two-participant runtime, SSE, qu
   });
   let runtime!: RoomRuntime;
   const engine = new AgentEngine(new RoomStore(new MemoryPersistence()), { ...base, mode: "MOCK" }, {
-    ...MOCK_LIMITS, maxTokens: 1_000_000, maxCostMicros: 2_000_000, callTokens: 64_000,
-    callCostMicros: 104_000, roomMaxTokens: 10_000_000, roomMaxCostMicros: 20_000_000,
+    ...MOCK_LIMITS, callTokens: 64_000,
+    callCostMicros: 104_000,
   }, (id) => { void runtime.events.publishGroup(id); }, (id, owner) => { void runtime.events.publishPrivate(id, owner); });
-  runtime = new RoomRuntime({ engine, budget, privateRoot: directory, publicRoot: join(directory, "public"),
+  runtime = new RoomRuntime({ engine, privateRoot: directory, publicRoot: join(directory, "public"),
     syntheticDemo: true, persistenceLock: async () => {}, journal: {
       runId: randomUUID(), attemptsFor: async () => [], snapshot: async () => ({ attempts: 0 }), release: async () => {},
     } as never });

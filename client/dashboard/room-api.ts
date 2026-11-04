@@ -19,11 +19,11 @@ const HealthSchema = z.object({
   mode: z.enum(["synthetic-live-demo", "local-live", "offline-mock", "unavailable"]),
   budget: z.object({
     attempts: z.number().int().nonnegative(),
-    remainingAttempts: z.number().int().nonnegative(),
+    remainingAttempts: z.number().int().nonnegative().nullable(),
     reservedTokens: z.number().int().nonnegative(),
-    remainingTokens: z.number().int().nonnegative(),
+    remainingTokens: z.number().int().nonnegative().nullable(),
     reservedCostMicros: z.number().int().nonnegative(),
-    remainingCostMicros: z.number().int().nonnegative(),
+    remainingCostMicros: z.number().int().nonnegative().nullable(),
   }).optional(),
 });
 export type RoomHealth = z.infer<typeof HealthSchema>;

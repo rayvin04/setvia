@@ -193,14 +193,14 @@ export default function DemoStudio() {
   const scenario = parsed.scenario;
   const isDirty = Boolean(scenario && scenarioText !== baselineText);
   const simulationMode = simulation?.mode === "RECORDED" ? "RECORDED" : simulation?.run.mode ?? null;
-  const liveBudget = health?.roomApi.budget ?? null;
+  const liveUsage = health?.roomApi.budget ?? null;
   const roomId = simulation ? roomIdFromSnapshot(simulation.currentSnapshot) : "";
   const dashboardUrl = roomId && simulation ? `/rooms/${encodeURIComponent(roomId)}?syntheticRun=${encodeURIComponent(simulation.run.runId)}` : "";
   const approved = Boolean(currentRecord?.review.approvedForPlayback);
   const canLive = Boolean(
     currentRecord && approved &&
     health?.roomApi.mode === "synthetic-live-demo" &&
-    health.roomApi.enabled && liveBudget && liveBudget.remainingAttempts > 0,
+    health.roomApi.enabled,
   );
 
   const refresh = useCallback(async () => {
@@ -477,7 +477,7 @@ export default function DemoStudio() {
           <div><span>Event attendees</span><strong>{scenario?.event.expectedAttendeeCount ?? attendees}</strong><small>expected to attend</small></div>
           <div><span>Room planners</span><strong>{scenario?.activePlannerCount ?? planners}</strong><small>fictional Setvia members</small></div>
           <div><span>Participant messages</span><strong>{scenario?.messages.length ?? messageCount}</strong><small>ordered, visibility marked</small></div>
-          <div><span>Shared Meta budget</span><strong>{liveBudget ? `${liveBudget.remainingAttempts} calls left` : "Unavailable"}</strong><small>generation and room agents</small></div>
+          <div><span>Meta HTTP attempts</span><strong>{liveUsage ? liveUsage.attempts.toLocaleString() : "Unavailable"}</strong><small>recorded for this run</small></div>
         </section>
 
         <div className="studio-workbench">
@@ -505,7 +505,7 @@ export default function DemoStudio() {
             <button type="button" className="studio-primary-button studio-full" onClick={generate} disabled={busy || !health?.scenarioGeneratorMounted}>
               <Sparkles size={16} aria-hidden="true" />{busy ? "Working…" : "Generate with Muse Spark"}
             </button>
-            {!health?.scenarioGeneratorMounted ? <p className="studio-inline-note">Shared-budget scenario route is not mounted on the Setvia API yet. No generation attempt will be made.</p> : null}
+            {!health?.scenarioGeneratorMounted ? <p className="studio-inline-note">The Meta-backed scenario generator is not available on this server.</p> : null}
             {generation ? <p className="studio-inline-note">Generation does not start playback. Review and save the draft first.</p> : null}
           </aside>
 
@@ -575,7 +575,7 @@ export default function DemoStudio() {
 
               {!simulation ? <div className="studio-mode-grid">
                 <article className="studio-mode-card"><div className="studio-mode-title"><span className="studio-mode-icon recorded"><Activity size={17} aria-hidden="true" /></span><div><strong>Recorded demo</strong><small>Saved synthetic messages · saved agent outputs</small></div></div><p>Reopen a previous room run for fast, reproducible walkthroughs. No new Meta calls.</p><a className="studio-inline-anchor" href="#recorded">Choose a saved recording <ExternalLink size={13} aria-hidden="true" /></a></article>
-                <article className="studio-mode-card live"><div className="studio-mode-title"><span className="studio-mode-icon live"><Sparkles size={17} aria-hidden="true" /></span><div><strong>Synthetic participants · Live Meta AI</strong><small>Real planning agents · actual room snapshots</small></div></div><p>Available after a saved scenario receives explicit human approval. Room actions use the shared Setvia budget.</p><button type="button" className="studio-primary-button" onClick={startLive} disabled={busy || !canLive}><Play size={15} aria-hidden="true" />Start live playback</button>
+                <article className="studio-mode-card live"><div className="studio-mode-title"><span className="studio-mode-icon live"><Sparkles size={17} aria-hidden="true" /></span><div><strong>Synthetic participants · Live Meta AI</strong><small>Real planning agents · actual room snapshots</small></div></div><p>Available after a saved scenario receives explicit human approval. Meta requests and usage are recorded for review.</p><button type="button" className="studio-primary-button" onClick={startLive} disabled={busy || !canLive}><Play size={15} aria-hidden="true" />Start live playback</button>
                   {!approved ? <small className="studio-inline-note">Save and approve this version before live playback.</small> : null}
                   {approved && health?.roomApi.mode !== "synthetic-live-demo" ? <small className="studio-inline-note">Live synthetic room mode is not enabled on the API.</small> : null}
                 </article>
@@ -655,8 +655,8 @@ export default function DemoStudio() {
             </div>
 
             <div className="studio-budget-box">
-              <div><Activity size={16} aria-hidden="true" /><strong>Shared Meta budget</strong></div>
-              {liveBudget ? <><div className="studio-budget-numbers"><span>{liveBudget.remainingAttempts}<small> attempts left</small></span><span>{usd(liveBudget.remainingCostMicros)}<small> remaining cap</small></span></div><div className="studio-budget-bar"><span style={{ width: `${Math.max(0, Math.min(100, (liveBudget.remainingCostMicros / 2_000_000) * 100))}%` }} /></div><small>Generation and room-agent events share the cap and are labeled separately in the private ledger.</small></> : <small>Setvia room API is not available.</small>}
+              <div><Activity size={16} aria-hidden="true" /><strong>Meta request accounting</strong></div>
+              {liveUsage ? <><div className="studio-budget-numbers"><span>{liveUsage.attempts.toLocaleString()}<small> HTTP attempts recorded</small></span><span>{usd(liveUsage.reservedCostMicros)}<small> estimated or reserved</small></span></div><small>Request and usage details are retained in the private ledger.</small></> : <small>Setvia room API is not available.</small>}
             </div>
             <div className="studio-honesty"><Shield size={15} aria-hidden="true" /><span>Scenario ground truth stays in private Studio storage. Only event details and submitted participant messages reach room agents.</span></div>
           </aside>

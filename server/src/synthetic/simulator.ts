@@ -140,8 +140,6 @@ export class SyntheticSimulationService {
     const health = await this.rooms.health();
     if (!health.enabled || health.mode !== "synthetic-live-demo")
       throw new Error("SYNTHETIC_LIVE_ROOM_SERVER_REQUIRED");
-    if (!health.budget || health.budget.remainingAttempts < 1)
-      throw new Error("LIVE_ROOM_BUDGET_EXHAUSTED");
 
     const runId = `sim-${randomUUID()}`;
     const roomIdSeed = `plan-${randomUUID()}`;
@@ -184,10 +182,10 @@ export class SyntheticSimulationService {
         note: `${creator.name} joined the synthetic planning room.`,
         snapshot: initialSnapshot,
         budget: {
-          attempts: health.budget.attempts,
-          remainingAttempts: health.budget.remainingAttempts,
-          reservedTokens: health.budget.reservedTokens,
-          reservedCostMicros: health.budget.reservedCostMicros,
+          attempts: health.budget?.attempts ?? null,
+          remainingAttempts: health.budget?.remainingAttempts ?? null,
+          reservedTokens: health.budget?.reservedTokens ?? null,
+          reservedCostMicros: health.budget?.reservedCostMicros ?? null,
         },
       }],
       manualInterventions: [],

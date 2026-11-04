@@ -26,31 +26,17 @@ import { calculateReadiness, explicitViolations, violations } from "./readiness.
 import { MetaApiError } from "../ai/errors.js";
 
 export interface Limits {
-  maxInvocations: number;
-  maxRequests: number;
   maxRevisions: number;
   timeoutMs: number;
-  maxTokens: number;
-  maxCostMicros: number;
-  // Conservative allowances for a single request, including its full prompt/schema.
+  // Conservative per-attempt estimates kept for accounting only.
   callTokens: number;
   callCostMicros: number;
-  roomMaxRequests: number;
-  roomMaxTokens: number;
-  roomMaxCostMicros: number;
 }
 export const MOCK_LIMITS: Limits = {
-  maxInvocations: 16,
-  maxRequests: 12,
   maxRevisions: 2,
   timeoutMs: 30_000,
-  maxTokens: 200_000,
-  maxCostMicros: 500_000,
   callTokens: 12_000,
   callCostMicros: 30_000,
-  roomMaxRequests: 100,
-  roomMaxTokens: 2_000_000,
-  roomMaxCostMicros: 5_000_000,
 };
 const fingerprint = (value: unknown) => {
   const canonical = (v: unknown): unknown =>
@@ -331,7 +317,8 @@ function traceFailure(error: unknown): { code: string; message: string } {
       connection: "Could not connect to Meta.",
       invalid_response: "Meta returned an incomplete or invalid response.",
       unexpected_model: "Meta returned an unexpected model.",
-      request_budget_exhausted: "The configured Meta request budget was exhausted.",
+      request_limit: "This Meta client reached its single-request safeguard.",
+      accounting: "Request accounting failed before inference could be completed.",
     };
     return {
       code: truncated ? "META_OUTPUT_TRUNCATED" : `META_${error.code.toUpperCase()}`,
@@ -408,7 +395,6 @@ export class AgentEngine {
       throw new StateError("LIVE_LIMITS_REQUIRED");
     this.limits = limits ?? MOCK_LIMITS;
     limits = this.limits;
-    if (limits.maxInvocations > 30) throw new StateError("INVALID_LIMITS");
     for (const value of Object.values(limits))
       if (!Number.isSafeInteger(value) || value < 1)
         throw new StateError("INVALID_LIMITS");
@@ -562,8 +548,6 @@ export class AgentEngine {
       };
     });
     let previousFindings = validatedFindingsBeforeCycle;
-    let admission: Awaited<ReturnType<NonNullable<AgentGateway["openCycle"]>>> | undefined;
-
     const assertCurrent = async () => {
       signal.throwIfAborted();
       const state = await this.store.read(roomId);
@@ -578,12 +562,6 @@ export class AgentEngine {
       privateContext = false,
     ) => {
       await assertCurrent();
-      const optional = role !== "Judge";
-      if (
-        cycle.traces.length + 1 + (optional ? 1 : 0) >
-        this.limits.maxInvocations
-      )
-        throw new StateError("INVOCATION_LIMIT");
       const trace: Trace = {
         sequence: cycle.traces.length + 1,
         role,
@@ -613,33 +591,15 @@ export class AgentEngine {
       const callStartedAt = performance.now();
       try {
         const result = await withAbort(
-          (admission ?? this.gateway).call(role, payload, {
+          this.gateway.call(role, payload, {
             signal,
             reserveAttempt: async (allowance) => {
               await assertCurrent();
-              if (
-                allowance &&
-                (allowance.tokens > this.limits.callTokens ||
-                  allowance.costMicros > this.limits.callCostMicros ||
-                  allowance.tokens <= 0 ||
-                  allowance.costMicros <= 0)
-              )
+              const tokens = allowance?.tokens ?? this.limits.callTokens;
+              const costMicros = allowance?.costMicros ?? this.limits.callCostMicros;
+              if (!Number.isSafeInteger(tokens) || tokens < 1 ||
+                !Number.isSafeInteger(costMicros) || costMicros < 1)
                 throw new StateError("INVALID_ALLOWANCE");
-              // All optional work preserves one full final-Judge allowance.
-              const reserve = optional ? 1 : 0;
-              if (cycle.attempts + 1 + reserve > this.limits.maxRequests)
-                throw new StateError("REQUEST_LIMIT");
-              if (
-                cycle.reservedTokens + this.limits.callTokens * (1 + reserve) >
-                this.limits.maxTokens
-              )
-                throw new StateError("TOKEN_LIMIT");
-              if (
-                cycle.reservedCostMicros +
-                  this.limits.callCostMicros * (1 + reserve) >
-                this.limits.maxCostMicros
-              )
-                throw new StateError("COST_LIMIT");
               await this.store.transaction(roomId, (state) => {
                 if (
                   !state ||
@@ -647,22 +607,13 @@ export class AgentEngine {
                   state.activeCycleId !== cycleId
                 )
                   throw new StateError("STALE_STATE");
-                if (
-                  state.lifetimeAttempts + 1 > this.limits.roomMaxRequests ||
-                  state.lifetimeReservedTokens + this.limits.callTokens >
-                    this.limits.roomMaxTokens ||
-                  state.lifetimeReservedCostMicros +
-                    this.limits.callCostMicros >
-                    this.limits.roomMaxCostMicros
-                )
-                  throw new StateError("ROOM_BUDGET_LIMIT");
                 state.lifetimeAttempts++;
-                state.lifetimeReservedTokens += this.limits.callTokens;
-                state.lifetimeReservedCostMicros += this.limits.callCostMicros;
+                state.lifetimeReservedTokens += tokens;
+                state.lifetimeReservedCostMicros += costMicros;
                 cycle.attempts++;
                 trace.attempts++;
-                cycle.reservedTokens += this.limits.callTokens;
-                cycle.reservedCostMicros += this.limits.callCostMicros;
+                cycle.reservedTokens += tokens;
+                cycle.reservedCostMicros += costMicros;
                 state.lastCycle = structuredClone(cycle);
               });
             },
@@ -691,13 +642,6 @@ export class AgentEngine {
           )
             throw new StateError("INVALID_USAGE");
           trace.estimatedCostMicros = result.usage.estimatedCostMicros;
-          if (
-            result.usage.inputTokens + result.usage.outputTokens >
-              this.limits.callTokens * trace.attempts ||
-            result.usage.estimatedCostMicros >
-              this.limits.callCostMicros * trace.attempts
-          )
-            throw new StateError("USAGE_BOUND_EXCEEDED");
         } else cycle.usageKnown = false;
         trace.output = privateContext
           ? { redacted: true, validated: true }
@@ -747,7 +691,6 @@ export class AgentEngine {
       return judge;
     };
     try {
-      admission = await this.gateway.openCycle?.(this.limits.maxRequests);
       for (const pendingInput of room.pendingInputs) {
         if (pendingInput.visibility !== "group")
           throw new StateError("PRIVATE_INPUT_IN_GROUP_ANALYSIS");
@@ -966,7 +909,6 @@ export class AgentEngine {
       cycle.mascot = null;
       cycle.readiness = room.readiness;
     } finally {
-      await admission?.release();
       clearTimeout(deadline);
       if (this.active.get(roomId) === controller) this.active.delete(roomId);
     }
@@ -1169,20 +1111,12 @@ export class AgentEngine {
                 const tokens = allowance?.tokens ?? this.limits.callTokens;
                 const costMicros = allowance?.costMicros ?? this.limits.callCostMicros;
                 if (
-                  !Number.isSafeInteger(tokens) || tokens < 1 || tokens > this.limits.callTokens ||
-                  !Number.isSafeInteger(costMicros) || costMicros < 1 || costMicros > this.limits.callCostMicros ||
-                  cycle.attempts + 1 > this.limits.maxRequests ||
-                  cycle.reservedTokens + tokens > this.limits.maxTokens ||
-                  cycle.reservedCostMicros + costMicros > this.limits.maxCostMicros
-                ) throw new StateError("PRIVATE_REQUEST_BUDGET_LIMIT");
+                  !Number.isSafeInteger(tokens) || tokens < 1 ||
+                  !Number.isSafeInteger(costMicros) || costMicros < 1
+                ) throw new StateError("INVALID_ALLOWANCE");
                 await this.store.transaction(roomId, (state) => {
                   if (!state || !state.participants.some((participant) => participant.id === ownerId))
                     throw new StateError("UNAUTHORIZED");
-                  if (
-                    state.lifetimeAttempts + 1 > this.limits.roomMaxRequests ||
-                    state.lifetimeReservedTokens + tokens > this.limits.roomMaxTokens ||
-                    state.lifetimeReservedCostMicros + costMicros > this.limits.roomMaxCostMicros
-                  ) throw new StateError("ROOM_BUDGET_LIMIT");
                   state.lifetimeAttempts++;
                   state.lifetimeReservedTokens += tokens;
                   state.lifetimeReservedCostMicros += costMicros;
@@ -1206,10 +1140,6 @@ export class AgentEngine {
           trace.reasoningTokens = result.usage.reasoningTokens ?? null;
           trace.totalTokens = result.usage.totalTokens ?? result.usage.inputTokens + result.usage.outputTokens;
           trace.estimatedCostMicros = result.usage.estimatedCostMicros;
-          if (
-            result.usage.inputTokens + result.usage.outputTokens > this.limits.callTokens ||
-            result.usage.estimatedCostMicros > this.limits.callCostMicros
-          ) throw new StateError("USAGE_BOUND_EXCEEDED");
         } else cycle.usageKnown = false;
         trace.output = structuredClone(parsed);
         trace.status = "accepted";
