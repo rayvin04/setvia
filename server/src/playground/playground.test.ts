@@ -66,7 +66,6 @@ test("Meta accepts Negotiator's dynamic values contract while other roles keep s
     inputPriceMicrosPerMillion: 1_250_000, outputPriceMicrosPerMillion: 4_250_000,
     client: {
       config: { apiKey: "synthetic-key", baseUrl: META_API_BASE_URL, model: META_SPARK_MODEL },
-      beforeAttempt: () => { if (!enabled) throw new Error("INFERENCE_DISABLED"); },
       fetchImpl: async (_url, init) => {
         const format = JSON.parse(String(init?.body)).text.format;
         formats.push(format);
@@ -79,7 +78,13 @@ test("Meta accepts Negotiator's dynamic values contract while other roles keep s
       },
     },
   });
-  const context = { signal: new AbortController().signal, reserveAttempt: async () => { reserved++; } };
+  const context = {
+    signal: new AbortController().signal,
+    reserveAttempt: async () => {
+      if (!enabled) throw new Error("INFERENCE_DISABLED");
+      reserved++;
+    },
+  };
   RoleSchemas.Negotiator.parse((await gateway.call("Negotiator", {}, context)).output);
   await gateway.call("Judge", {}, context);
   enabled = false;
