@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ArrowLeft, ArrowRight, CircleAlert, LockKeyhole } from "lucide-react";
+import { ArrowLeft, CircleAlert, LockKeyhole } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { joinRoom, RoomApiError } from "./dashboard/room-api";
 
@@ -60,7 +60,7 @@ export function JoinRoomPage() {
         <input id="room-join-name" value={name} onChange={(event) => setName(event.currentTarget.value)} placeholder="What should we call you?" autoComplete="nickname" maxLength={40} onKeyDown={(event) => { if (event.key === "Enter") void join(); }} />
         {error ? <p className="room-join-error" role="alert"><CircleAlert size={15} aria-hidden="true" />{error}</p> : null}
         <button className="button button-primary" type="button" disabled={busy} onClick={() => void join()}>
-          {busy ? "Joining room…" : "Join planning room"}<ArrowRight size={17} aria-hidden="true" />
+          {busy ? "Joining room…" : "Join planning room"}
         </button>
       </div>
     </section>
