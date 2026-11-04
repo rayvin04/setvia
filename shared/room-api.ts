@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { OptionSchema } from "../server/src/agents/contracts.js";
-import { DashboardSnapshotSchema } from "./dashboard.js";
+import { DashboardSnapshotSchema, type DashboardRoom } from "./dashboard.js";
+import { ReceiptImageStatusSchema } from "../server/src/agents/contracts.js";
 
 const id = z.string().regex(/^[a-zA-Z0-9_-]{1,80}$/);
 
@@ -91,5 +92,22 @@ export const ApproveProposalRequestSchema = z
 export const LeaveRoomRequestSchema = z
   .object({ expectedRevision: z.number().int().nonnegative() })
   .strict();
+
+export const GenerateReceiptImageRequestSchema = z
+  .object({
+    expectedRevision: z.number().int().nonnegative(),
+    proposalVersion: z.number().int().positive(),
+    // Set only for an explicit user click after the first attempt failed.
+    retry: z.boolean().optional().default(false),
+  })
+  .strict();
+
+export const GenerateReceiptImageResponseSchema = z
+  .object({ receiptImage: ReceiptImageStatusSchema })
+  .strict();
+
+export type GenerateReceiptImageRequest = z.infer<typeof GenerateReceiptImageRequestSchema>;
+export type GenerateReceiptImageResponse = z.infer<typeof GenerateReceiptImageResponseSchema>;
+export type ReceiptImageClientStatus = DashboardRoom["receiptImage"];
 
 export type ParticipantSession = z.infer<typeof ParticipantSessionSchema>;

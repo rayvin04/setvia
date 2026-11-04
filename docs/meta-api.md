@@ -7,7 +7,7 @@ The local backend foundation uses the Meta Model API Responses endpoint:
 - Model: muse-spark-1.3 Standard
 - Authentication: server-side MODEL_API_KEY
 
-The React client does not contain or receive the API key. The client pins the host and model and rejects a Contributor model ID. It does not use web search, tools, Muse Image generation, or a database.
+The React client does not contain or receive the API key. The text-extraction path pins the host and model and rejects a Contributor model ID. It does not use web search or tools. Live room receipts also use Muse Image 1.0 for event illustrations; see [the receipt image API notes](receipt-image-api.md) for its privacy, storage, and cost limits. The app uses no database.
 
 ## Local configuration
 
@@ -30,13 +30,13 @@ In PowerShell:
     $env:META_TESTS_BILLING_CHECKED = "1"
     npm run test:meta
 
-The command sends three small requests using Muse Spark Standard: a short connectivity prompt, one planning extraction, and one synthetic screenshot extraction. A shared cap stops after four HTTP attempts total, including a single retry. It never calls Muse Image. Do not use real private group chats in this test.
+The command sends three small requests using Muse Spark Standard: a short connectivity prompt, one planning extraction, and one synthetic screenshot extraction. A shared cap stops after four HTTP attempts total, including a single retry. This smoke script never calls Muse Image. Do not use real private group chats in this test.
 
 The command prints the answer or candidate extraction, returned model, elapsed time, token counts when supplied, and a cost estimate based on the published Standard prices checked on 2026-11-03. It compares the text and screenshot outputs with the known synthetic inputs and stops with a review result if key facts are missing. Actual account billing and credits must be checked in Meta's dashboard; the displayed estimate is not a statement of account balance. Refresh the published rates before running this script on a later date.
 
 ## Data handling
 
-Screenshot bytes are validated in memory and sent as a data URL to Meta. This implementation creates no upload temp file and does not persist prompts, images, responses, or request bodies. Standard mode is selected by model ID; this is not a zero-retention promise. Treat extracted values as unconfirmed candidates for a person to review.
+Screenshot bytes for planning extraction are validated in memory and sent as a data URL to Meta. The extraction path creates no upload temp file and does not persist source images, prompts, responses, or request bodies. Receipt illustrations are generated separately and stored as private WebP files; they are not included in room snapshots or SSE. Standard mode is selected by model ID; this is not a zero-retention promise. Treat extracted values as unconfirmed candidates for a person to review.
 
 ## Implemented scope
 
@@ -67,5 +67,6 @@ Phase 2C build, offline tests, and browser checks used mocked API responses. No 
 - [Models](https://dev.meta.ai/docs/models)
 - [Structured output](https://dev.meta.ai/docs/structured-output)
 - [Image understanding](https://dev.meta.ai/docs/image-understanding)
+- [Image generation with Muse Image](https://dev.meta.ai/docs/image-generation)
 - [Responses API](https://dev.meta.ai/docs/protocols/responses)
 - [Pricing and rate limits](https://dev.meta.ai/docs/pricing-rate-limits)

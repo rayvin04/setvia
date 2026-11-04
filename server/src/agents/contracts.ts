@@ -360,6 +360,50 @@ export const ReadinessHistorySchema = z
     explanation: z.string().trim().min(1).max(500),
   })
   .strict();
+
+export const ReceiptImageStatusSchema = z
+  .object({
+    status: z.enum(["idle", "generating", "ready", "failed", "capped"]),
+    retryAvailable: z.boolean(),
+    proposalVersion: z.number().int().positive().nullable(),
+    updatedAt: z.iso.datetime().nullable(),
+  })
+  .strict();
+
+export const ReceiptImageRecordSchema = z
+  .object({
+    status: z.enum(["idle", "generating", "ready", "failed", "capped"]).default("idle"),
+    attemptCount: z.number().int().min(0).max(2).default(0),
+    proposalVersion: z.number().int().positive().nullable().default(null),
+    updatedAt: z.iso.datetime().nullable().default(null),
+    activeRequestId: z.string().uuid().nullable().default(null),
+    byteLength: z.number().int().positive().max(8 * 1024 * 1024).nullable().default(null),
+    sha256: z.string().regex(/^[a-f0-9]{64}$/).nullable().default(null),
+    lastFailure: z.enum(["provider", "transport", "invalid_output", "storage", "interrupted"]).nullable().default(null),
+  })
+  .strict()
+  .superRefine((image, context) => {
+    if ((image.status === "generating") !== (image.activeRequestId !== null)) {
+      context.addIssue({ code: "custom", path: ["activeRequestId"], message: "Only a generating image may have an active request." });
+    }
+    if (image.status === "ready" && (image.byteLength === null || image.sha256 === null || image.proposalVersion === null)) {
+      context.addIssue({ code: "custom", message: "Ready images require stored metadata." });
+    }
+    if (image.status === "failed" && (image.attemptCount === 0 || image.lastFailure === null)) {
+      context.addIssue({ code: "custom", message: "Failed images require an attempt and a safe failure code." });
+    }
+  });
+export type ReceiptImageRecord = z.infer<typeof ReceiptImageRecordSchema>;
+
+export function projectReceiptImageStatus(image: ReceiptImageRecord) {
+  return ReceiptImageStatusSchema.parse({
+    status: image.status,
+    retryAvailable: image.status === "failed" && image.attemptCount === 1,
+    proposalVersion: image.proposalVersion,
+    updatedAt: image.updatedAt,
+  });
+}
+
 export const RoomSchema = z
   .object({
     schemaVersion: z.literal(1),
@@ -403,6 +447,16 @@ export const RoomSchema = z
     privateAnalysisStatus: z.record(id, z.enum(["queued", "running", "blocked", "complete"])).default({}),
     privateAnalyses: z.array(PrivateAnalysisSchema).max(100).default([]),
     readinessHistory: z.array(ReadinessHistorySchema).max(30).default([]),
+    receiptImage: ReceiptImageRecordSchema.default({
+      status: "idle",
+      attemptCount: 0,
+      proposalVersion: null,
+      updatedAt: null,
+      activeRequestId: null,
+      byteLength: null,
+      sha256: null,
+      lastFailure: null,
+    }),
     questions: z.array(QuestionSchema).max(8),
     options: z.array(OptionSchema).max(8),
     readiness: ReadinessSchema.nullable(),

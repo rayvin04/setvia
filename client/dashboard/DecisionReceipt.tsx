@@ -2,7 +2,9 @@ import { useId, useState } from "react";
 import { Avatar } from "../Mascot";
 import { createEventCard } from "./event-card";
 import type { projectDecisionReceipt } from "./decision-receipt";
+import type { ParticipantSession } from "../../shared/room-api";
 import { createReceiptPdf } from "./receipt-pdf";
+import { ReceiptArtwork, type ReceiptImageStatus } from "./ReceiptArtwork";
 import "./decision-receipt.css";
 
 type Receipt = ReturnType<typeof projectDecisionReceipt>;
@@ -10,9 +12,17 @@ type Receipt = ReturnType<typeof projectDecisionReceipt>;
 export function DecisionReceipt({
   receipt,
   evidence,
+  session,
+  roomRevision,
+  receiptImageStatus,
+  receiptImageRetryAvailable,
 }: {
   receipt: Receipt;
   evidence: ReadonlyMap<string, string>;
+  session: ParticipantSession | null;
+  roomRevision: number;
+  receiptImageStatus: ReceiptImageStatus | null;
+  receiptImageRetryAvailable: boolean;
 }) {
   const id = useId();
   const [busy, setBusy] = useState(false);
@@ -96,6 +106,14 @@ export function DecisionReceipt({
           ) : (
             <p>No details have been added yet.</p>
           )}
+          <ReceiptArtwork
+            title={eventCard.title}
+            session={session}
+            expectedRevision={roomRevision}
+            proposalVersion={receipt.proposalVersion}
+            status={receiptImageStatus}
+            retryAvailable={receiptImageRetryAvailable}
+          />
         </section>
         <section>
           <h3>Blind spots caught by Setvia</h3>

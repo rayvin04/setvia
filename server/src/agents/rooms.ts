@@ -7,6 +7,7 @@ import {
 import { z } from "zod";
 import {
   RoomSchema,
+  projectReceiptImageStatus,
   FactSchema,
   MAX_ROOM_PARTICIPANTS,
   ConstraintSchema,
@@ -628,6 +629,7 @@ export class RoomService {
         confirmedAttendeeCount: room.confirmedAttendeeCount ?? null,
       },
       analysisStatus: room.analysisStatus,
+      receiptImage: projectReceiptImageStatus(room.receiptImage),
       privateAnalysisStatus: room.privateAnalysisStatus[auth.participantId] ?? "idle",
       participantApprovals: room.participants
         .filter((p) => room.approvals[p.id] === room.proposalVersion)

@@ -6,6 +6,7 @@ import {
   OptionSchema,
   OutcomeSchema,
   QuestionSchema,
+  ReceiptImageStatusSchema,
   ReadinessSchema,
   MAX_ROOM_PARTICIPANTS,
 } from "../server/src/agents/contracts.js";
@@ -36,6 +37,12 @@ export const DashboardRoomSchema = z
     revision: z.number().int().nonnegative(),
     analysisStatus: z.enum(["idle", "queued", "running", "blocked", "complete"]).default("idle"),
     proposalVersion: z.number().int().positive(),
+    receiptImage: ReceiptImageStatusSchema.default({
+      status: "idle",
+      retryAvailable: false,
+      proposalVersion: null,
+      updatedAt: null,
+    }),
     participants: z
       .array(
         z

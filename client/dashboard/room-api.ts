@@ -7,6 +7,7 @@ import {
   CreateRoomRequestSchema,
   ParticipantSessionSchema,
   SubmitRoomMessageResultSchema,
+  GenerateReceiptImageResponseSchema,
   type CreateRoomRequest,
   type ParticipantSession,
 } from "../../shared/room-api";
@@ -38,7 +39,6 @@ const JoinedSchema = z.object({
   session: ParticipantSessionSchema,
   snapshot: DashboardSnapshotSchema,
 });
-
 export class RoomApiError extends Error {
   constructor(message: string, readonly status = 0) {
     super(message);
@@ -105,6 +105,59 @@ export async function getRoomHealth(signal?: AbortSignal): Promise<RoomHealth> {
     cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal,
   });
   return readResponse(response, HealthSchema);
+}
+
+export async function requestReceiptImage(
+  session: ParticipantSession,
+  expectedRevision: number,
+  proposalVersion: number,
+  options: { retry?: boolean; signal?: AbortSignal } = {},
+) {
+  const response = await fetch(apiEndpoint(`/rooms/${encodeURIComponent(session.roomId)}/receipt-image`), {
+    method: "POST",
+    headers: { ...authHeaders(session), "Content-Type": "application/json" },
+    body: JSON.stringify({
+      expectedRevision,
+      proposalVersion,
+      ...(options.retry ? { retry: true } : {}),
+    }),
+    cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal: options.signal,
+  });
+  if (response.status === 429) {
+    let value: unknown = null;
+    try { value = await response.json(); } catch { /* Use a safe fallback below. */ }
+    const capped = GenerateReceiptImageResponseSchema.safeParse(value);
+    if (capped.success) return capped.data.receiptImage;
+    const message = value && typeof value === "object" && "error" in value && typeof value.error === "string"
+      ? value.error
+      : "The event artwork limit has been reached. Please try again later.";
+    throw new RoomApiError(message, response.status);
+  }
+  const result = await readResponse(response, GenerateReceiptImageResponseSchema);
+  return result.receiptImage;
+}
+
+export async function getReceiptImage(session: ParticipantSession, signal?: AbortSignal) {
+  const response = await fetch(apiEndpoint(`/rooms/${encodeURIComponent(session.roomId)}/receipt-image`), {
+    headers: authHeaders(session),
+    cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal,
+  });
+  if (!response.ok) {
+    let message = "The event illustration could not be loaded. Please try again.";
+    try {
+      const body: unknown = await response.json();
+      if (body && typeof body === "object" && "error" in body && typeof body.error === "string") {
+        message = body.error;
+      }
+    } catch { /* Keep the safe fallback if the response is not JSON. */ }
+    throw new RoomApiError(message, response.status);
+  }
+  if (!response.headers.get("content-type")?.toLowerCase().includes("image/webp")) {
+    throw new RoomApiError("The event illustration arrived in an unsupported format.", 502);
+  }
+  const image = await response.blob();
+  if (!image.size) throw new RoomApiError("The event illustration was empty. Please try again.", 502);
+  return image;
 }
 
 export async function createRoom(input: CreateRoomRequest, signal?: AbortSignal) {

@@ -10,7 +10,7 @@
     "build": "npm run check:server && tsc -b && vite build --configLoader runner",
     "preview": "vite preview --host 127.0.0.1",
     "check:server": "tsc --noEmit -p server/tsconfig.json",
-    "test": "tsx --test server/src/ai/ai.test.ts server/src/http/app.test.ts client/plan-api.test.ts client/plan-mapping.test.ts client/draft-store.test.ts client/frontend-preview.test.ts server/src/agents/agents.test.ts scripts/live-budget-journal.test.ts lab-ui/server.test.ts server/src/dashboard/dashboard.test.ts client/dashboard/dashboard.test.ts server/src/rooms/runtime.test.ts server/src/synthetic/synthetic.test.ts server/src/storage-seed.test.ts shared/room-code.test.ts client/dashboard/beach-trip-demo.test.ts client/dashboard/decision-receipt.test.ts server/src/playground/playground.test.ts",
+    "test": "tsx --test server/src/ai/ai.test.ts server/src/ai/muse-image.test.ts server/src/http/app.test.ts client/plan-api.test.ts client/plan-mapping.test.ts client/draft-store.test.ts client/frontend-preview.test.ts server/src/agents/agents.test.ts scripts/live-budget-journal.test.ts lab-ui/server.test.ts server/src/dashboard/dashboard.test.ts client/dashboard/dashboard.test.ts server/src/rooms/runtime.test.ts server/src/rooms/receipt-image.test.ts server/src/synthetic/synthetic.test.ts server/src/storage-seed.test.ts shared/room-code.test.ts client/dashboard/beach-trip-demo.test.ts client/dashboard/decision-receipt.test.ts server/src/playground/playground.test.ts",
     "test:playground": "tsx --test server/src/playground/playground.test.ts",
     "test:dashboard": "tsx --test server/src/dashboard/dashboard.test.ts client/dashboard/dashboard.test.ts",
     "lab": "tsx scripts/run-lab.ts",

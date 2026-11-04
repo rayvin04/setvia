@@ -17,7 +17,8 @@ import { saveLab, type LabRecord } from "../agents/lab.js";
 import { DashboardSnapshotSchema } from "../../../shared/dashboard.js";
 import { SubmitRoomMessageSchema, SubmitRoomMessageResultSchema } from "../../../shared/room-api.js";
 import { projectDashboardSnapshot } from "../dashboard/projection.js";
-import type { CreateRoomRequest } from "../../../shared/room-api.js";
+import { ReceiptImageManager } from "./receipt-image.js";
+import type { CreateRoomRequest, GenerateReceiptImageRequest } from "../../../shared/room-api.js";
 
 export const DEFAULT_ROOM_PROMPT_VERSION = "agents-v8";
 
@@ -222,9 +223,13 @@ export class RoomEventHub {
   private static readonly MAX_STREAMS_PER_ROOM = 32;
   private static readonly MAX_STREAMS_PER_PARTICIPANT = 4;
   private readonly streams = new Map<string, Set<StreamClient>>();
-  constructor(private readonly rooms: AgentEngine["rooms"]) {}
+  constructor(
+    private readonly rooms: AgentEngine["rooms"],
+    private readonly beforeSnapshot?: (roomId: string, auth: Auth) => Promise<void>,
+  ) {}
 
   async subscribe(roomId: string, auth: Auth, response: Response) {
+    await this.beforeSnapshot?.(roomId, auth);
     const initial = await this.snapshot(roomId, auth);
     const existing = this.streams.get(roomId);
     if (
@@ -317,6 +322,7 @@ interface RoomRuntimeOptions {
   acquireAttempt?(): Promise<() => void>;
   beforeAttempt?(): void | Promise<void>;
   participantCooldownMs?: number;
+  receiptImages?: ReceiptImageManager;
 }
 
 export interface AuxiliaryInferenceHooks {
@@ -394,10 +400,21 @@ export class RoomRuntime {
   }
 
   async snapshot(roomId: string, auth: Auth) {
+    await this.options.receiptImages?.recover(roomId, auth);
     const view = await this.rooms.view(roomId, auth);
     const result = DashboardSnapshotSchema.parse(projectDashboardSnapshot(view));
     this.resumePending(roomId, auth);
     return result;
+  }
+
+  requestReceiptImage(roomId: string, auth: Auth, input: GenerateReceiptImageRequest) {
+    if (!this.options.receiptImages) throw new StateError("RECEIPT_IMAGE_NOT_CONFIGURED");
+    return this.options.receiptImages.request(roomId, auth, input);
+  }
+
+  readReceiptImage(roomId: string, auth: Auth) {
+    if (!this.options.receiptImages) throw new StateError("RECEIPT_IMAGE_NOT_CONFIGURED");
+    return this.options.receiptImages.read(roomId, auth);
   }
 
   async submit(roomId: string, auth: Auth, input: ReturnType<typeof SubmitRoomMessageSchema.parse>) {
@@ -604,6 +621,7 @@ export class RoomRuntime {
     this.groupTimers.clear();
     this.privateTimers.clear();
     this.options.engine.cancelAll();
+    await this.options.receiptImages?.close();
     this.events.close();
     await Promise.allSettled([...this.activeTasks]);
     this.privateRuns.clear();
@@ -667,6 +685,7 @@ export async function createLocalRoomRuntime(options: {
   const persistenceLock = await persistence.acquireRuntimeLock();
   let journal: LiveBudgetJournal | undefined;
   let budget: IntegrationRunBudget | undefined;
+  let receiptImages: ReceiptImageManager | undefined;
   try {
     journal = await LiveBudgetJournal.open(privateRoot, options.publicRoot, ["F"]);
     const runBudget = await IntegrationRunBudget.open(resolve(privateRoot, "room-state", "integration-budget.ndjson"));
@@ -733,7 +752,14 @@ export async function createLocalRoomRuntime(options: {
       (roomId) => { void hub?.publishGroup(roomId); },
       (roomId, ownerId) => { void hub?.publishPrivate(roomId, ownerId); },
     );
-    hub = new RoomEventHub(engine.rooms);
+    receiptImages = await ReceiptImageManager.open({
+      store: engine.store,
+      privateRoot,
+      publicRoot: options.publicRoot,
+      beforeAttempt: options.beforeAttempt,
+      publishGroup: (roomId) => hub?.publishGroup(roomId),
+    });
+    hub = new RoomEventHub(engine.rooms, (roomId, auth) => receiptImages!.recover(roomId, auth));
     const runtime = new RoomRuntime({
       engine,
       journal,
@@ -743,6 +769,7 @@ export async function createLocalRoomRuntime(options: {
       publicRoot: options.publicRoot,
       syntheticDemo: options.syntheticDemo ?? false,
       events: hub,
+      receiptImages,
       beforeGroup: () => checkGroupCapacity(limits.maxRequests),
       acquireAttempt: options.acquireAttempt,
       beforeAttempt: options.beforeAttempt,
@@ -750,6 +777,7 @@ export async function createLocalRoomRuntime(options: {
     });
     return runtime;
   } catch (error) {
+    await receiptImages?.close();
     await budget?.close();
     await journal?.release();
     await persistenceLock();
@@ -769,9 +797,11 @@ export function roomAuthFromHeaders(headers: Record<string, unknown>): Auth {
 
 export function roomErrorStatus(code: string) {
   if (code === "ROOM_STREAM_LIMIT" || code === "PARTICIPANT_COOLDOWN") return 429;
+  if (["INFERENCE_DISABLED", "RECEIPT_IMAGE_NOT_CONFIGURED", "RECEIPT_IMAGE_BUDGET_UNAVAILABLE", "RECEIPT_IMAGE_STORAGE_INVALID"].includes(code)) return 503;
   if (["UNAUTHORIZED", "UNAUTHORIZED_ANSWER", "PRIVATE_ANSWER_REQUIRED", "DUPLICATE_MESSAGE_ID"].includes(code)) return 403;
   if (["ROOM_NOT_FOUND", "CANDIDATE_NOT_FOUND"].includes(code)) return 404;
-  if (["STALE_STATE", "STALE_PROPOSAL", "STALE_PRIVATE_ANALYSIS", "INVALID_REPLY_OPTION", "REPLY_WITHOUT_QUESTION"].includes(code)) return 409;
+  if (["STALE_STATE", "STALE_PROPOSAL", "STALE_PRIVATE_ANALYSIS", "INVALID_REPLY_OPTION", "REPLY_WITHOUT_QUESTION", "INVALID_RECEIPT_IMAGE_RETRY", "RECEIPT_IMAGE_STATE_INVALID", "RECEIPT_IMAGE_NOT_READY"].includes(code)) return 409;
+  if (code === "RECEIPT_IMAGE_BUDGET_LIMIT") return 429;
   if (code.includes("LIMIT") || code === "REVIEW_NOT_READY") return 409;
   return 400;
 }

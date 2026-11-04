@@ -15,6 +15,7 @@ export function projectDashboardRoom(view: AuthorizedView): DashboardRoom {
     eventAttendance: view.eventAttendance,
     revision: view.revision,
     analysisStatus: view.analysisStatus,
+    receiptImage: view.receiptImage,
     privateAnalysisStatus: view.privateAnalysisStatus,
     proposalVersion: view.proposalVersion,
     participants: view.participants.map((person) => ({

@@ -23,6 +23,8 @@ import { assertPlanningScope, PLANNING_REDIRECT, PlanningScopeError } from "../a
 import {
   ApproveProposalRequestSchema,
   CreateRoomRequestSchema,
+  GenerateReceiptImageRequestSchema,
+  GenerateReceiptImageResponseSchema,
   JoinRoomRequestSchema,
   LeaveRoomRequestSchema,
   ReviseProposalRequestSchema,
@@ -191,6 +193,13 @@ function roomErrorMessage(code: string) {
     LIVE_HTTP_ATTEMPT_LIMIT: "The remaining request allowance cannot cover a complete analysis. Developer approval is required for more requests.",
     ROOM_BUDGET_LIMIT: "This room has reached its live-analysis budget.",
     PRIVATE_REQUEST_BUDGET_LIMIT: "The private analysis budget has been reached.",
+    INFERENCE_DISABLED: "Planning inference is temporarily disabled.",
+    RECEIPT_IMAGE_NOT_CONFIGURED: "Event illustration generation is not configured on this server.",
+    RECEIPT_IMAGE_BUDGET_UNAVAILABLE: "Event illustration generation is temporarily unavailable.",
+    RECEIPT_IMAGE_NOT_READY: "The event illustration is not ready yet.",
+    RECEIPT_IMAGE_STORAGE_INVALID: "The saved event illustration is unavailable.",
+    RECEIPT_IMAGE_STATE_INVALID: "The event illustration state could not be validated.",
+    INVALID_RECEIPT_IMAGE_RETRY: "Retry is available only after the first image attempt fails.",
   };
   return messages[code] ?? "This room action could not be completed.";
 }
@@ -308,6 +317,46 @@ export function createApp(options: AppOptions) {
     try {
       const auth = roomAuthFromHeaders(request.headers as Record<string, unknown>);
       response.json(await options.rooms.snapshot(roomId!, auth));
+    } catch (error) { sendRoomFailure(response, error); }
+  });
+
+  app.post(
+    "/api/rooms/:roomId/receipt-image",
+    createRateLimiter(10, 60_000, now),
+    async (request, response) => {
+      if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
+      const roomId = typeof request.params.roomId === "string" ? request.params.roomId : "";
+      const parsed = GenerateReceiptImageRequestSchema.safeParse(request.body);
+      if (!/^[a-zA-Z0-9_-]{1,80}$/.test(roomId ?? "") || !parsed.success)
+        return response.status(400).json({ error: "Refresh the room before requesting its event illustration." });
+      try {
+        const auth = roomAuthFromHeaders(request.headers as Record<string, unknown>);
+        const body = GenerateReceiptImageResponseSchema.parse({
+          receiptImage: await options.rooms.requestReceiptImage(roomId, auth, parsed.data),
+        });
+        const status = body.receiptImage.status === "generating"
+          ? 202
+          : body.receiptImage.status === "capped"
+            ? 429
+            : 200;
+        response.status(status).json(body);
+      } catch (error) { sendRoomFailure(response, error); }
+    },
+  );
+
+  app.get("/api/rooms/:roomId/receipt-image", async (request, response) => {
+    if (!options.rooms) return response.status(503).json({ error: "Local real-time planning is not configured on this server." });
+    const roomId = typeof request.params.roomId === "string" ? request.params.roomId : "";
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(roomId ?? ""))
+      return response.status(400).json({ error: "Invalid room link." });
+    try {
+      const auth = roomAuthFromHeaders(request.headers as Record<string, unknown>);
+      const { bytes } = await options.rooms.readReceiptImage(roomId, auth);
+      response.setHeader("Cache-Control", "private, no-store, no-transform");
+      response.setHeader("Content-Type", "image/webp");
+      response.setHeader("Content-Length", String(bytes.length));
+      response.setHeader("Content-Disposition", "inline; filename=\"setvia-event.webp\"");
+      response.send(bytes);
     } catch (error) { sendRoomFailure(response, error); }
   });
 

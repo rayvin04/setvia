@@ -8,6 +8,7 @@ import { useSetviaSounds } from "../sound";
 import { MessageComposer, type MessageComposerHandle } from "./MessageComposer";
 import { PlanningDashboard, type SectionId } from "./Dashboard";
 import { DecisionReceipt } from "./DecisionReceipt";
+import type { ReceiptImageStatus } from "./ReceiptArtwork";
 import { ReceiptEditor } from "./ReceiptEditor";
 import {
   projectDecisionReceipt,
@@ -413,6 +414,9 @@ export default function LiveRoom() {
       <strong>{analysisLabel}</strong>
     </div>
   ) : null;
+  const receiptImageState = snapshot
+    ? getReceiptImageState(snapshot)
+    : { status: null, retryAvailable: false };
 
   return (
     <div
@@ -467,8 +471,13 @@ export default function LiveRoom() {
           {participant && snapshot.source === "room" ? (
             <section className="live-decision-receipt" aria-label="Decision Receipt">
               <DecisionReceipt
+                key={snapshot.room.roomId}
                 receipt={projectDecisionReceipt(snapshot)}
                 evidence={projectReceiptEvidence(snapshot)}
+                session={session}
+                roomRevision={snapshot.room.revision}
+                receiptImageStatus={receiptImageState.status}
+                receiptImageRetryAvailable={receiptImageState.retryAvailable}
               />
               <ReceiptEditor
                 key={snapshot.room.roomId}
@@ -527,6 +536,28 @@ export default function LiveRoom() {
       </AnimatePresence>
     </div>
   );
+}
+
+function getReceiptImageState(snapshot: DashboardSnapshot): {
+  status: ReceiptImageStatus | null;
+  retryAvailable: boolean;
+} {
+  const state = (snapshot.room as typeof snapshot.room & {
+    receiptImage?: { status?: unknown; retryAvailable?: unknown };
+  }).receiptImage;
+  const validStatuses: ReceiptImageStatus[] = [
+    "idle",
+    "generating",
+    "ready",
+    "failed",
+    "capped",
+  ];
+  return {
+    status: validStatuses.includes(state?.status as ReceiptImageStatus)
+      ? (state?.status as ReceiptImageStatus)
+      : null,
+    retryAvailable: state?.retryAvailable === true,
+  };
 }
 
 async function copyText(value: string) {
