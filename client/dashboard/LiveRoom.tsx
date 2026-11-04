@@ -6,6 +6,9 @@ import { Wordmark } from "../components";
 import { Avatar } from "../Mascot";
 import { MessageComposer, type MessageComposerHandle } from "./MessageComposer";
 import { PlanningDashboard, type SectionId } from "./Dashboard";
+import { DecisionReceipt } from "./DecisionReceipt";
+import { ReceiptEditor } from "./ReceiptEditor";
+import { projectDecisionReceipt } from "./decision-receipt";
 import { currentQuestion, questionQuickReplies } from "./composer-model";
 import { acceptDashboardUpdate } from "./model";
 import { validateDashboardAction, type DashboardAction, type DashboardSnapshot } from "../../shared/dashboard";
@@ -103,6 +106,8 @@ export default function LiveRoom() {
   const [inviteLink, setInviteLink] = useState(() => getInvitationLink(roomId));
   const [copied, setCopied] = useState(false);
   const [leaving, setLeaving] = useState(false);
+  const [composerHeight, setComposerHeight] = useState(0);
+  const [composerInset, setComposerInset] = useState(0);
   const composer = useRef<MessageComposerHandle>(null);
   const lastActivityIds = useRef<Set<string> | null>(null);
   const noticeTimer = useRef<number | null>(null);
@@ -284,7 +289,8 @@ export default function LiveRoom() {
   const budget = health?.budget;
 
   return (
-    <div className="dashboard-shell dashboard-refined live-room-shell">
+    <div className="dashboard-shell dashboard-refined live-room-shell"
+      style={participant ? { paddingBottom: composerHeight + composerInset + 24 } : undefined}>
       <header className="dashboard-header live-room-header">
         <Wordmark />
         <div className="live-room-mode" data-demo={health?.mode === "synthetic-live-demo"}>
@@ -336,6 +342,25 @@ export default function LiveRoom() {
             </button>
             {!readyToApprove ? <small>Approval opens after a current analysis completes and readiness is cleared for human review.</small> : null}
           </div>
+          {participant && snapshot.source === "room" ? (
+            <details className="live-decision-receipt">
+              <summary>Decision Receipt</summary>
+              <DecisionReceipt
+                receipt={projectDecisionReceipt(snapshot)}
+                evidence={new Map(snapshot.contributions
+                  .filter((entry) => entry.visibility === "group" && entry.proposalVersion === snapshot.room.proposalVersion)
+                  .map((entry) => [entry.id, entry.text]))}
+              />
+              <ReceiptEditor
+                key={snapshot.room.roomId}
+                room={snapshot.room}
+                onSave={async (revision, proposal) => {
+                  const next = await reviseRoomProposal(session, revision, proposal);
+                  acceptSnapshot(next);
+                }}
+              />
+            </details>
+          ) : null}
           {participant ? <MessageComposer
             key={`${snapshot.room.roomId}-${snapshot.room.viewerId}`}
             ref={composer}
@@ -347,8 +372,8 @@ export default function LiveRoom() {
             replies={questionQuickReplies(question)}
             allowedVisibilities={["private", "group"]}
             onSubmit={onSubmit}
-            onHeightChange={() => {}}
-            onBottomInsetChange={() => {}}
+            onHeightChange={setComposerHeight}
+            onBottomInsetChange={setComposerInset}
             pending={busy}
             disabledReason={snapshot.room.analysisStatus === "running" ? "You can keep drafting while analysis runs." : undefined}
             mode="room"
