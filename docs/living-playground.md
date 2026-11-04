@@ -1,6 +1,6 @@
 # Meet the minds: Setvia’s Meta AI playground
 
-The homepage’s **Meet the minds** section shows four focused examples of how Setvia’s planning roles work. Each card starts a bounded request only after someone selects a scenario and clicks its action. Results show whether they came from a live response or the scenario cache.
+The homepage’s **Meet the minds** section shows four focused examples of how Setvia’s planning roles work. Each card cycles through three fictional scenarios and starts a bounded request only after someone clicks Run. During the request, that card shows the example input and a thinking state; when it completes, the same card shows a compact model response in orange. Results identify whether they came from a live response or the scenario cache. The other cards stay in their preview state.
 
 ## The four cards
 
@@ -15,7 +15,7 @@ These cards are separate demonstrations, not a complete collaborative planning s
 
 ## Validation and privacy
 
-- Requests can select only a supported role and predefined scenario. The optional 10–240 character free-text input is accepted only by Listener and is limited to group-planning topics.
+- Homepage cards use predefined scenarios only. The API also accepts an optional 10–240 character free-text input for Listener, limited to group-planning topics; it is private to that request.
 - The API validates request and response schemas. The server applies scope checks, evidence and feasibility checks where relevant, request limits, concurrency limits, and a separate bounded inference allowance.
 - Model output is a proposal. It cannot confirm a participant’s facts, override a hard constraint, or approve a plan for someone.
 - Preset results may be cached. Personal Listener text and its response are not written to that cache.

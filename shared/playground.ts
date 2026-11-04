@@ -11,6 +11,12 @@ export type PlaygroundAgent = (typeof PlaygroundAgents)[number];
 export const playgroundScenarios = {
   listener: [
     {
+      id: "listener-school-day",
+      title: "Beach day around class",
+      text: "Four of us are planning a beach getaway, but I have class Saturday morning and can only leave after 1 PM. Can we plan around that?",
+      cue: "Can one person’s schedule shape a plan?",
+    },
+    {
       id: "listener-budget",
       title: "A budget worth hearing",
       text: "I’d love to join the beach trip, but I’m worried about spending more than ₱800 in total.",
@@ -36,6 +42,12 @@ export const playgroundScenarios = {
       text: "The lunch costs ₱950 per person. Everyone’s confirmed limit is ₱800, including food.",
       cue: "A good idea still has to fit the budget.",
     },
+    {
+      id: "judge-school-time",
+      title: "The schedule doesn’t fit",
+      text: "The beach group plans to leave at 10 AM Saturday, but one attendee has class until 2 PM. The trip takes about an hour.",
+      cue: "Check the plan against one person’s real availability.",
+    },
   ],
   negotiator: [
     {
@@ -50,6 +62,12 @@ export const playgroundScenarios = {
       text: "Ana: Saturday, 1–5 PM. Ben: Saturday, 3–7 PM. Travel time is unknown.",
       cue: "Suggest a window without assuming agreement.",
     },
+    {
+      id: "negotiator-friday",
+      title: "Find a Friday window",
+      text: "Ana: Friday, 4–8 PM. Ben: Friday, 5–7 PM. Travel time is unknown.",
+      cue: "Offer an overlap and leave travel open.",
+    },
   ],
   speaker: [
     {
@@ -63,6 +81,12 @@ export const playgroundScenarios = {
       title: "The missing picnic piece",
       text: "The picnic is tentatively Sunday at noon. No one has confirmed who will bring food.",
       cue: "Turn a missing detail into a natural question.",
+    },
+    {
+      id: "speaker-meeting-point",
+      title: "Where should everyone meet?",
+      text: "The group agreed to meet Saturday afternoon, but nobody has picked a meeting point yet.",
+      cue: "Find the next practical detail to decide.",
     },
   ],
 } as const;

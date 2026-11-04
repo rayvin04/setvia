@@ -54,7 +54,7 @@ This table is a navigation aid, not an official weighted rubric. The project not
 
 ## What judges can try today
 
-The homepage’s **Meet the minds** section has four role cards. Each button makes a bounded request to the Muse Spark 1.3 playground API; the card shows whether the result is live or cached and names the role or role handoff. No model request happens on page load. Listener’s optional personal thought is transient and is not saved. See the [playground guide](docs/living-playground.md).
+The homepage’s **Meet the minds** section has four role cards, each with three fictional examples. Clicking Run replaces that card’s teaser with the selected input and a compact Muse Spark 1.3 response; a live/cached label keeps replay status clear. No model request happens on page load. See the [playground guide](docs/living-playground.md).
 
 The public [scenario page](https://setvia.r4yv.tech/demos) and [planning dashboard](https://setvia.r4yv.tech/dashboard) use fictional preview data; those routes do not call a live model or create a shared planning room. The Vite frontend uses a separate Express API for model-backed actions. The Meta API key stays on the server. See the [judge guide](docs/judge-guide.md) for the public and local paths.
 

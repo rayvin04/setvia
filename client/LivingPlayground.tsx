@@ -1,25 +1,13 @@
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
-import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { useLocation } from "react-router-dom";
 import {
   Archive,
-  ArrowRight,
-  Check,
   CircleAlert,
   LoaderCircle,
-  Minus,
   Play,
-  Plus,
   RotateCw,
-  ShieldCheck,
   Sparkles,
-  X,
   Zap,
 } from "lucide-react";
 import {
@@ -29,7 +17,6 @@ import {
 } from "../shared/playground";
 import { AgentCat } from "./AgentCats";
 import { Reveal } from "./MotionUI";
-import { ButtonLink } from "./components";
 import { playgroundSession, runPlayground } from "./playground-api";
 import "./living-playground.css";
 
@@ -39,8 +26,6 @@ const agents = [
     name: "Listener",
     title: "Hear me out.",
     purpose: "Turns a thought into a constraint.",
-    breed: "The thoughtful Scottish fold",
-    idle: "A little context goes a long way.",
     loading: "Listening for what matters…",
   },
   {
@@ -48,8 +33,6 @@ const agents = [
     name: "Judge",
     title: "Spot the problem.",
     purpose: "Checks a plan against the facts.",
-    breed: "The observant silver Persian",
-    idle: "Let’s check before we commit.",
     loading: "Checking the evidence…",
   },
   {
@@ -57,8 +40,6 @@ const agents = [
     name: "Negotiator",
     title: "Find common ground.",
     purpose: "Makes room for different needs.",
-    breed: "The easygoing ginger tabby",
-    idle: "There might be a way for both.",
     loading: "Looking for a workable overlap…",
   },
   {
@@ -66,11 +47,15 @@ const agents = [
     name: "Speaker",
     title: "Ask the right question.",
     purpose: "Gives the next step a voice.",
-    breed: "Your original Setvia cat",
-    idle: "One good question. Less back-and-forth.",
-    loading: "Choosing a question & finding the words…",
+    loading: "Choosing the next question…",
   },
-] as const;
+] as const satisfies readonly {
+  id: PlaygroundAgent;
+  name: string;
+  title: string;
+  purpose: string;
+  loading: string;
+}[];
 type AgentInfo = (typeof agents)[number];
 
 function Source({ result }: { result: PlaygroundResult }) {
@@ -83,20 +68,23 @@ function Source({ result }: { result: PlaygroundResult }) {
   );
 }
 
-function AgentCard({
-  agent,
-  onInspect,
-}: {
-  agent: AgentInfo;
-  onInspect: (result: PlaygroundResult) => void;
-}) {
+function visibleOutput(agent: PlaygroundAgent, result: PlaygroundResult) {
+  return result.sections.slice(
+    0,
+    agent === "judge" || agent === "negotiator" ? 3 : 2,
+  );
+}
+
+function AgentCard({ agent }: { agent: AgentInfo }) {
   const [scenarioIndex, setScenarioIndex] = useState(0);
   const [result, setResult] = useState<PlaygroundResult>();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const pending = useRef<AbortController | null>(null);
   const reduced = useReducedMotion();
-  const scenario = playgroundScenarios[agent.id][scenarioIndex];
+  const scenarios = playgroundScenarios[agent.id];
+  const scenario = scenarios[scenarioIndex];
+  const showingResponse = loading || Boolean(result) || Boolean(error);
   useEffect(() => () => pending.current?.abort(), []);
 
   async function run() {
@@ -131,85 +119,145 @@ function AgentCard({
     }
   }
 
+  function nextExample() {
+    setScenarioIndex((index) => (index + 1) % scenarios.length);
+    setResult(undefined);
+    setError("");
+  }
+
+  const swapMotion = reduced
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+    : {
+        initial: { opacity: 0, y: 7 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: -5 },
+      };
+
   return (
     <article
       className={`playground-card playground-${agent.id}${loading ? " is-working" : ""}`}
-      aria-labelledby={`${agent.id}-title`}
+      aria-labelledby={`${agent.id}-role`}
     >
-      <div className="playground-cat-stage">
-        <div className="playground-cat-platform" />
-        <motion.div
-          className="playground-cat-wrap"
-          whileHover={
-            reduced
-              ? undefined
-              : { y: -3, rotate: agent.id === "judge" ? -2 : 2 }
-          }
-          transition={{ type: "spring", bounce: 0, visualDuration: 0.24 }}
-        >
-          <AgentCat agent={agent.id} />
-        </motion.div>
-        <span className="playground-role">{agent.name}</span>
-      </div>
-      <h3 id={`${agent.id}-title`}>{agent.title}</h3>
-      <p className="playground-purpose">{agent.purpose}</p>
-      <div className="playground-scenario">
-        <span>{scenario.title}</span>
-        <p>{scenario.text}</p>
-      </div>
-      <div
-        className="playground-answer"
-        aria-live="polite"
-        aria-atomic="true"
-        aria-busy={loading}
+      <span className="playground-role" id={`${agent.id}-role`}>
+        {agent.name}
+      </span>
+      <motion.div
+        className={`playground-cat-stage playground-cat-${agent.id}`}
+        aria-hidden="true"
+        animate={loading && !reduced ? { y: [0, -2, 0] } : { y: 0 }}
+        transition={{ duration: 1.4, repeat: loading && !reduced ? Infinity : 0 }}
       >
-        {loading ? (
-          <div className="playground-waiting">
-            <LoaderCircle size={19} aria-hidden="true" />
-            <strong>{agent.loading}</strong>
-            <span>
-              {agent.id === "speaker"
-                ? "Question Strategist → Speaker"
-                : `${agent.name} · Muse Spark 1.3`}
-            </span>
-          </div>
-        ) : error ? (
-          <div className="playground-error" role="alert">
-            <CircleAlert size={18} aria-hidden="true" />
-            <p>{error}</p>
-          </div>
-        ) : result ? (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: reduced ? 0 : 0.2 }}
-          >
-            <Source result={result} />
-            <dl>
-              {result.sections.slice(0, 2).map((section) => (
-                <div key={section.label}>
-                  <dt>{section.label}</dt>
-                  <dd>{section.text}</dd>
-                </div>
-              ))}
-            </dl>
-            <button
-              className="playground-inspect"
-              type="button"
-              onClick={() => onInspect(result)}
-              aria-controls="playground-inspector"
+        <div className="playground-cat-platform" />
+        <div className="playground-cat-wrap">
+          <AgentCat agent={agent.id} />
+        </div>
+      </motion.div>
+
+      <div
+        className="playground-card-content"
+        aria-busy={loading}
+        aria-live="polite"
+        aria-atomic="false"
+      >
+        <AnimatePresence mode="wait" initial={false}>
+          {!showingResponse ? (
+            <motion.div
+              key="preview"
+              className="playground-card-preview"
+              {...swapMotion}
+              transition={{ duration: reduced ? 0.12 : 0.2, ease: "easeOut" }}
             >
-              Inspect full answer <ArrowRight size={13} aria-hidden="true" />
-            </button>
-          </motion.div>
-        ) : (
-          <div className="playground-empty">
-            <Sparkles size={17} aria-hidden="true" />
-            <p>{agent.idle}</p>
-            <span>{scenario.cue}</span>
-          </div>
-        )}
+              <h3>{agent.title}</h3>
+              <p className="playground-purpose">{agent.purpose}</p>
+              <div className="playground-scenario">
+                <div className="playground-scenario-heading">
+                  <span>{scenario.title}</span>
+                  <span className="playground-example-count">
+                    {scenarioIndex + 1} / {scenarios.length}
+                  </span>
+                </div>
+                <p>{scenario.text}</p>
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="response"
+              className="playground-card-conversation"
+              {...swapMotion}
+              transition={{ duration: reduced ? 0.12 : 0.2, ease: "easeOut" }}
+            >
+              <div className="playground-input-block">
+                <div className="playground-message-heading">
+                  <span>Example input</span>
+                  <span className="playground-example-count">
+                    {scenarioIndex + 1} / {scenarios.length}
+                  </span>
+                </div>
+                <p className="playground-input-copy">{scenario.text}</p>
+              </div>
+
+              <div className="playground-output-block">
+                <div className="playground-output-heading">
+                  <span>Muse Spark response</span>
+                  {result && <Source result={result} />}
+                </div>
+                <span className="playground-output-path">
+                  {result
+                    ? `Muse Spark 1.3 · ${result.roles.join(" → ")}`
+                    : agent.id === "speaker"
+                      ? "Muse Spark 1.3 · Question Strategist → Speaker"
+                      : `Muse Spark 1.3 · ${agent.name}`}
+                </span>
+
+                <AnimatePresence mode="wait" initial={false}>
+                  {loading ? (
+                    <motion.div
+                      key="loading"
+                      className="playground-response-waiting"
+                      role="status"
+                      {...swapMotion}
+                      transition={{ duration: reduced ? 0.12 : 0.18, ease: "easeOut" }}
+                    >
+                      <LoaderCircle size={15} aria-hidden="true" />
+                      <span>{agent.loading}</span>
+                      <span className="playground-thinking-dots" aria-hidden="true">
+                        <i />
+                        <i />
+                        <i />
+                      </span>
+                    </motion.div>
+                  ) : error ? (
+                    <motion.div
+                      key="error"
+                      className="playground-error"
+                      role="alert"
+                      {...swapMotion}
+                      transition={{ duration: reduced ? 0.12 : 0.18, ease: "easeOut" }}
+                    >
+                      <CircleAlert size={16} aria-hidden="true" />
+                      <p>{error}</p>
+                    </motion.div>
+                  ) : result ? (
+                    <motion.div
+                      key="result"
+                      className="playground-output-copy"
+                      {...swapMotion}
+                      transition={{ duration: reduced ? 0.12 : 0.22, ease: "easeOut" }}
+                    >
+                      {visibleOutput(agent.id, result).map((section) => (
+                        <p className="playground-output-line" key={section.label}>
+                          <strong>{section.label}:</strong> {section.text}
+                        </p>
+                      ))}
+                    </motion.div>
+                  ) : null}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
+
       <div className="playground-card-actions">
         <motion.button
           className="playground-run"
@@ -230,172 +278,26 @@ function AgentCard({
           className="playground-another"
           type="button"
           disabled={loading}
-          onClick={() => {
-            setScenarioIndex(
-              (index) => (index + 1) % playgroundScenarios[agent.id].length,
-            );
-            setResult(undefined);
-            setError("");
-          }}
-          aria-label={`Try another ${agent.name} scenario`}
+          onClick={nextExample}
+          aria-label={`Show another ${agent.name} example`}
         >
           <RotateCw size={13} aria-hidden="true" />
-          Try another scenario
+          Try another example
         </button>
       </div>
-      <span className="playground-breed">{agent.breed}</span>
     </article>
-  );
-}
-
-function PersonalThought({
-  onInspect,
-}: {
-  onInspect: (result: PlaygroundResult) => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [result, setResult] = useState<PlaygroundResult>();
-  const [length, setLength] = useState(0);
-  const form = useRef<HTMLFormElement>(null);
-  const pending = useRef<AbortController | null>(null);
-  useEffect(() => () => pending.current?.abort(), []);
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (pending.current) return;
-    const text = String(
-      new FormData(event.currentTarget).get("thought") ?? "",
-    ).trim();
-    const controller = new AbortController();
-    pending.current = controller;
-    setLoading(true);
-    setError("");
-    setResult(undefined);
-    const timeout = setTimeout(() => controller.abort(), 75_000);
-    try {
-      const answer = await runPlayground(
-        {
-          agent: "listener",
-          scenarioId: "listener-budget",
-          text,
-          sessionId: playgroundSession(),
-        },
-        controller.signal,
-      );
-      setResult(answer);
-      form.current?.reset();
-      setLength(0);
-    } catch (failure) {
-      setError(
-        failure instanceof Error ? failure.message : "Please try again.",
-      );
-    } finally {
-      clearTimeout(timeout);
-      pending.current = null;
-      setLoading(false);
-    }
-  }
-  return (
-    <div className="playground-personal">
-      <button
-        className="playground-personal-toggle"
-        type="button"
-        onClick={() => setOpen(!open)}
-        aria-expanded={open}
-        aria-controls="playground-personal-form"
-      >
-        <ShieldCheck size={16} aria-hidden="true" />
-        <span>
-          Something on your mind? <strong>Let Listener hear it.</strong>
-        </span>
-        {open ? (
-          <Minus size={16} aria-hidden="true" />
-        ) : (
-          <Plus size={16} aria-hidden="true" />
-        )}
-      </button>
-      {open && (
-        <form id="playground-personal-form" ref={form} onSubmit={submit}>
-          <label htmlFor="playground-thought">
-            A small thought about your next plan
-          </label>
-          <p id="playground-thought-help">
-            Try a budget, a time, or a transport concern. Sent to Meta for this
-            reply; your text and result aren’t saved. Avoid names or sensitive
-            details.
-          </p>
-          <textarea
-            id="playground-thought"
-            name="thought"
-            rows={2}
-            minLength={10}
-            maxLength={240}
-            required
-            autoComplete="off"
-            placeholder="I can join the picnic, but I need to be home by 3 PM…"
-            aria-describedby={`playground-thought-help${error ? " playground-personal-error" : ""}`}
-            onChange={(event) => setLength(event.target.value.length)}
-          />
-          <div className="playground-personal-actions">
-            <span>{length}/240 · Up to 3 personal tries per hour</span>
-            <button className="playground-run" disabled={loading} type="submit">
-              {loading ? (
-                <LoaderCircle size={14} aria-hidden="true" />
-              ) : (
-                <Play size={12} fill="currentColor" aria-hidden="true" />
-              )}
-              {loading ? "Listening…" : "Run Listener"}
-            </button>
-          </div>
-          <div aria-live="polite">
-            {error && (
-              <p
-                className="playground-personal-error"
-                id="playground-personal-error"
-                role="alert"
-              >
-                {error}
-              </p>
-            )}
-            {result && (
-              <div className="playground-personal-result">
-                <Check size={16} aria-hidden="true" />
-                <p>{result.sections[0].text}</p>
-                <button
-                  type="button"
-                  onClick={() => onInspect(result)}
-                  aria-controls="playground-inspector"
-                >
-                  Inspect answer <ArrowRight size={13} aria-hidden="true" />
-                </button>
-              </div>
-            )}
-          </div>
-        </form>
-      )}
-    </div>
   );
 }
 
 export function LivingPlayground() {
   const { hash, pathname } = useLocation();
-  const [inspected, setInspected] = useState<PlaygroundResult>();
-  const inspectorHeading = useRef<HTMLHeadingElement>(null);
-  const inspectTrigger = useRef<HTMLElement | null>(null);
-  const inspect = (result: PlaygroundResult) => {
-    inspectTrigger.current = document.activeElement as HTMLElement;
-    setInspected(result);
-  };
   useLayoutEffect(() => {
     if (pathname !== "/" || hash !== "#meet-the-minds") return;
     document
       .getElementById("meet-the-minds")
       ?.scrollIntoView({ behavior: "instant", block: "start" });
   }, [hash, pathname]);
-  useEffect(() => {
-    if (inspected) inspectorHeading.current?.focus();
-  }, [inspected]);
+
   return (
     <Reveal
       section
@@ -413,77 +315,13 @@ export function LivingPlayground() {
         </div>
         <span className="playground-model">
           <Sparkles size={15} aria-hidden="true" />
-          Muse Spark 1.3<span>Runs only when you ask</span>
+          Muse Spark 1.3
         </span>
       </div>
       <div className="playground-grid">
         {agents.map((agent) => (
-          <AgentCard key={agent.id} agent={agent} onInspect={inspect} />
+          <AgentCard key={agent.id} agent={agent} />
         ))}
-      </div>
-      <div className="playground-afterword">
-        <p>
-          <ShieldCheck size={14} aria-hidden="true" />
-          Fictional situations. Real AI responses. People make the decisions.
-        </p>
-        <span>Cat characters represent the roles.</span>
-      </div>
-      <PersonalThought onInspect={inspect} />
-      {inspected && (
-        <section
-          className="playground-inspector"
-          id="playground-inspector"
-          aria-labelledby="playground-inspector-heading"
-        >
-          <div className="playground-inspector-heading">
-            <div>
-              <h3
-                id="playground-inspector-heading"
-                ref={inspectorHeading}
-                tabIndex={-1}
-              >
-                {agents.find((agent) => agent.id === inspected.agent)!.name}’s
-                answer
-              </h3>
-              <Source result={inspected} />
-            </div>
-            <button
-              type="button"
-              aria-label="Close full answer"
-              onClick={() => {
-                setInspected(undefined);
-                inspectTrigger.current?.focus();
-              }}
-            >
-              <X size={18} aria-hidden="true" />
-            </button>
-          </div>
-          <dl>
-            {inspected.sections.map((section) => (
-              <div key={section.label}>
-                <dt>{section.label}</dt>
-                <dd>{section.text}</dd>
-              </div>
-            ))}
-          </dl>
-          <p className="playground-provenance">
-            {inspected.roles.join(" → ")} · {inspected.model} ·{" "}
-            {new Intl.DateTimeFormat(undefined, {
-              dateStyle: "medium",
-              timeStyle: "short",
-            }).format(new Date(inspected.generatedAt))}
-            {inspected.source === "cached"
-              ? " · Previously generated; no new model request"
-              : " · Generated for this request"}
-            {inspected.personal ? " · Not saved" : ""}
-          </p>
-        </section>
-      )}
-      <div className="playground-next">
-        <p>A little clearer? Bring your people into the picture.</p>
-        <ButtonLink to="/start" secondary>
-          Plan something together <ArrowRight size={15} aria-hidden="true" />
-        </ButtonLink>
       </div>
     </Reveal>
   );

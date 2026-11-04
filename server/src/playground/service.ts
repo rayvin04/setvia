@@ -189,7 +189,9 @@ export function createPlaygroundService(options: PlaygroundOptions) {
             text:
               request.scenarioId === "judge-seats"
                 ? "Transport for everyone has not been confirmed."
-                : "A meal within the limit, or explicit agreement to a changed budget.",
+                : request.scenarioId === "judge-budget"
+                  ? "A meal within the limit, or explicit agreement to a changed budget."
+                  : "Confirm whether a later departure is possible after class.",
           },
         );
       } else if (request.agent === "negotiator") {
@@ -205,14 +207,18 @@ export function createPlaygroundService(options: PlaygroundOptions) {
           }),
         );
         const option = output.options[0];
-        const sunday = request.scenarioId === "negotiator-sunday";
+        const overlap = request.scenarioId === "negotiator-sunday"
+          ? { day: "Sunday", earliestStart: 10, latestEnd: 12 }
+          : request.scenarioId === "negotiator-saturday"
+            ? { day: "Saturday", earliestStart: 15, latestEnd: 17 }
+            : { day: "Friday", earliestStart: 17, latestEnd: 19 };
         const values = option.values;
         if (
-          values.day !== (sunday ? "Sunday" : "Saturday") ||
+          values.day !== overlap.day ||
           typeof values.startHour !== "number" ||
           typeof values.endHour !== "number" ||
-          values.startHour < (sunday ? 10 : 15) ||
-          values.endHour > (sunday ? 12 : 17) ||
+          values.startHour < overlap.earliestStart ||
+          values.endHour > overlap.latestEnd ||
           values.endHour <= values.startHour ||
           values.travelTime !== null ||
           Object.keys(values).some(

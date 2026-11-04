@@ -48,18 +48,45 @@ export function demoContext(request: PlaygroundRequest) {
       "Find a lunch costing at most ₱800 per person, or ask people whether they want to reconsider their limit.",
       ["price", "limit"],
     );
+  } else if (request.scenarioId === "judge-school-time") {
+    fact("departure", "plannedDeparture", "Saturday 10:00");
+    fact("class-end", "attendeeClassEnds", "Saturday 14:00");
+    fact("trip-duration", "estimatedTripDurationMinutes", 60);
+    finding = issue(
+      "schedule-conflict",
+      "Schedule Check",
+      "The planned 10 AM Saturday departure overlaps with one attendee’s class, which ends at 2 PM.",
+      "Ask whether the group can leave after class or choose a different time.",
+      ["departure", "class-end", "trip-duration"],
+    );
   } else if (request.agent === "negotiator") {
-    const sunday = request.scenarioId === "negotiator-sunday";
+    const schedule = request.scenarioId === "negotiator-sunday"
+      ? {
+          day: "Sunday",
+          ana: "Sunday 08:00–12:00",
+          ben: "Sunday 10:00–15:00",
+        }
+      : request.scenarioId === "negotiator-saturday"
+        ? {
+            day: "Saturday",
+            ana: "Saturday 13:00–17:00",
+            ben: "Saturday 15:00–19:00",
+          }
+        : {
+            day: "Friday",
+            ana: "Friday 16:00–20:00",
+            ben: "Friday 17:00–19:00",
+          };
     fact(
       "ana-window",
       "availability",
-      sunday ? "Sunday 08:00–12:00" : "Saturday 13:00–17:00",
+      schedule.ana,
     );
     facts.at(-1)!.scope = "participant";
     fact(
       "ben-window",
       "availability",
-      sunday ? "Sunday 10:00–15:00" : "Saturday 15:00–19:00",
+      schedule.ben,
       "ben",
     );
     facts.at(-1)!.scope = "participant";
@@ -67,23 +94,36 @@ export function demoContext(request: PlaygroundRequest) {
     finding = issue(
       "schedule-overlap",
       "Schedule Check",
-      "Find an overlapping availability window. Travel time is unknown; nobody has approved a time.",
+      `Find an overlapping ${schedule.day} availability window. Travel time is unknown; nobody has approved a time.`,
       "Propose a time entirely within both availability windows. Keep travel and human confirmation open.",
       ["ana-window", "ben-window", "travel-time"],
     );
   } else {
     const food = request.scenarioId === "speaker-food";
-    fact("tentative-day", "tentativeDate", "Sunday (tentative)");
-    fact("unconfirmed-item", food ? "foodOwner" : "transport", null);
+    const meetingPoint = request.scenarioId === "speaker-meeting-point";
+    fact(
+      "tentative-day",
+      "tentativeDate",
+      food || !meetingPoint ? "Sunday (tentative)" : "Saturday (agreed)",
+    );
+    fact(
+      "unconfirmed-item",
+      food ? "foodOwner" : meetingPoint ? "meetingPoint" : "transport",
+      null,
+    );
     finding = issue(
-      food ? "food-gap" : "transport-gap",
+      food ? "food-gap" : meetingPoint ? "meeting-point-gap" : "transport-gap",
       food ? "Preparation Check" : "Logistics Check",
       food
         ? "No one has confirmed who will bring food to the picnic."
-        : "The group has not confirmed transportation for the tentative Sunday outing.",
+        : meetingPoint
+          ? "The group agreed on Saturday afternoon, but no meeting point has been selected."
+          : "The group has not confirmed transportation for the tentative Sunday outing.",
       food
         ? "Ask who can take care of food."
-        : "Ask the group how transportation will be arranged.",
+        : meetingPoint
+          ? "Ask the group to choose a meeting point."
+          : "Ask the group how transportation will be arranged.",
       ["unconfirmed-item"],
     );
   }
