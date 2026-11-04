@@ -12,6 +12,7 @@ import {
 } from "../../shared/room-api";
 import type { PlanningMessage, MessageReceipt } from "../../shared/planning-message";
 import type { PlanOption } from "../../server/src/agents/contracts";
+import { apiEndpoint } from "../api-url";
 
 const HealthSchema = z.object({
   enabled: z.boolean(),
@@ -45,13 +46,8 @@ export class RoomApiError extends Error {
   }
 }
 
-const apiBase = ((import.meta.env as ImportMetaEnv & { VITE_SETVIA_API_ORIGIN?: string }).VITE_SETVIA_API_ORIGIN ?? "").replace(/\/$/, "");
 const sessionKey = (roomId: string) => `setvia.room.session.v1:${roomId}`;
 const invitationKey = (roomId: string) => `setvia.room.invitation.v1:${roomId}`;
-
-function endpoint(path: string) {
-  return `${apiBase}/api${path}`;
-}
 
 async function readResponse<T>(response: Response, schema: z.ZodType<T>): Promise<T> {
   let value: unknown;
@@ -105,7 +101,7 @@ export function getRoomInvitation(roomId: string): string | null {
 }
 
 export async function getRoomHealth(signal?: AbortSignal): Promise<RoomHealth> {
-  const response = await fetch(endpoint("/rooms/health"), {
+  const response = await fetch(apiEndpoint("/rooms/health"), {
     cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal,
   });
   return readResponse(response, HealthSchema);
@@ -113,7 +109,7 @@ export async function getRoomHealth(signal?: AbortSignal): Promise<RoomHealth> {
 
 export async function createRoom(input: CreateRoomRequest, signal?: AbortSignal) {
   const parsed = CreateRoomRequestSchema.parse(input);
-  const response = await fetch(endpoint("/rooms"), {
+  const response = await fetch(apiEndpoint("/rooms"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(parsed),
@@ -133,7 +129,7 @@ export async function joinRoom(
   signal?: AbortSignal,
   options: { persistSession?: boolean } = {},
 ) {
-  const response = await fetch(endpoint(`/rooms/${encodeURIComponent(roomId)}/join`), {
+  const response = await fetch(apiEndpoint(`/rooms/${encodeURIComponent(roomId)}/join`), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ invitation, name }),
@@ -145,7 +141,7 @@ export async function joinRoom(
 }
 
 export async function getRoomSnapshot(session: ParticipantSession, signal?: AbortSignal) {
-  const response = await fetch(endpoint(`/rooms/${encodeURIComponent(session.roomId)}`), {
+  const response = await fetch(apiEndpoint(`/rooms/${encodeURIComponent(session.roomId)}`), {
     headers: authHeaders(session), cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal,
   });
   return readResponse(response, DashboardSnapshotSchema);
@@ -156,7 +152,7 @@ export async function submitRoomMessage(
   input: PlanningMessage,
   signal: AbortSignal,
 ): Promise<{ receipt: MessageReceipt; snapshot: DashboardSnapshot }> {
-  const response = await fetch(endpoint(`/rooms/${encodeURIComponent(session.roomId)}/messages`), {
+  const response = await fetch(apiEndpoint(`/rooms/${encodeURIComponent(session.roomId)}/messages`), {
     method: "POST",
     headers: { ...authHeaders(session), "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -193,7 +189,7 @@ export async function sharePrivateCandidate(
   candidateId: string,
   expectedRevision: number,
 ) {
-  const response = await fetch(endpoint(`/rooms/${encodeURIComponent(session.roomId)}/candidates/${encodeURIComponent(candidateId)}/share`), {
+  const response = await fetch(apiEndpoint(`/rooms/${encodeURIComponent(session.roomId)}/candidates/${encodeURIComponent(candidateId)}/share`), {
     method: "POST",
     headers: { ...authHeaders(session), "Content-Type": "application/json" },
     body: JSON.stringify({ candidateId, expectedRevision }),
@@ -203,7 +199,7 @@ export async function sharePrivateCandidate(
 }
 
 export async function reviseRoomProposal(session: ParticipantSession, expectedRevision: number, proposal: PlanOption) {
-  const response = await fetch(endpoint(`/rooms/${encodeURIComponent(session.roomId)}/proposal`), {
+  const response = await fetch(apiEndpoint(`/rooms/${encodeURIComponent(session.roomId)}/proposal`), {
     method: "POST",
     headers: { ...authHeaders(session), "Content-Type": "application/json" },
     body: JSON.stringify({ expectedRevision, proposal }),
@@ -213,7 +209,7 @@ export async function reviseRoomProposal(session: ParticipantSession, expectedRe
 }
 
 export async function approveRoomProposal(session: ParticipantSession, version: number) {
-  const response = await fetch(endpoint(`/rooms/${encodeURIComponent(session.roomId)}/approve`), {
+  const response = await fetch(apiEndpoint(`/rooms/${encodeURIComponent(session.roomId)}/approve`), {
     method: "POST",
     headers: { ...authHeaders(session), "Content-Type": "application/json" },
     body: JSON.stringify({ version }),
@@ -223,7 +219,7 @@ export async function approveRoomProposal(session: ParticipantSession, version: 
 }
 
 export async function leaveRoom(session: ParticipantSession, expectedRevision: number) {
-  const response = await fetch(endpoint(`/rooms/${encodeURIComponent(session.roomId)}/leave`), {
+  const response = await fetch(apiEndpoint(`/rooms/${encodeURIComponent(session.roomId)}/leave`), {
     method: "POST",
     headers: { ...authHeaders(session), "Content-Type": "application/json" },
     body: JSON.stringify({ expectedRevision }),
@@ -268,7 +264,7 @@ export async function streamRoom(
   let retryMs = 500;
   while (!signal.aborted) {
     try {
-      const response = await fetch(endpoint(`/rooms/${encodeURIComponent(session.roomId)}/events`), {
+      const response = await fetch(apiEndpoint(`/rooms/${encodeURIComponent(session.roomId)}/events`), {
         headers: authHeaders(session, lastSequence >= 0 ? lastSequence : undefined),
         cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", signal,
       });

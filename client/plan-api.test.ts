@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { PlanExtraction } from "../shared/plan-schema.js";
 import { extractPlanFromImage, extractPlanFromText, PlanApiError } from "./plan-api.js";
+import { apiEndpoint } from "./api-url.js";
+import { extractionIsReachable } from "./planning-core.js";
 
 const emptyPlan: PlanExtraction = {
   title: null,
@@ -25,7 +27,28 @@ const emptyPlan: PlanExtraction = {
   suggestedQuestions: [],
 };
 
-test("text client sends only the description to the same-origin route and validates its response", async () => {
+test("API endpoints use the configured origin and normalize route paths", () => {
+  assert.equal(apiEndpoint("/health"), "/api/health");
+  assert.equal(apiEndpoint("health"), "/api/health");
+});
+
+test("autofill availability checks the configured room API health contract", async () => {
+  let requestUrl = "";
+  const enabled = await extractionIsReachable(new AbortController().signal, async (input) => {
+    requestUrl = String(input);
+    return Response.json({ enabled: true, mode: "local-live" });
+  });
+  assert.equal(requestUrl, "/api/rooms/health");
+  assert.equal(enabled, true);
+
+  const unavailable = await extractionIsReachable(
+    new AbortController().signal,
+    async () => Response.json({ enabled: false, mode: "unavailable" }),
+  );
+  assert.equal(unavailable, false);
+});
+
+test("text client sends only the description to the configured extraction route and validates its response", async () => {
   let requestUrl = "";
   let requestInit: RequestInit | undefined;
   const result = await extractPlanFromText("Fictional project planning", async (input, init) => {

@@ -1,4 +1,5 @@
 import type { PlanDraft, PlanField } from "./plan-mapping";
+import { apiEndpoint } from "./api-url";
 
 export type CoreField =
   "title" | "location" | "people" | "schedule" | "description";
@@ -48,9 +49,10 @@ export function validateStartingPoint(
 
 export async function extractionIsReachable(
   signal: AbortSignal,
+  fetcher: typeof fetch = globalThis.fetch.bind(globalThis),
 ): Promise<boolean> {
   try {
-    const response = await fetch("/api/health", {
+    const response = await fetcher(apiEndpoint("/rooms/health"), {
       signal,
       headers: { Accept: "application/json" },
     });
@@ -63,8 +65,8 @@ export async function extractionIsReachable(
     return (
       typeof body === "object" &&
       body !== null &&
-      "status" in body &&
-      body.status === "ok"
+      "enabled" in body &&
+      body.enabled === true
     );
   } catch {
     return false;

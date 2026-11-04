@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { PlanExtractionSchema, type PlanExtraction } from "../shared/plan-schema.js";
+import { apiEndpoint } from "./api-url";
 
 export class PlanApiError extends Error {
   constructor(message: string) {
@@ -11,14 +12,6 @@ export class PlanApiError extends Error {
 export type FetchLike = typeof fetch;
 
 const RESPONSE_SCHEMA = z.object({ plan: PlanExtractionSchema }).strict();
-const apiBase = ((import.meta as ImportMeta & {
-  env?: ImportMetaEnv & { VITE_SETVIA_API_ORIGIN?: string };
-}).env?.VITE_SETVIA_API_ORIGIN ?? "").replace(/\/$/, "");
-
-function endpoint(path: string) {
-  return `${apiBase}/api${path}`;
-}
-
 function messageForStatus(status: number): string {
   switch (status) {
     case 400:
@@ -68,7 +61,7 @@ export async function extractPlanFromText(
   fetcher: FetchLike = defaultFetch(),
 ): Promise<PlanExtraction> {
   try {
-    const response = await fetcher(endpoint("/ai/extract/text"), {
+    const response = await fetcher(apiEndpoint("/ai/extract/text"), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ description }),
@@ -87,7 +80,7 @@ export async function extractPlanFromImage(
   fetcher: FetchLike = defaultFetch(),
 ): Promise<PlanExtraction> {
   try {
-    const response = await fetcher(endpoint("/ai/extract/image"), {
+    const response = await fetcher(apiEndpoint("/ai/extract/image"), {
       method: "POST",
       headers: { "Content-Type": image.type },
       body: image,
