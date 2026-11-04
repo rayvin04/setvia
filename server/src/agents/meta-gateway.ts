@@ -112,7 +112,11 @@ export function createMetaGateway(options: MetaGatewayOptions): AgentGateway {
           format: {
             type: "json_schema" as const,
             name: "setvia_" + role.toLowerCase().replaceAll(" ", "_"),
-            strict: true,
+            // Negotiator's `values` map intentionally allows scenario-specific
+            // field names. The provider's strict structured-output mode
+            // requires every object key to be fixed in the schema, so enforce
+            // this role's dynamic contract with the existing local Zod parse.
+            strict: role !== "Negotiator",
             schema: z.toJSONSchema(RoleSchemas[role]),
           },
         },

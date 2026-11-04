@@ -241,8 +241,6 @@ test("Speaker runs Question Strategist then Speaker with validated handoff", asy
     kind: "choice",
     text: "How will everyone get there?",
     options: ["Two cars", "Public transport", "Rent a van"],
-    answerType: "choice",
-    customAnswerType: "text",
   };
   const { service, calls } = fixture([
     { questions: [question] },
