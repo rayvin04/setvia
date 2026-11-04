@@ -343,6 +343,17 @@ export class RoomService {
       mascot: latest ? (room.lastCycle?.mascot ?? null) : null,
       loopState: latest ? (room.lastCycle?.outcome ?? null) : null,
       analysisIncomplete: !latest || room.lastCycle?.outcome === "BLOCKED",
+      analysisError:
+        latest && room.lastCycle?.outcome === "BLOCKED"
+          ? {
+              code: room.lastCycle.reason,
+              role:
+                [...(room.lastCycle.traces ?? [])]
+                  .reverse()
+                  .find((trace) => trace.failureCode || trace.status === "failed")
+                  ?.role ?? null,
+            }
+          : null,
       finalEvaluationAvailable:
         latest && room.lastCycle?.finalEvaluation !== null,
       approved:
@@ -356,4 +367,3 @@ export class RoomService {
     };
   }
 }
-

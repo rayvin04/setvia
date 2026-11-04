@@ -81,7 +81,7 @@ The five roles are not a fixed five-call chain:
 
 Role contracts use strict Zod schemas; the Meta gateway converts them to structured JSON Schema output. Findings reference known group facts or constraints. Application code, not model prose, enforces hard-constraint comparisons, deterministic readiness, privacy projections, request reservations, and versioned approvals.
 
-The engine can continue, wait for participant input, complete, or block. Role invocations, revisions, time, request attempts, token allowances, and estimated cost are bounded. Agent requests reserve an attempt before sending it and disable automatic retries. Cancellation, stale room revisions, malformed output, unsupported evidence, budget exhaustion, and interrupted work fail closed. A blocked or stale cycle cannot publish a new readiness result.
+The engine can continue, wait for participant input, complete, or block. Provider output/context limits, timeouts, and the no-progress/revision safeguards remain bounded, but the application does not impose a lifetime, per-cycle, token, or spending quota on normal Meta planning. Agent requests reserve an attempt for historical accounting before sending it and disable automatic retries. Cancellation, stale room revisions, malformed output, unsupported evidence, and interrupted work fail closed. A blocked or stale cycle cannot publish a new readiness result.
 
 The real multi-agent loop is not exposed through the deployed public site. The separate Stage B worktree’s latest recorded local verification passed three targeted live contract checks, but the complete real planning-room cycle remains unverified. Stage B changes are unpublished and are not included in the code links above.
 

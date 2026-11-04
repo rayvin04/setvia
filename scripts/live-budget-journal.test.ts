@@ -3,7 +3,7 @@ import { test } from "node:test";
 import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve, sep } from "node:path";
-import { LIVE_ATTEMPT_RESERVATION_MICROS, LIVE_ATTEMPT_RESERVATION_TOKENS, LIVE_COST_BUDGET_MICROS, LIVE_MAX_HTTP_ATTEMPTS, LIVE_TOKEN_BUDGET, LiveBudgetJournal } from "./live-budget-journal.js";
+import { LIVE_ATTEMPT_RESERVATION_MICROS, LIVE_ATTEMPT_RESERVATION_TOKENS, LiveBudgetJournal } from "./live-budget-journal.js";
 import type { MetaHttpEvent } from "../server/src/agents/meta-gateway.js";
 
 const event = (phase: MetaHttpEvent["phase"], requestNumber = 1): MetaHttpEvent => ({
@@ -68,32 +68,30 @@ test("live request journal persists reservations, HTTP status, usage, and privat
   assert.ok(root.length > 0);
 });
 
-test("cumulative request, token, and cost reservations stop at the approved evaluation ceiling", async (t) => {
+test("live request accounting does not impose a cumulative ceiling", async (t) => {
   const { privateRoot, publicRoot } = await tempRoots(t);
   const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A"]);
   try {
-    for (let index = 0; index < LIVE_MAX_HTTP_ATTEMPTS; index++)
+    for (let index = 0; index < 45; index++)
       await journal.handle(event("started", index + 1), "A");
     const before = await journal.snapshot();
-    assert.equal(before.attempts, LIVE_MAX_HTTP_ATTEMPTS);
-    assert.equal(before.tokensAtRisk, LIVE_TOKEN_BUDGET);
-    assert.equal(before.remainingTokens, 0);
-    assert.equal(before.remainingAttempts, 0);
-    await assert.rejects(journal.handle(event("started", LIVE_MAX_HTTP_ATTEMPTS + 1), "A"), /LIVE_HTTP_ATTEMPT_LIMIT/);
-    assert.equal((await journal.snapshot()).attempts, LIVE_MAX_HTTP_ATTEMPTS);
-    assert.ok(before.estimatedCostMicros <= LIVE_COST_BUDGET_MICROS);
-    assert.equal(before.estimatedCostMicros, LIVE_MAX_HTTP_ATTEMPTS * LIVE_ATTEMPT_RESERVATION_MICROS);
+    assert.equal(before.attempts, 45);
+    assert.equal(before.remainingTokens, null);
+    assert.equal(before.remainingAttempts, null);
+    assert.equal(before.estimatedCostMicros, 45 * LIVE_ATTEMPT_RESERVATION_MICROS);
+    await journal.handle(event("started", 46), "A");
+    assert.equal((await journal.snapshot()).attempts, 46);
   } finally {
     await journal.release();
   }
 });
 
-test("token usage above a call reservation is recorded and permanently stops further live requests", async (t) => {
+test("token usage above a reservation is recorded without stopping later requests", async (t) => {
   const { privateRoot, publicRoot } = await tempRoots(t);
   const journal = await LiveBudgetJournal.open(privateRoot, publicRoot, ["A", "B"]);
   try {
     await journal.handle(event("started", 1), "A");
-    await assert.rejects(journal.handle({
+    await journal.handle({
       ...event("usage"),
       usage: {
         model: "muse-spark-1.3",
@@ -105,10 +103,10 @@ test("token usage above a call reservation is recorded and permanently stops fur
         reasoningTokens: 0,
         durationMs: 480,
       },
-    }, "A"), /LIVE_ATTEMPT_TOKEN_RESERVATION_EXCEEDED/);
+    }, "A");
     assert.equal((await journal.snapshot()).tokensAtRisk, LIVE_ATTEMPT_RESERVATION_TOKENS + 1);
-    await assert.rejects(journal.handle(event("started", 2), "B"), /LIVE_TOKEN_RESERVATION_BREACH/);
-    assert.equal((await journal.snapshot()).attempts, 1);
+    await journal.handle(event("started", 2), "B");
+    assert.equal((await journal.snapshot()).attempts, 2);
   } finally {
     await journal.release();
   }
@@ -151,4 +149,3 @@ test("live ledger refuses symlinked private directories and writes nothing throu
   await assert.rejects(LiveBudgetJournal.open(safePrivateRoot, publicRoot, ["A"]), /PRIVATE_LIVE_LEDGER_REQUIRED/);
   assert.equal(await readFile(sentinel, "utf8"), "sentinel");
 });
-

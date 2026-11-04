@@ -19,8 +19,7 @@ export function readinessPresentation(room: DashboardRoom): {
     return {
       tone: "red",
       label: "Analysis blocked",
-      detail:
-        "Analysis did not finish. Any score below is the last validated result.",
+      detail: blockedAnalysisDetail(room),
       historical: true,
     };
   if (!room.readiness)
@@ -63,6 +62,28 @@ export function readinessPresentation(room: DashboardRoom): {
     detail: "A few details still need your people.",
     historical: false,
   };
+}
+
+function blockedAnalysisDetail(room: DashboardRoom): string {
+  const role = room.analysisError?.role
+    ? ` while ${room.analysisError.role} was working`
+    : "";
+  const code = room.analysisError?.code;
+  const detail =
+    code === "TIMEOUT"
+      ? "The analysis timed out."
+      : code === "CANCELLED" || code === "STALE_STATE"
+        ? "The room changed while analysis was running."
+        : code === "NO_PROGRESS" || code === "REVISION_LIMIT"
+          ? "The agents could not make further progress."
+          : code?.startsWith("META_")
+            ? "Meta could not complete the model request."
+            : code === "PERSISTENCE_FAILURE"
+              ? "The result could not be saved."
+              : code === "INVALID_HANDOFF" || code === "INVALID_MODEL_JSON"
+                ? "The model returned an invalid structured result."
+                : "Analysis did not finish.";
+  return detail + role + ". Any score below is the last validated result.";
 }
 
 export function acceptDashboardUpdate(
@@ -164,7 +185,7 @@ export function speakerPresentation(room: DashboardRoom) {
   if (room.loopState === "BLOCKED")
     return {
       kind: "Analysis blocked",
-      text: "The latest analysis couldn’t finish. Your plan is here; it needs a new evaluation before we continue.",
+      text: blockedAnalysisDetail(room),
       question: undefined,
       expression: "concerned",
     };

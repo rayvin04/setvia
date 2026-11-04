@@ -410,15 +410,8 @@ export async function prepareScenario(
     : scripted.gateway;
   const mockLimits: Limits = {
     ...MOCK_LIMITS,
-    maxInvocations: 10,
-    maxRequests: 10,
-    maxTokens: 120_000,
-    maxCostMicros: 300_000,
     callTokens: 12_000,
     callCostMicros: 30_000,
-    roomMaxRequests: 20,
-    roomMaxTokens: 240_000,
-    roomMaxCostMicros: 600_000,
   };
   const engine = new AgentEngine(
     store,
@@ -488,7 +481,7 @@ async function assertionsFor(
   const assertions: ScenarioAssertion[] = [
     { id: "expected_outcome", label: "Execution stops in the ground-truth state", passed: cycle.outcome === expectedOutcome(scenario), detail: `expected ${expectedOutcome(scenario)}, got ${cycle.outcome}` },
     { id: "conditional_agent_path", label: "Only the scenario-appropriate agents ran", passed: JSON.stringify(path) === JSON.stringify(expectedRolePath(scenario)), detail: path.join(" → ") },
-    { id: "bounded_calls", label: "Model calls remain below the per-scenario cap", passed: cycle.attempts <= 10 && cycle.traces.length <= 10, detail: `${cycle.attempts} attempts; ${cycle.traces.length} invocations; cap 10` },
+    { id: "accounted_calls", label: "Every model attempt is represented in the execution record", passed: cycle.attempts === cycle.traces.reduce((total, trace) => total + trace.attempts, 0), detail: `${cycle.attempts} attempts; ${cycle.traces.length} invocations; no application quota` },
     { id: "all_categories_configured", label: "All six Reality Check categories remain configurable", passed: scenario.policy.length === 6 && scenario.policy.every((p, index) => p.category === Categories[index]), detail: scenario.policy.map((p) => p.category).join(", ") },
   ];
   const allJudgeFindings = traceOutputFindings(cycle);
@@ -568,7 +561,7 @@ async function assertionsFor(
       return !!fact && !!stableOwner && fact.ownerId === prepared.authByParticipant.get(stableOwner)?.participantId;
     });
     const distinctPeople = new Set(scenario.participants.map((person) => person.id)).size === expectedRoomCount;
-    const noPerParticipantCalls = cycle.traces.filter((trace) => trace.role === "Listener").length === 0 && cycle.attempts <= 10;
+    const noPerParticipantCalls = cycle.traces.filter((trace) => trace.role === "Listener").length === 0;
     const questionsUnique = new Set(cycle.questions.map((q) => `${q.findingId}:${q.targetId}:${q.kind}`)).size === cycle.questions.length;
     const access = cycle.finalEvaluation?.findings.find((item) => item.id === "volunteer_access_conflict");
     const accessEvidence = new Set(access?.evidenceIds ?? []);
@@ -739,13 +732,12 @@ async function liveAssertionsFor(
   });
   const assertions: ScenarioAssertion[] = [
     {
-      id: "live_request_bounds",
-      label: "Live calls and reservations remain within the configured scenario limits",
-      passed: cycle.attempts <= prepared.engine.limits.maxRequests &&
-        cycle.traces.length <= prepared.engine.limits.maxInvocations &&
-        cycle.reservedTokens <= prepared.engine.limits.maxTokens &&
-        cycle.reservedCostMicros <= prepared.engine.limits.maxCostMicros,
-      detail: `${cycle.attempts} HTTP attempts; ${cycle.traces.length} invocations; ${cycle.reservedTokens} reserved tokens; $${(cycle.reservedCostMicros / 1e6).toFixed(4)} reserved, within configured caps.`,
+      id: "live_request_accounting",
+      label: "Live calls and reservations are recorded without application quotas",
+      passed: cycle.attempts === cycle.traces.reduce((total, trace) => total + trace.attempts, 0) &&
+        cycle.reservedTokens >= 0 &&
+        cycle.reservedCostMicros >= 0,
+      detail: `${cycle.attempts} HTTP attempts; ${cycle.traces.length} invocations; ${cycle.reservedTokens} reserved tokens; $${(cycle.reservedCostMicros / 1e6).toFixed(4)} recorded.`,
     },
     {
       id: "reality_check_categories",
@@ -848,4 +840,3 @@ export async function runAllScenarioMocks() {
 export function getExpectedOutcome(id: ScenarioId) {
   return expectedOutcome(getScenario(id));
 }
-

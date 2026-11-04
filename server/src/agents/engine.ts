@@ -18,31 +18,17 @@ import { calculateReadiness, explicitViolations, violations } from "./readiness.
 import { MetaApiError } from "../ai/errors.js";
 
 export interface Limits {
-  maxInvocations: number;
-  maxRequests: number;
   maxRevisions: number;
   timeoutMs: number;
-  maxTokens: number;
-  maxCostMicros: number;
-  // Conservative allowances for a single request, including its full prompt/schema.
+  // These values are accounting metadata for a single provider attempt.
   callTokens: number;
   callCostMicros: number;
-  roomMaxRequests: number;
-  roomMaxTokens: number;
-  roomMaxCostMicros: number;
 }
 export const MOCK_LIMITS: Limits = {
-  maxInvocations: 16,
-  maxRequests: 12,
   maxRevisions: 2,
   timeoutMs: 30_000,
-  maxTokens: 200_000,
-  maxCostMicros: 500_000,
   callTokens: 12_000,
   callCostMicros: 30_000,
-  roomMaxRequests: 100,
-  roomMaxTokens: 2_000_000,
-  roomMaxCostMicros: 5_000_000,
 };
 const fingerprint = (value: unknown) => {
   const canonical = (v: unknown): unknown =>
@@ -283,7 +269,6 @@ export class AgentEngine {
       throw new StateError("LIVE_LIMITS_REQUIRED");
     this.limits = limits ?? MOCK_LIMITS;
     limits = this.limits;
-    if (limits.maxInvocations > 30) throw new StateError("INVALID_LIMITS");
     for (const value of Object.values(limits))
       if (!Number.isSafeInteger(value) || value < 1)
         throw new StateError("INVALID_LIMITS");
@@ -383,12 +368,6 @@ export class AgentEngine {
       privateContext = false,
     ) => {
       await assertCurrent();
-      const optional = role !== "Judge";
-      if (
-        cycle.traces.length + 1 + (optional ? 1 : 0) >
-        this.limits.maxInvocations
-      )
-        throw new StateError("INVOCATION_LIMIT");
       const trace: Trace = {
         sequence: cycle.traces.length + 1,
         role,
@@ -424,27 +403,15 @@ export class AgentEngine {
               await assertCurrent();
               if (
                 allowance &&
-                (allowance.tokens > this.limits.callTokens ||
-                  allowance.costMicros > this.limits.callCostMicros ||
+                (!Number.isSafeInteger(allowance.tokens) ||
+                  !Number.isSafeInteger(allowance.costMicros) ||
                   allowance.tokens <= 0 ||
                   allowance.costMicros <= 0)
               )
                 throw new StateError("INVALID_ALLOWANCE");
-              // All optional work preserves one full final-Judge allowance.
-              const reserve = optional ? 1 : 0;
-              if (cycle.attempts + 1 + reserve > this.limits.maxRequests)
-                throw new StateError("REQUEST_LIMIT");
-              if (
-                cycle.reservedTokens + this.limits.callTokens * (1 + reserve) >
-                this.limits.maxTokens
-              )
-                throw new StateError("TOKEN_LIMIT");
-              if (
-                cycle.reservedCostMicros +
-                  this.limits.callCostMicros * (1 + reserve) >
-                this.limits.maxCostMicros
-              )
-                throw new StateError("COST_LIMIT");
+              const reservedTokens = allowance?.tokens ?? this.limits.callTokens;
+              const reservedCostMicros =
+                allowance?.costMicros ?? this.limits.callCostMicros;
               await this.store.transaction(roomId, (state) => {
                 if (
                   !state ||
@@ -452,22 +419,13 @@ export class AgentEngine {
                   state.activeCycleId !== cycleId
                 )
                   throw new StateError("STALE_STATE");
-                if (
-                  state.lifetimeAttempts + 1 > this.limits.roomMaxRequests ||
-                  state.lifetimeReservedTokens + this.limits.callTokens >
-                    this.limits.roomMaxTokens ||
-                  state.lifetimeReservedCostMicros +
-                    this.limits.callCostMicros >
-                    this.limits.roomMaxCostMicros
-                )
-                  throw new StateError("ROOM_BUDGET_LIMIT");
                 state.lifetimeAttempts++;
-                state.lifetimeReservedTokens += this.limits.callTokens;
-                state.lifetimeReservedCostMicros += this.limits.callCostMicros;
+                state.lifetimeReservedTokens += reservedTokens;
+                state.lifetimeReservedCostMicros += reservedCostMicros;
                 cycle.attempts++;
                 trace.attempts++;
-                cycle.reservedTokens += this.limits.callTokens;
-                cycle.reservedCostMicros += this.limits.callCostMicros;
+                cycle.reservedTokens += reservedTokens;
+                cycle.reservedCostMicros += reservedCostMicros;
                 state.lastCycle = structuredClone(cycle);
               });
             },
@@ -496,13 +454,6 @@ export class AgentEngine {
           )
             throw new StateError("INVALID_USAGE");
           trace.estimatedCostMicros = result.usage.estimatedCostMicros;
-          if (
-            result.usage.inputTokens + result.usage.outputTokens >
-              this.limits.callTokens * trace.attempts ||
-            result.usage.estimatedCostMicros >
-              this.limits.callCostMicros * trace.attempts
-          )
-            throw new StateError("USAGE_BOUND_EXCEEDED");
         } else cycle.usageKnown = false;
         trace.output = privateContext
           ? { redacted: true, validated: true }
@@ -738,6 +689,12 @@ export class AgentEngine {
         break;
       }
     } catch (error) {
+      const failure = traceFailure(error);
+      const lastTrace = cycle.traces.at(-1);
+      if (lastTrace && !lastTrace.failureCode) {
+        lastTrace.failureCode = failure.code;
+        lastTrace.failureMessage = failure.message;
+      }
       cycle.outcome = "BLOCKED";
       cycle.reason =
         controller.signal.reason === "TIMEOUT"
@@ -789,4 +746,3 @@ export class AgentEngine {
     return cycle;
   }
 }
-

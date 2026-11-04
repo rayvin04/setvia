@@ -43,6 +43,16 @@ export const DashboardRoomSchema = z
     readiness: ReadinessSchema.nullable(),
     analysisCurrent: z.boolean(),
     analysisIncomplete: z.boolean(),
+    analysisError: z
+      .object({
+        code: z.string().regex(/^[A-Z0-9_]{1,64}$/),
+        role: z
+          .enum(["Listener", "Judge", "Negotiator", "Question Strategist", "Speaker"])
+          .nullable(),
+      })
+      .strict()
+      .nullable()
+      .optional(),
     finalEvaluationAvailable: z.boolean(),
     loopState: OutcomeSchema.nullable(),
     mascot: z.enum(["thinking", "curious", "concerned", "content"]).nullable(),

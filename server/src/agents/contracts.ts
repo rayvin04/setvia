@@ -241,7 +241,7 @@ export const CycleSchema = z
     reason: z.string().regex(/^[A-Z_]+$/),
     finalEvaluation: JudgeSchema.nullable(),
     readiness: ReadinessSchema.nullable(),
-    traces: z.array(TraceSchema).max(30),
+    traces: z.array(TraceSchema),
     attempts: z.number().int().nonnegative(),
     reservedTokens: z.number().int().nonnegative(),
     reservedCostMicros: z.number().int().nonnegative(),
@@ -361,4 +361,3 @@ export interface VisualPlanner {
     signal: AbortSignal,
   ): Promise<{ assetRequests: string[] }>;
 }
-

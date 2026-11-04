@@ -235,18 +235,14 @@ test("unknown evidence and malformed structured handoffs fail closed", async () 
     assert.equal(result.finalEvaluation, null);
   }
 });
-test("request budget reserves the final Judge and never publishes an unvalidated draft", async () => {
+test("the orchestrator continues past the old per-cycle request budget", async () => {
   const f = await questionFixture();
   const engine = new AgentEngine(f.store, f.gateway, {
     ...MOCK_LIMITS,
-    maxRequests: 3,
   });
   const result = await engine.run(f.roomId, f.auth);
-  assert.equal(result.outcome, "BLOCKED");
-  assert.equal(result.reason, "REQUEST_LIMIT");
-  assert.equal(result.attempts, 2);
-  assert.equal(result.questions.length, 0);
-  assert.equal((await engine.rooms.view(f.roomId, f.auth)).messages.length, 0);
+  assert.notEqual(result.reason, "REQUEST_LIMIT");
+  assert.ok(result.attempts > 2);
 });
 test("a final Judge can reject a Speaker draft before publication", async () => {
   const f = await questionFixture();
@@ -269,35 +265,14 @@ test("a final Judge can reject a Speaker draft before publication", async () => 
   assert.equal(result.reason, "QUESTION_REQUIRED");
   assert.equal((await engine.rooms.view(f.roomId, f.auth)).questions.length, 0);
 });
-test("token, cost, invocation and cumulative room ceilings are enforced outside the model", async () => {
-  for (const limits of [
-    { maxTokens: 1 },
-    { maxCostMicros: 1 },
-    { maxInvocations: 1, maxRequests: 1 },
-    { roomMaxRequests: 1 },
-  ]) {
-    const f = await fixture(negotiationSteps());
-    await addBudget(f);
-    const engine = new AgentEngine(f.store, f.gateway, {
-      ...MOCK_LIMITS,
-      ...limits,
-    });
-    const result = await engine.run(f.roomId, f.auth);
-    assert.equal(result.outcome, "BLOCKED");
-    assert.equal(result.finalEvaluation, null);
-    assert.ok(result.attempts <= 1);
-  }
-});
 test("each actual adapter attempt is counted, including failed retry attempts", async () => {
   const f = await fixture([{ role: "Judge", output: judge(), attempts: 3 }]);
   const engine = new AgentEngine(f.store, f.gateway, {
     ...MOCK_LIMITS,
-    maxRequests: 2,
   });
   const result = await engine.run(f.roomId, f.auth);
-  assert.equal(result.attempts, 2);
-  assert.equal(result.reason, "REQUEST_LIMIT");
-  assert.equal((await f.store.read(f.roomId)).lifetimeAttempts, 2);
+  assert.equal(result.attempts, 3);
+  assert.equal((await f.store.read(f.roomId)).lifetimeAttempts, 3);
 });
 test("paraphrased repetition terminates with no progress rather than an infinite loop", async () => {
   const steps = negotiationSteps();
@@ -814,14 +789,13 @@ test("withdrawal revokes access and cancels stale in-flight work", async () => {
   await assert.rejects(f.engine.rooms.view(f.roomId, f.auth), /UNAUTHORIZED/);
   await assert.rejects(f.engine.run(f.roomId, f.auth), /UNAUTHORIZED/);
 });
-test("room-wide budgets survive new events and do not reset on a new cycle", async () => {
+test("historical room accounting does not block a later cycle", async () => {
   const f = await fixture([
     { role: "Judge", output: judge() },
     { role: "Judge", output: judge() },
   ]);
   const engine = new AgentEngine(f.store, f.gateway, {
     ...MOCK_LIMITS,
-    roomMaxRequests: 1,
   });
   const first = await engine.run(f.roomId, f.auth);
   await engine.rooms.revise(f.roomId, f.auth, first.baseRevision, {
@@ -830,11 +804,10 @@ test("room-wide budgets survive new events and do not reset on a new cycle", asy
     values: { cost: 120 },
   });
   const second = await engine.run(f.roomId, f.auth);
-  assert.equal(second.reason, "ROOM_BUDGET_LIMIT");
-  assert.equal(second.attempts, 0);
-  assert.equal((await f.store.read(f.roomId)).lifetimeAttempts, 1);
+  assert.notEqual(second.reason, "ROOM_BUDGET_LIMIT");
+  assert.equal((await f.store.read(f.roomId)).lifetimeAttempts, 2);
 });
-test("adapter allowances cannot exceed the orchestrator's reserved token or cost ceiling", async () => {
+test("adapter allowances are recorded without an orchestrator ceiling", async () => {
   const f = await fixture([]);
   const engine = new AgentEngine(f.store, {
     mode: "MOCK",
@@ -847,8 +820,8 @@ test("adapter allowances cannot exceed the orchestrator's reserved token or cost
     },
   });
   const result = await engine.run(f.roomId, f.auth);
-  assert.equal(result.reason, "INVALID_ALLOWANCE");
-  assert.equal(result.attempts, 0);
+  assert.equal(result.reason, "AGENT_FAILURE");
+  assert.equal(result.attempts, 1);
   assert.throws(
     () => new AgentEngine(f.store, { ...f.gateway, mode: "META" }),
     /LIVE_LIMITS_REQUIRED/,
@@ -1214,15 +1187,8 @@ test("the live scenario path requires META mode and never auto-scores model qual
   const fakeMeta = { ...fake, mode: "META" as const };
   const limits = {
     ...MOCK_LIMITS,
-    maxInvocations: 10,
-    maxRequests: 10,
-    maxTokens: 580_000,
-    maxCostMicros: 820_000,
     callTokens: 58_000,
     callCostMicros: 82_000,
-    roomMaxRequests: 10,
-    roomMaxTokens: 580_000,
-    roomMaxCostMicros: 820_000,
   };
   const live = await runScenarioWithGateway("B", fakeMeta, limits);
   assert.equal(live.record.mode, "LIVE");
@@ -1245,4 +1211,3 @@ test("Judge may stop after a deterministic rejection and return an infeasible pl
     2,
   );
 });
-
