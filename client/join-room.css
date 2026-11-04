@@ -1,0 +1,80 @@
+.room-join-page {
+  width: min(100%, 680px);
+  min-height: 75svh;
+  padding: clamp(112px, 14svh, 156px) 24px 64px;
+}
+
+.room-join-page h1 {
+  font-size: clamp(2rem, 4.3vw, 2.65rem);
+  line-height: 1.15;
+}
+
+.room-join-page > p {
+  margin-top: 14px;
+  color: #b5c4ce;
+  font-size: 0.94rem;
+  line-height: 1.7;
+}
+
+.room-join-page .room-join-form {
+  display: grid;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+.room-join-field {
+  display: grid;
+  min-width: 0;
+  gap: 9px;
+}
+
+.room-join-page .room-join-field label {
+  margin: 0;
+  color: #d6e4e9;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.room-join-field input {
+  min-height: 52px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.room-join-hint {
+  color: #a9bbc5;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.room-join-disclosure,
+.room-join-error {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  color: #a9bbc5;
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+
+.room-join-disclosure > svg,
+.room-join-error > svg {
+  flex: 0 0 auto;
+  margin-top: 3px;
+}
+
+.room-join-error {
+  color: #ffb39c;
+}
+
+.room-join-page .room-join-form > .button {
+  width: 100%;
+  min-height: 50px;
+  justify-content: center;
+  margin-top: 0;
+}
+
+.room-join-form .button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}

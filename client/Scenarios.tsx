@@ -4,7 +4,6 @@ import { Reveal } from "./MotionUI";
 import { Link, useSearchParams } from "react-router-dom";
 import {
   ArrowRight,
-  ArrowLeft,
   TreePalm,
   House,
   BriefcaseBusiness,
@@ -104,17 +103,13 @@ export function Demos() {
   }
   return (
     <section className="demo-page section-shell">
-      <Link className="back-link" to="/">
-        <ArrowLeft size={17} aria-hidden="true" />
-        Back to Setvia
-      </Link>
       <div className="demo-heading">
         <div>
           <h1>Explore Setvia in action.</h1>
           <p>
-            Step into a fictional planning room, discover conflicting priorities,
-            and see how a group can move toward a shared decision. No account or
-            setup needed.
+            Step into a fictional planning room, discover conflicting
+            priorities, and see how a group can move toward a shared decision.
+            No account or setup needed.
           </p>
           <ButtonLink
             className="demo-primary-cta"
@@ -124,10 +119,6 @@ export function Demos() {
             <ArrowRight size={18} aria-hidden="true" />
           </ButtonLink>
         </div>
-        <span className="demo-mode">
-          <span className="status-dot" />
-          Interactive demo · Fictional data · No live AI
-        </span>
       </div>
       <nav className="world-tabs" aria-label="Demo scenarios">
         {scenarios.map((s, i) => {
@@ -208,7 +199,6 @@ export function Demos() {
                   <p>{detail.resolution}</p>
                 </div>
               </div>
-
             </div>
           </div>
           <section className="sample-plan">

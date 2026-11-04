@@ -3,7 +3,7 @@ import {
   type PlaygroundRequest,
 } from "../shared/playground";
 
-const apiBase = (import.meta.env.VITE_SETVIA_API_ORIGIN ?? "").replace(
+const apiBase = (import.meta.env?.VITE_SETVIA_API_ORIGIN ?? "").replace(
   /\/$/,
   "",
 );
@@ -41,12 +41,26 @@ export async function runPlayground(
     );
   }
   const payload = await response.json().catch(() => null);
-  if (!response.ok)
+  if (!response.ok) {
+    if (
+      response.status === 400 &&
+      !request.text &&
+      payload?.error ===
+        "Choose one of the playground scenarios. Personal thoughts must be 10–240 characters."
+    )
+      throw new Error(
+        "This example is not supported by the running playground server. Please refresh and try again.",
+      );
+    const code =
+      typeof payload?.code === "string" && /^[a-z_]{1,40}$/.test(payload.code)
+        ? ` (${payload.code})`
+        : "";
     throw new Error(
       typeof payload?.error === "string"
-        ? payload.error
+        ? payload.error + code
         : "The playground couldn’t finish. Please try again.",
     );
+  }
   const result = PlaygroundResultSchema.safeParse(payload);
   if (
     !result.success ||
