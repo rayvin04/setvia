@@ -14,4 +14,4 @@
 - public/github-mark.svg comes from Primer Octicons. Its upstream MIT license is retained in public/github-mark.LICENSE.
 - Lexend is supplied by @fontsource-variable/lexend under OFL-1.1. Lucide interface icons use the package's ISC license. See the [third-party notices](third-party-notices.md) for the direct dependency inventory and its audit limits.
 
-The proprietary notice applies to Setvia-authored materials only. It does not replace or override third-party licenses. AI-generated image rights and protection may depend on the applicable jurisdiction; this documentation does not claim guaranteed exclusivity.
+The repository's Apache-2.0 license applies to Setvia-authored software and documentation. It does not replace or override third-party licenses. AI-generated image rights and protection may depend on the applicable jurisdiction; this documentation does not claim guaranteed exclusivity.

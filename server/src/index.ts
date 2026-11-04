@@ -3,10 +3,13 @@ import { createApp } from "./http/app.js";
 import { createMetaClient, readMetaConfig } from "./ai/meta-client.js";
 import { MetaApiError } from "./ai/errors.js";
 import { InferenceConcurrencyLimiter, inferenceEnabled, readInferenceConcurrency, readParticipantCooldownMs } from "./ai/inference-control.js";
-import { createLocalRoomRuntime, DEFAULT_ROOM_PROMPT_VERSION } from "./rooms/runtime.js";
+import { createLocalRoomRuntime, createRoomMetaGateway, DEFAULT_ROOM_PROMPT_VERSION, IntegrationRunBudget } from "./rooms/runtime.js";
 import { seedProductionBudgetLedgers } from "./storage-seed.js";
 import { createScenarioGenerationRouter } from "./synthetic/generation-router.js";
 import { createMeteredExtractionClient } from "./ai/metered-extraction.js";
+import { createPlaygroundService } from "./playground/service.js";
+import { createPlaygroundRouter } from "./playground/router.js";
+import { LIVE_ATTEMPT_RESERVATION_MICROS, LIVE_ATTEMPT_RESERVATION_TOKENS } from "../../scripts/live-budget-journal.js";
 
 const port = Number(process.env.PORT ?? "3001");
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
@@ -97,6 +100,40 @@ const demoScenarioRouter = runtime && demoApiToken
       internalToken: demoApiToken,
     })
   : undefined;
+let playgroundBudget: IntegrationRunBudget | undefined;
+let playgroundService: ReturnType<typeof createPlaygroundService> | undefined;
+if (runtime && process.env.SETVIA_PLAYGROUND_ENABLED === "1") {
+  try {
+    const allowance = Number(process.env.SETVIA_PLAYGROUND_BUDGET_MICROS ?? "2000000");
+    if (!Number.isSafeInteger(allowance) || allowance < LIVE_ATTEMPT_RESERVATION_MICROS || allowance > 100_000_000)
+      throw new Error("SETVIA_PLAYGROUND_BUDGET_MICROS must fit inside the $100 application ceiling.");
+    const attempts = Math.min(24, Math.floor(allowance / LIVE_ATTEMPT_RESERVATION_MICROS));
+    playgroundBudget = await IntegrationRunBudget.open(resolve(privateRoot, "public-playground", "allowance.ndjson"), {
+      attempts, costMicros: allowance, tokens: attempts * LIVE_ATTEMPT_RESERVATION_TOKENS,
+    });
+    const hooks = runtime.getAuxiliaryInferenceHooks();
+    const gateway = await createRoomMetaGateway(
+      privateRoot,
+      process.env.SETVIA_PROMPT_VERSION ?? DEFAULT_ROOM_PROMPT_VERSION,
+      hooks.recordHttpEvent,
+      process.env.SETVIA_PROMPT_ROOT,
+      { acquireAttempt: hooks.acquireAttempt, beforeAttempt: hooks.beforeAttempt },
+    );
+    playgroundService = createPlaygroundService({
+      gateway,
+      inferenceEnabled,
+      cacheRoot: resolve(privateRoot, "public-playground", "cache"),
+      reserveAttempt: async (allowance) => {
+        await playgroundBudget!.reserve(allowance);
+        await hooks.reserveAttempt(allowance);
+      },
+    });
+  } catch {
+    await playgroundBudget?.close();
+    playgroundBudget = undefined;
+    console.error("The public playground is unavailable; existing rooms remain enabled.");
+  }
+}
 const app = createApp({
   client,
   meteredExtractionClient: runtime && createMeteredExtractionClient(metaConfig, runtime.getAuxiliaryInferenceHooks()),
@@ -104,6 +141,7 @@ const app = createApp({
   roomOrigins: roomOrigins.length ? roomOrigins : undefined,
   trustProxy: production ? 1 : undefined,
   demoScenarioRouter,
+  playgroundRouter: createPlaygroundRouter(playgroundService),
   inferenceEnabled,
 });
 const server = app.listen(port, host);
@@ -119,6 +157,7 @@ const close = () => {
   if (closing) return;
   closing = true;
   const closedRuntime = runtime?.close();
+  void playgroundBudget?.close().catch(() => { process.exitCode = 1; });
   server.close();
   void closedRuntime?.catch(() => { process.exitCode = 1; });
 };

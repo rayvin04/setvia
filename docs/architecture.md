@@ -1,12 +1,12 @@
 # Setvia architecture
 
-This page describes source at released commit [`1c6a4894a8acc562830dce89a770a126c2f332bb`](https://github.com/rayvin04/setvia/commit/1c6a4894a8acc562830dce89a770a126c2f332bb). Its Mermaid blocks are the editable, source-controlled technical diagrams. The public Vercel deployment is a static Vite site; the local extraction API and the room/agent domain code are separate paths.
+This page describes the current `main` source. Its Mermaid blocks are the editable, source-controlled technical diagrams. The public site is a static Vite frontend backed by a separate Express API for model-powered actions.
 
 ## System boundaries
 
-- **Public site:** static React/Vite pages and JSON preview fixtures on Vercel. The scenario page and dashboard use fictional data and do not call live AI.
-- **Local extraction:** Vite proxies `/api` calls to a local Express server. With a server-side `MODEL_API_KEY`, text or image input can be sent to Meta's Responses API for extraction. This API is not deployed with the public site.
-- **Agent foundation:** the committed `AgentEngine`, `RoomService`, persistence adapters, and gateways are domain code with offline mock tests. The public Express app does not mount authenticated room routes, and the frontend does not connect to the room engine.
+- **Public site:** static React/Vite pages and JSON preview fixtures on Vercel. `/demos` and `/dashboard` use fictional data; the homepage’s four-card role playground sends bounded requests to the separate API only after a user action.
+- **Meta API:** the Express server uses a server-side `MODEL_API_KEY`. The homepage playground calls Muse Spark 1.3 through this server; the key is never sent to the browser. Vite proxies `/api` to a local Express server during development.
+- **Agent runtime:** the repository includes the `AgentEngine`, `RoomService`, persistence adapters, role gateway, and authenticated room routes. The homepage playground demonstrates bounded role calls, not a complete collaborative room cycle.
 - **Persistence:** the code includes in-memory and private-path JSON adapters. It has no database. The JSON adapter is single-process local storage, not a validated production durability design.
 - **Unpublished Stage B:** a separate local integration branch contains work that is not included in the base commit or public deployment. Its latest recorded real checks do not establish a complete live planning-room cycle.
 
@@ -56,7 +56,7 @@ flowchart LR
   end
 ```
 
-The public Vercel rewrite sends page routes to the SPA entry point. It does not create an Express function or a room backend. The local extraction API exposes health and text/image extraction routes only. The agent foundation and JSON persistence are not mounted to an authenticated HTTP transport in this commit.
+The Vercel deployment serves the Vite frontend; it does not host the Express API. The separate API exposes health, text/image extraction, the bounded playground when enabled, and authenticated room routes when the live runtime is configured. Its API key and role prompts remain server-side.
 
 ## B. Conditional multi-agent orchestration
 
@@ -90,9 +90,9 @@ The scheduler follows the typed Judge decision. It does not always run five role
 
 ### Contracts and server-enforced checks
 
-- [`contracts.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/contracts.ts) defines strict Zod contracts for facts, constraints, findings, options, questions, readiness, traces, cycles, and rooms. The Meta gateway converts role contracts to JSON Schema for structured output.
-- [`engine.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/engine.ts) parses each role handoff, checks evidence IDs against known group facts and constraints, validates option verdicts against hard constraints, checks question targets/consent/repetition, and renders messages from validated questions and findings.
-- [`readiness.ts`](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/readiness.ts) calculates readiness deterministically. The Judge may report an assessment, but its percentage is not accepted as the readiness score.
+- [`contracts.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/contracts.ts) defines strict Zod contracts for facts, constraints, findings, options, questions, readiness, traces, cycles, and rooms. The Meta gateway converts role contracts to JSON Schema for structured output.
+- [`engine.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/engine.ts) parses each role handoff, checks evidence IDs against known group facts and constraints, validates option verdicts against hard constraints, checks question targets/consent/repetition, and renders messages from validated questions and findings.
+- [`readiness.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/readiness.ts) calculates readiness deterministically. The Judge may report an assessment, but its percentage is not accepted as the readiness score.
 - Role invocation, revision, elapsed-time, request, token, and cost limits are supplied by application configuration. The engine reserves a request allowance before the gateway sends an HTTP attempt. The agent Meta gateway disables automatic retries. Stale room revisions, cancellation, schema failures, unsupported evidence, request-budget exhaustion, and interrupted work fail closed.
 - A model recommendation is not an enforcement action. The server owns validation, readiness, privacy projection, and human approvals.
 

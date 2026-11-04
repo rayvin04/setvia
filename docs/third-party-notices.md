@@ -1,6 +1,6 @@
 # Third-party notices
 
-Setvia-authored code and artwork are covered by the repository's all-rights-reserved notice. Third-party packages and assets remain under their own terms.
+Setvia's original software and documentation are licensed under Apache-2.0. Third-party packages and assets remain under their own terms; this inventory records the direct dependencies and shipped asset identified below.
 
 ## Direct package inventory
 

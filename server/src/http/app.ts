@@ -55,6 +55,7 @@ export interface AppOptions {
   roomOrigins?: string[];
   trustProxy?: boolean | number | string;
   demoScenarioRouter?: RequestHandler;
+  playgroundRouter?: RequestHandler;
   inferenceEnabled?: () => boolean;
   rateLimit?: {
     limit?: number;
@@ -245,6 +246,8 @@ export function createApp(options: AppOptions) {
   };
   app.use("/api/rooms", restrictBrowserOrigin);
   app.use("/api/ai", restrictBrowserOrigin);
+  app.use("/api/playground", restrictBrowserOrigin);
+  if (options.playgroundRouter) app.use("/api/playground", options.playgroundRouter);
   app.get("/api/rooms/health", (_request, response) => {
     const health = {
       enabled: Boolean(options.rooms),

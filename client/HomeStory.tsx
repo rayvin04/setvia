@@ -17,6 +17,7 @@ import { ButtonLink } from "./components";
 import { scenarios } from "./demoData";
 import { Reveal } from "./MotionUI";
 import { InteractivePlanPreview } from "./InteractivePlanPreview";
+import { LivingPlayground } from "./LivingPlayground";
 import { approveVersion, initialVersion, revisePreview } from "./preview-state";
 import "./home-story.css";
 
@@ -42,9 +43,10 @@ function ConversationToPlan() {
       id="how-it-works"
       className="home-story-section story-conversation"
     >
-      <StoryHeading title="Every “maybe” means something.">
-        A tight budget. One early driver. Different schedules. Keep each reason
-        visible while the group shapes a plan.
+      <StoryHeading title="Is this your group chat?">
+        Tight budget. Someone needs an early ride home. Everyone is free at a
+        different time. Setvia makes those trade-offs visible so your group can
+        find a plan people can actually say yes to.
       </StoryHeading>
       <div className="story-translation" data-visual-slot="chat-demo">
         <picture
@@ -431,6 +433,7 @@ function ClosingStory() {
 export function HomeStory() {
   return (
     <div className="home-story">
+      <LivingPlayground />
       <ConversationToPlan />
       <RealityCheckStory />
       <SharedVersionStory />

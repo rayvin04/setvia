@@ -1,6 +1,12 @@
 # Judge demo guide
 
-This guide separates the public synthetic preview from local Meta-enabled code. Both are useful for evaluation, but they demonstrate different parts of the repository.
+This guide distinguishes the homepage’s bounded live role playground from the synthetic scenario preview and the full planning-room flow.
+
+## Public Muse Spark role playground
+
+Open [setvia.r4yv.tech/#meet-the-minds](https://setvia.r4yv.tech/#meet-the-minds). No account is required. Choose one of the four role cards and explicitly run a scenario to see the returned result and whether it was generated live or served from cache. The cards use Muse Spark 1.3 through the server-side playground API. Speaker demonstrates a Question Strategist → Speaker handoff. No model call happens on page load.
+
+These are bounded role examples, not a complete group-planning session. They do not create a room or collect approvals. The optional Listener thought is not saved or placed in a public scenario cache. See the [playground guide](living-playground.md) for the role map and safeguards.
 
 ## Public synthetic demonstration
 
@@ -10,9 +16,9 @@ Open [setvia.r4yv.tech/demos](https://setvia.r4yv.tech/demos). No account is req
 2. Select **Explore the planning dashboard**.
 3. Explore the available dashboard views and synthetic preview interactions. The dashboard can show different fictional participants and preview states.
 
-The preview data is loaded from static JSON files in [`public/dashboard-preview/`](https://github.com/rayvin04/setvia/tree/1c6a4894a8acc562830dce89a770a126c2f332bb/public/dashboard-preview). The route makes no Meta request. Names, participant input, group activity, readiness, questions, replies, and proposals are fictional. Dashboard preview interactions are local to the browser session and are not shared with other visitors.
+The preview data is loaded from static JSON files in [`public/dashboard-preview/`](https://github.com/rayvin04/setvia/tree/main/public/dashboard-preview). The route makes no Meta request. Names, participant input, group activity, readiness, questions, replies, and proposals are fictional. Dashboard preview interactions are local to the browser session and are not shared with other visitors.
 
-The landing page, `/demos`, `/dashboard`, and `/start` UI can be viewed on the public site. The deployed site is a static Vite app. It does not include the local Express API or authenticated room transport, so the public page is not a live group-planning service. The `/start` form's Meta extraction path requires a separately running local server.
+The deployed site is a static Vite frontend. Model-backed operations use the separate Express API; `/demos` and `/dashboard` remain synthetic previews. The homepage playground does not create an authenticated room. See the local setup below for running the development server.
 
 **Video:** The submission video does not have a verified URL yet. Add it to the README after recording and checking the final link.
 
@@ -51,11 +57,9 @@ Open [http://127.0.0.1:5173/start](http://127.0.0.1:5173/start). Vite serves the
 
 Muse Spark returns structured candidate details. The page lets a person review and edit them; model suggestions are not decisions. The image route accepts PNG, JPEG, or WebP up to 5 MiB. The text route accepts up to 8,000 characters. No image-generation model is called.
 
-### What is not a live demo
+### What the playground does not demonstrate
 
-The public `main` snapshot does not connect the browser to `AgentEngine`, create authenticated planning rooms, or run live multi-device collaboration. The agent gateway requires role prompts loaded by a server adapter; those prompt files are intentionally not part of this public repository. The offline suite uses a mock gateway and synthetic fixtures.
-
-The separate local Stage B integration branch is unpublished. Its latest recorded checks cover three targeted live model contracts; a complete real planning-room cycle has not been verified. No statement here presents Stage B as deployed or merged.
+The role cards do not show a complete real group-planning cycle or multi-device room. Room cycles require the configured API runtime and private server-side role prompts; those prompt files are intentionally not part of this public repository. The offline suite uses a mock gateway and synthetic fixtures.
 
 ### Optional API smoke command
 
@@ -65,8 +69,8 @@ The repository also has `npm run test:meta`. This script makes real Meta API req
 
 For source-backed details, start with:
 
-- [Meta API implementation](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/ai/meta-client.ts)
-- [Extraction UI](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/client/StartPlanning.tsx)
-- [Express extraction routes](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/http/app.ts)
-- [Agent tests](https://github.com/rayvin04/setvia/blob/1c6a4894a8acc562830dce89a770a126c2f332bb/server/src/agents/agents.test.ts)
+- [Meta API implementation](https://github.com/rayvin04/setvia/blob/main/server/src/ai/meta-client.ts)
+- [Extraction UI](https://github.com/rayvin04/setvia/blob/main/client/StartPlanning.tsx)
+- [Express routes](https://github.com/rayvin04/setvia/blob/main/server/src/http/app.ts)
+- [Agent tests](https://github.com/rayvin04/setvia/blob/main/server/src/agents/agents.test.ts)
 - [Existing live-call accounting](agent-foundation.md#recorded-muse-spark-evaluation)
