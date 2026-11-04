@@ -132,18 +132,18 @@ The real multi-agent loop is not exposed through the deployed public site. The s
 
 The policy supports six categories. It decides which categories apply, which facts are required, how much weight each category has, and whether evidence is needed for each participant.
 
-| Check                 | What it evaluates                                                                              | Useful evidence                                                                                           |
-| --------------------- | ---------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Schedule Check**    | Availability, timing conflicts, duration, and deadlines.                                       | Participant availability and the proposed date, start time, duration, or deadline.                        |
-| **Budget Check**      | Individual limits, shared costs, estimates, and unclear expenses.                              | Confirmed per-person caps and cost estimates with their scope identified.                                 |
-| **People Check**      | Responses, accessibility needs, attendance conflicts, responsibilities, and roles.             | Current room membership, confirmed attendance, accessibility details, and named owners for tasks.         |
-| **Logistics Check**   | Transport, location, venue, route, and practical coordination.                                 | A confirmed destination, transport plan, venue details, and route information from an appropriate source. |
-| **Preparation Check** | Supplies, equipment, materials, and preparation work.                                          | A preparation list and clear responsibility for each item or task.                                        |
-| **Safety Check**      | Hazards, precautions, emergency preparation, weather, route risk, and relevant local guidance. | Current, reliable evidence and a human review of the relevant conditions.                                 |
+The examples use one fictional Sunday beach trip; the outcomes are illustrative and do not use live venue, route, price, or weather data.
+
+| Check                 | What it checks                                    | Useful evidence                                 | Example (fictional trip)                                         |
+| --------------------- | ------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------- |
+| **Schedule Check**    | Availability, conflicts, duration, and deadlines. | Participant calendars and the proposed time.    | Return at 5 PM conflicts with a 4 PM hard limit → blocked.       |
+| **Budget Check**      | Individual caps, shared costs, and estimates.     | Confirmed caps and scoped cost estimates.       | Estimate is ₱1,250; hard cap is ₱1,000 → blocked.                |
+| **People Check**      | Responses, access needs, attendance, and roles.   | Attendees, access details, and task owners.     | A required attendee has not responded → incomplete.              |
+| **Logistics Check**   | Transport, venue, route, and coordination.        | Destination, transport plan, and sourced route. | Meeting point is set; route time lacks a source → incomplete.    |
+| **Preparation Check** | Supplies, equipment, and responsibilities.        | Checklist and a named owner for each item.      | Water and sunscreen are listed; nobody owns pickup → incomplete. |
+| **Safety Check**      | Hazards, precautions, and current local guidance. | Current reliable sources and human review.      | No current forecast or advisory has been reviewed → unresolved.  |
 
 Missing or uncertain information is represented as absent or null facts, unconfirmed candidates, and findings with `missing`, `estimated`, or `conflicting` uncertainty. Required missing values leave a category unknown or incomplete. A hard constraint that the proposal fails to satisfy, a conflict in shared facts, or an unresolved critical finding can block readiness.
-
-**Synthetic example:** A Sunday outing proposal returns at 5:00 PM. One participant has confirmed a hard 4:00 PM return limit, and the route duration has not been verified. The Schedule Check is blocked by the constraint; the Logistics Check still needs evidence. A model may suggest an earlier return or ask the group about another ride, but it cannot verify a route or waive the participant’s constraint.
 
 Readiness is a deterministic summary of the current policy and confirmed group-visible evidence. **It is not a safety guarantee, external fact check, or participant approval.** Real prices, routes, venues, accessibility, weather, and hazards are not independently verified by the released app.
 
