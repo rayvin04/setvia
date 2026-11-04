@@ -31,6 +31,24 @@ export function Mascot() {
   );
 }
 
+export function ComposerCat() {
+  return (
+    <svg className="composer-cat" viewBox="0 0 88 76" fill="none" aria-hidden="true">
+      <path d="M20 28 19 12q0-7 6-2l11 10q10-3 20 1l10-9q6-5 6 3l-1 16q10 8 6 20-4 14-32 14T14 52q-5-13 6-24Z" fill="#FC734D" stroke="#A44731" strokeWidth="1.5" />
+      <path d="m24 17 7 8-7 2ZM66 18l-7 8 8 3Z" fill="#FFB493" />
+      <path d="m39 24 2 7m7-7-1 7M21 41l7 2m-7 5 7 1m38-7-6 2m7 4-7 1" stroke="#B94E30" strokeWidth="2.5" strokeLinecap="round" />
+      <path d="M27 38q6-7 13-1-5 8-13 1ZM50 37q7-5 12 1-7 7-12-1Z" fill="#14252C" />
+      <circle cx="32" cy="38" r="1.3" fill="#FFF1D8" />
+      <circle cx="55" cy="37" r="1.3" fill="#FFF1D8" />
+      <path d="M32 50q4-6 12-3 8-3 13 2 3 10-12 10-14 0-13-9Z" fill="#FFDBAD" />
+      <path d="m41 47 4 3 4-3Z" fill="#743C32" />
+      <path d="M45 50v3m-5 0q2 3 5 0 3 3 6-1" stroke="#743C32" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M22 61q-8 1-8 7 0 6 14 5 9-1 9-6 0-7-15-6ZM60 61q-10 0-10 7 1 6 14 5 12-1 11-7-1-5-15-5Z" fill="#FC734D" stroke="#A44731" strokeWidth="1.5" />
+      <path d="m23 67 1 4m5-4 1 4m29-4 1 4m5-4 1 4" stroke="#BE5436" strokeWidth="1.5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 const catAvatars = [
   {
     name: "black-cat",

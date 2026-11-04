@@ -9,6 +9,7 @@ import {
   Mountain,
   TreePalm,
   CircleAlert,
+  Sparkles,
 } from "lucide-react";
 import type { DashboardSnapshot } from "../../shared/dashboard";
 import { readinessChange, readinessPresentation } from "./model";
@@ -54,11 +55,13 @@ export function ReadinessPanel({
   compact = false,
   titleActions,
   titleStatus,
+  agentActivity,
 }: {
   snapshot: DashboardSnapshot;
   compact?: boolean;
   titleActions?: ReactNode;
   titleStatus?: ReactNode;
+  agentActivity?: "active" | "queued" | "idle";
 }) {
   const { room } = snapshot;
   const state = readinessPresentation(room);
@@ -95,7 +98,19 @@ export function ReadinessPanel({
           {titleActions ? <div className="room-title-actions">{titleActions}</div> : null}
         </div>
       ) : null}
-      {titleStatus}
+      {agentActivity === undefined ? titleStatus : null}
+      {agentActivity !== undefined ? (
+        <section className="agent-team-panel" aria-label="Shared analysis roles" data-state={agentActivity}>
+          <div className="agent-team-heading">
+            <span className="agent-team-mark" aria-hidden="true"><Sparkles size={14} /></span>
+            <h2>Shared analysis roles</h2>
+            {titleStatus}
+          </div>
+          <ul className="agent-team-roles">
+            {["Question Strategist", "Negotiator", "Judge", "Speaker"].map((role) => <li key={role}><span aria-hidden="true" />{role}</li>)}
+          </ul>
+        </section>
+      ) : null}
       <div className="readiness-and-plan">
         <div className="gauge-column">
           <div className="panel-heading">

@@ -149,7 +149,7 @@ function MobileIdentity({ snapshot, live = false, titleActions, titleStatus }: {
   return (
     <div className="mobile-room-identity">
       {live ? <div className="mobile-event-heading"><h1>{snapshot.room.proposal.label}</h1>{titleActions}</div> : <h1>{snapshot.room.proposal.label}</h1>}
-      {titleStatus}
+      {!live ? titleStatus : null}
       <div className="mobile-member-strip">
         <span className="identity-avatars" aria-hidden="true">
           {snapshot.room.participants.slice(0, 3).map((person, index) => (
@@ -248,6 +248,7 @@ export function PlanningDashboard({
   speakerResponseKey = "",
   titleActions,
   titleStatus,
+  agentActivity = "idle",
 }: {
   snapshot: DashboardSnapshot;
   onAction?: (action: DashboardAction) => void;
@@ -261,6 +262,7 @@ export function PlanningDashboard({
   speakerResponseKey?: string;
   titleActions?: ReactNode;
   titleStatus?: ReactNode;
+  agentActivity?: "active" | "queued" | "idle";
 }) {
   const compact = useSyncExternalStore(
     subscribeViewport,
@@ -287,7 +289,7 @@ export function PlanningDashboard({
           >
             {activeSection === "overview" ? (
               <div className="mobile-overview">
-                <ReadinessPanel snapshot={snapshot} compact />
+                <ReadinessPanel snapshot={snapshot} compact titleStatus={contributionMode === "room" ? titleStatus : undefined} agentActivity={contributionMode === "room" ? agentActivity : undefined} />
                 <div className="overview-companion">
                   <SpeakerPanel
                     snapshot={snapshot}
@@ -344,7 +346,7 @@ export function PlanningDashboard({
             </div>
           </div>
           <div className="dashboard-column dashboard-center">
-            <ReadinessPanel snapshot={snapshot} titleActions={titleActions} titleStatus={titleStatus} />
+            <ReadinessPanel snapshot={snapshot} titleActions={titleActions} titleStatus={titleStatus} agentActivity={contributionMode === "room" ? agentActivity : undefined} />
             <details className="advanced-plan dashboard-panel">
               <summary>
                 <Layers size={16} aria-hidden="true" />
