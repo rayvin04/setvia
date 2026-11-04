@@ -71,13 +71,56 @@ The local server uses Meta's Responses API at `https://api.meta.ai/v1/responses`
 
 ## How the agent system works
 
-The five roles are not a fixed five-call chain:
+Setvia uses five conditional roles, not a fixed five-call chain. The Judge selects the next useful action, and application code validates every handoff before it can affect the room.
 
-1. **Listener** runs for pending participant input. Its input contains that participant’s text and their own private facts, not the group roster or shared plan. It returns unconfirmed, owner-scoped candidates.
-2. **Judge** reviews authorized group context, evidence references, constraints, findings, and candidate options. Its typed decision determines the next step.
-3. **Negotiator** runs only when the Judge requests another option. The server parses the options and checks hard constraints during the Judge/readiness path before an option can be treated as acceptable.
-4. **Question Strategist** runs when participant input is needed. The application checks question schemas, finding references, targets, participant consent for public targeting, and repeated questions.
-5. **Speaker** runs when a message or question needs to be presented. It selects validated question/finding IDs and a bounded mascot state; the application renders text from those validated objects, then runs a final Judge pass before publication.
+```mermaid
+flowchart TD
+  Input["Pending input from one participant"] --> Listener["Listener<br/>only when input exists"]
+  Listener --> Candidate["Private, unconfirmed candidates"]
+  Candidate --> Owner["Owner reviews,<br/>edits, confirms, or shares"]
+  Owner --> Context["Authorized shared context"]
+  Context --> Judge["Judge reviews evidence,<br/>constraints, findings, and options"]
+  Judge --> Decision{"Next action"}
+
+  Decision -->|"another option"| Negotiator["Negotiator"]
+  Negotiator --> OptionGate["App parses alternatives<br/>and checks hard constraints"]
+  OptionGate --> Judge
+
+  Decision -->|"participant answers needed"| Strategist["Question Strategist"]
+  Strategist --> QuestionGate["App validates schema, evidence,<br/>target, consent, and duplicates"]
+  QuestionGate --> Speaker["Speaker selects validated<br/>question / finding IDs"]
+
+  Decision -->|"present findings"| Speaker
+  Speaker --> Render["App renders text<br/>from validated objects"]
+  Render --> FinalJudge["Final Judge review"]
+  FinalJudge -->|"accepted"| Publish["Publish to authorized views"]
+  FinalJudge -->|"another option needed"| Negotiator
+  FinalJudge -->|"questions published"| Wait["Wait for participant input"]
+  Wait -->|"new input"| Input
+
+  Decision -->|"complete or stop"| Outcome["Complete / stop<br/>readiness is deterministic"]
+  Decision -.->|"stale, malformed, cancelled,<br/>or budget limit"| Blocked["Blocked — fail closed"]
+  FinalJudge -.->|"rejected handoff"| Blocked
+
+  classDef role fill:#e6fffb,stroke:#0f766e,color:#0f172a,stroke-width:1.5px;
+  classDef human fill:#fff7ed,stroke:#c2410c,color:#431407,stroke-width:1.5px;
+  classDef gate fill:#eff6ff,stroke:#1d4ed8,color:#0f172a,stroke-width:1.5px;
+  classDef state fill:#f8fafc,stroke:#64748b,color:#0f172a;
+  class Listener,Judge,Negotiator,Strategist,Speaker role;
+  class Owner human;
+  class OptionGate,QuestionGate,Render,FinalJudge,Publish gate;
+  class Input,Candidate,Context,Decision,Wait,Outcome,Blocked state;
+```
+
+**Diagram key:** Teal nodes are model roles, blue nodes are application checks and rendering, orange is owner control, and gray nodes are room state. Solid arrows show conditional transitions; dashed arrows show fail-closed outcomes.
+
+| Role                    | When it runs and what it sees                                                                       | Output and application boundary                                                                                                                                                          |
+| ----------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Listener**            | When a participant has pending input. It sees that person’s text and their own private facts.       | Creates private, owner-scoped candidates. The owner must explicitly confirm or share a candidate before it enters group context.                                                         |
+| **Judge**               | When there is authorized context to review: evidence, constraints, findings, and candidate options. | Returns a typed next action. The application determines which role runs next.                                                                                                            |
+| **Negotiator**          | Only when the Judge requests another option.                                                        | Returns typed alternatives. The application parses them and checks hard constraints before an option can be accepted.                                                                    |
+| **Question Strategist** | When participant answers are needed.                                                                | Returns typed questions. The application checks schemas, finding references, targets, consent for public targeting, and repeated questions.                                              |
+| **Speaker**             | When validated findings or questions need to be presented.                                          | Selects validated question/finding IDs and a bounded mascot state. The application renders text from those objects, then a final Judge pass reviews the presentation before publication. |
 
 Role contracts use strict Zod schemas; the Meta gateway converts them to structured JSON Schema output. Findings reference known group facts or constraints. Application code, not model prose, enforces hard-constraint comparisons, deterministic readiness, privacy projections, request reservations, and versioned approvals.
 
