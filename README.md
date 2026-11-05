@@ -1,220 +1,131 @@
 <p align="center">
-  <img src="docs/setvia-cover-2026-11-03.jpg" width="100%" alt="Setvia: Make plans that survive the group chat. A premium dark banner shows the original black Setvia cat beside participants, a proposed plan card, a date, a route, a budget cue, and a shared check." />
+  <img src="docs/setvia-cover-2026-11-03.jpg" width="100%" alt="Setvia helps a group turn a chat into a plan everyone can review." />
 </p>
 
 <h1 align="center">Setvia</h1>
 
 <p align="center">
-  <a href="https://setvia.r4yv.tech"><img alt="Website" src="https://img.shields.io/badge/Website-setvia.r4yv.tech-0297DE?style=flat-square"></a>
-  <a href="https://github.com/rayvin04/setvia/actions/workflows/ci.yml"><img alt="CI workflow" src="https://github.com/rayvin04/setvia/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <a href="https://dev.meta.ai/docs/overview"><img alt="Meta API integration" src="https://img.shields.io/badge/Meta%20API-Muse%20Spark%201.3-0866FF?style=flat-square"></a>
-  <a href="https://github.com/rayvin04/setvia/tree/main"><img alt="TypeScript project" src="https://img.shields.io/badge/TypeScript-project-3178C6?style=flat-square"></a>
-  <a href="https://dev.meta.ai/events/global-hackathon"><img alt="Meta hackathon 2026" src="https://img.shields.io/badge/Meta%20Hackathon-2026-111827?style=flat-square"></a>
-  <a href="LICENSE"><img alt="Apache-2.0 License" src="https://img.shields.io/badge/License-Apache--2.0-blue.svg?style=flat-square"></a>
+  <a href="https://github.com/rayvin04/setvia">Public GitHub repository</a> ·
+  <a href="https://setvia.r4yv.tech">Website</a> ·
+  <a href="https://setvia.r4yv.tech/#meet-the-minds">Live Muse Spark playground</a> ·
+  <a href="https://setvia.r4yv.tech/demos">Planning demos</a> ·
+  <a href="docs/architecture.md">Architecture</a> ·
+  <a href="LICENSE">Apache-2.0</a>
 </p>
 
-Setvia helps a group turn scattered ideas, constraints, and concerns into a plan participants can review together.
+<p align="center">
+  <a href="https://github.com/rayvin04/setvia/actions/workflows/ci.yml"><img alt="CI workflow" src="https://github.com/rayvin04/setvia/actions/workflows/ci.yml/badge.svg?branch=main"></a>
+  <a href="https://dev.meta.ai/docs/overview"><img alt="Meta Muse Spark 1.3" src="https://img.shields.io/badge/Meta%20AI-Muse%20Spark%201.3-0866FF?style=flat-square"></a>
+</p>
 
 **Make plans that survive the group chat.**
 
-## Hackathon submission
+Setvia helps people turn scattered ideas, private concerns, and practical constraints into a plan the whole group can inspect and decide on together.
 
-|                               |                                                                                                                                                                                                                                       |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Event**                     | [Meta Global AI Developer Hackathon 2026](https://dev.meta.ai/events/global-hackathon)                                                                                                                                                |
-| **Track**                     | Indie Developer — documented project intent; confirm against the entrant account before submission                                                                                                                                    |
-| **Theme / problem statement** | Build for Your World — intended selection from the project brief; entrant-side selection still needs confirmation                                                                                                                     |
-| **Development period**        | Built from scratch during the hackathon window: October 26 – November 4, 2026                                                                                                                                                          |
-| **Website**                   | [setvia.r4yv.tech](https://setvia.r4yv.tech) — static Vite frontend, with a four-role Muse Spark playground; `/demos` and `/dashboard` use fictional preview data                                                  |
-| **Repository**                | [rayvin04/setvia](https://github.com/rayvin04/setvia)                                                                                                                                                                                 |
-| **Demo video**                | **Pending.** Add the real recording URL here when it exists.                                                                                                                                                                          |
-| **Submission status**         | Preparing the final submission. This repository does not claim portal submission or an award.                                                                                                                                        |
-| **Technical documentation**   | [Architecture](docs/architecture.md) · [Meta API reference](docs/meta-api.md) · [Judge guide](docs/judge-guide.md) · [Agent foundation and evaluation](docs/agent-foundation.md) · [Living playground](docs/living-playground.md) · [Third-party notices](docs/third-party-notices.md) |
+> Built from scratch during the Meta Global AI Developer Hackathon, October 26–November 4, 2026.
 
-Setvia did not exist before the hackathon. It was built from scratch during the October 26–November 4, 2026 build window.
+## The problem
 
-## Why Setvia exists
+In the Philippines, a plan that never happens may be called **“drawing lang”**—an idea that stays in the group chat. People may want the same outing, reunion, or school project while facing different schedules, budgets, transport options, accessibility needs, and responsibilities. Those details are easy to lose in a fast-moving conversation.
 
-In the Philippines, people sometimes call a plan that never happens **“drawing lang”**: literally “just drawing,” and in this context, an idea that stays talk or on paper. A group chat can be full of enthusiasm for a trip, reunion, meeting, birthday, or project, while the date, budget, transport, responsibilities, and open concerns are still unresolved.
+Setvia gives the group a shared planning process: preserve each person’s concerns, make unresolved facts visible, compare options against constraints, and let participants review the same proposal before they agree.
 
-Setvia is designed for the shared problem behind those situations: **several people need to agree on one plan while they have different priorities and constraints.** It can support friends arranging an outing, families organizing a reunion, students coordinating a project, professionals planning a meeting, businesses and wedding committees organizing events, and community or volunteer teams coordinating activities.
+## Try Setvia
 
-The software makes proposed facts, constraints, missing details, questions, and decisions easier to review together. This is the product goal; no user study or outcome measurement is being used to claim that Setvia has reduced cancellations or improved planning results.
+- **[Run the live role playground](https://setvia.r4yv.tech/#meet-the-minds).** Choose a Listener, Judge, Negotiator, or Speaker example and click Run to request a fresh Muse Spark 1.3 response. The Speaker card demonstrates a Question Strategist → Speaker handoff. If fresh inference is unavailable, the card identifies its saved fallback. No model call happens until you run a card.
+- **[Explore the planning-room demos](https://setvia.r4yv.tech/demos).** Open a fictional Beach Trip, Family Reunion, Project Kickoff, Group Project, or Wedding Planning scenario without an account. The playground and scenario demos require no third-party OAuth, login, or local API key. The authored scenarios let you inspect participant views, questions, proposals, and review states; they do not create a shared room or make model calls.
 
-## Judge map
+## How Meta AI powers Setvia
 
-This table is a navigation aid, not an official weighted rubric. The project notes do not include an entrant-verified percentage breakdown, so none is published here.
+Setvia uses Meta’s **Muse Spark 1.3** through the server-side Meta Responses API (`https://api.meta.ai/v1/responses`). The five names below are distinct application roles with separate instructions and typed contracts; they are not five different models. The API key stays on the server.
 
-| Area                            | Evidence in this repository                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Impact**                      | [Why Setvia exists](#why-setvia-exists), the [six Reality Checks](#six-reality-checks), and the [planning lifecycle](docs/architecture.md#d-planning-lifecycle)                                                                                                                                                                                                                                                                                                                                                     |
-| **Use of Meta AI**              | [Model-to-source map](#meta-model-to-source-map), [Meta API client](https://github.com/rayvin04/setvia/blob/main/server/src/ai/meta-client.ts), and [agent gateway](https://github.com/rayvin04/setvia/blob/main/server/src/agents/meta-gateway.ts)                                                                                                                                                                                         |
-| **Technical depth**             | [Architecture diagrams](docs/architecture.md), [typed contracts](https://github.com/rayvin04/setvia/blob/main/server/src/agents/contracts.ts), [orchestration](https://github.com/rayvin04/setvia/blob/main/server/src/agents/engine.ts), [readiness](https://github.com/rayvin04/setvia/blob/main/server/src/agents/readiness.ts), and [privacy boundaries](docs/architecture.md#c-privacy-boundaries) |
-| **Demo and product experience** | [Judge demo path](docs/judge-guide.md) and the [public synthetic preview](https://setvia.r4yv.tech/demos)                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Role | Responsibility | Application boundary |
+| --- | --- | --- |
+| **Listener** | Interprets one participant’s input as possible facts, needs, or constraints. | Produces private, unconfirmed candidates. The participant reviews them before they enter shared room context. |
+| **Judge** | Reviews the authorized facts, evidence, constraints, and open findings. | Chooses the next workflow step. The application calculates readiness independently. |
+| **Negotiator** | Suggests bounded alternatives when the current plan needs another option. | The application parses proposals and checks them against hard constraints; a suggestion is not an agreement. |
+| **Question Strategist** | Creates a question linked to a specific unresolved finding and participant. | The application validates its schema, evidence references, recipient, consent, and repeated-question status. |
+| **Speaker** | Selects validated findings or questions to present clearly to the group. | The application renders from validated objects and runs a final Judge review before publication. |
 
-## What judges can try today
+The [role contracts](server/src/agents/contracts.ts), [orchestration engine](server/src/agents/engine.ts), and [Meta gateway](server/src/agents/meta-gateway.ts) show how the roles work together. Output is treated as a proposal: strict schemas, evidence checks, revision checks, and application-owned rules determine what can affect a room.
 
-The homepage’s **Meet the minds** section has four role cards, each with three fictional examples. Clicking Run replaces that card’s teaser with the selected input and a compact Muse Spark 1.3 response; a live/cached label keeps replay status clear. No model request happens on page load. See the [playground guide](docs/living-playground.md).
-
-The public [scenario page](https://setvia.r4yv.tech/demos) and [planning dashboard](https://setvia.r4yv.tech/dashboard) use fictional preview data; those routes do not call a live model or create a shared planning room. The Vite frontend uses a separate Express API for model-backed actions. The Meta API key stays on the server. See the [judge guide](docs/judge-guide.md) for the public and local paths.
-
-### Offline judge-demo build in this worktree
-
-This local polish branch prepares a richer fictional journey for all five demo scenarios: Beach Trip, Family Reunion, Project Kickoff, Group Project, and Wedding Planning. The public deployment has not been changed by this worktree; the updated experience must be reviewed and released separately.
-
-To run the new offline demo locally, with no `.env`, account, model key, or server process:
-
-```powershell
-npm ci
-npm run demo:fixtures
-npm run dev
-```
-
-Open `http://127.0.0.1:5173/demos`. Each scenario’s **Try the … Demo** button opens its matching dashboard fixture. The dashboard can also be opened directly, for example `http://127.0.0.1:5173/dashboard?scenario=study&viewer=alex&frame=review`. Scenario, participant, and stage are reflected in the URL. **Continue** buttons move through scripted offline stages; a typed or suggested answer is recorded only in the current browser session and does not change the next analysis or readiness. A simulated approval is available only in the explicit review stage and remains local to that browser session and proposal version.
-
-The fixture builder runs the room-domain workflow against a scripted mock gateway, then writes schema-validated snapshots to `public/dashboard-preview/{scenario}/{viewer}.json`. The files contain one fictional participant projection each; they do not bundle private details into another participant’s UI view. Because they are static public assets, every file is still fetchable by URL. The content is entirely synthetic and contains no real participant data. The demo does not call the Express API, SSE, or Meta. Never use this public fixture format for real private data.
-
-Dashboard selectors also include technical fixtures for a mountain hike, critical safety blocker, blocked analysis, unevaluated room, and loading state. Those are additional UI states; the five planning demos above remain the judge-facing scenarios.
-
-Local verification for this unshipped polish worktree: `npm test` passed **168/168**; `npm run build` and `npm run lab:ui:build` completed; `npm run lab` passed **16/16** mock records with 55 mock calls and 0 live requests. Desktop and 390×844 mobile browser checks covered scenario navigation, the private family projection, one-click quick replies, review approvals, console errors, and horizontal overflow. No Meta request, deployment, or remote push was made.
-
-## Meta model-to-source map
-
-The server uses Meta's Responses API at `https://api.meta.ai/v1/responses`, with the pinned Standard model ID `muse-spark-1.3`. All five named roles use this same Meta model with different role contracts; they are not five separate models. The API key is read by the server from `MODEL_API_KEY`; it is not sent to the browser. Model output is treated as an untrusted suggestion and parsed against typed schemas.
-
-| Model / role                                                                   | Purpose                                                                           | Source location                                                                                                                                                                                                                                                                                                                                                                                        | Status in current main                                                                                                                                                                                                                                                        |
-| ------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Muse Spark 1.3 — plan extraction**                                           | Extract candidate planning details from text or an image using structured output. | [Meta client](https://github.com/rayvin04/setvia/blob/main/server/src/ai/meta-client.ts) · [text extraction](https://github.com/rayvin04/setvia/blob/main/server/src/ai/extract-plan.ts) · [image extraction](https://github.com/rayvin04/setvia/blob/main/server/src/ai/extract-image.ts) | The extraction API is separate from the static Vite frontend. The local UI/API path has been exercised with mocked responses; this README makes no live text/image extraction claim.                                                                                             |
-| **Muse Spark 1.3 — Listener, Judge, Negotiator, Question Strategist, Speaker** | Conditional role calls with typed handoffs; one model serves distinct application roles. | [role contracts](https://github.com/rayvin04/setvia/blob/main/server/src/agents/contracts.ts) · [engine](https://github.com/rayvin04/setvia/blob/main/server/src/agents/engine.ts) · [Meta gateway](https://github.com/rayvin04/setvia/blob/main/server/src/agents/meta-gateway.ts) · [playground API](server/src/playground/router.ts) | The homepage demonstrates bounded role calls on explicit user action. Speaker uses Question Strategist → Speaker. The complete group-planning cycle is distinct from these examples; private prompts stay server-side. |
-| **Muse Image 1.0 — Visual Planner**                                            | Possible future illustrations for a plan or preparation record.                   | The [VisualPlanner interface](https://github.com/rayvin04/setvia/blob/main/server/src/agents/contracts.ts) is an extension point only.                                                                                                                                                                                                                             | **Planned, not integrated.** No image-generation request is made by the released code.                                                                                                                                                                                         |
-| **SAM 3.1, Muse Voice, Muse Spark Open**                                       | —                                                                                 | —                                                                                                                                                                                                                                                                                                                                                                                                      | Not integrated in the released base.                                                                                                                                                                                                                                           |
-
-## How the agent system works
-
-Setvia uses five conditional roles, not a fixed five-call chain. The Judge selects the next useful action, and application code validates every handoff before it can affect the room.
-
-```mermaid
-flowchart TD
-  Input["Pending input from one participant"] --> Listener["Listener<br/>only when input exists"]
-  Listener --> Candidate["Private, unconfirmed candidates"]
-  Candidate --> Owner["Owner reviews,<br/>edits, confirms, or shares"]
-  Owner --> Context["Authorized shared context"]
-  Context --> Judge["Judge reviews evidence,<br/>constraints, findings, and options"]
-  Judge --> Decision{"Next action"}
-
-  Decision -->|"another option"| Negotiator["Negotiator"]
-  Negotiator --> OptionGate["App parses alternatives<br/>and checks hard constraints"]
-  OptionGate --> Judge
-
-  Decision -->|"participant answers needed"| Strategist["Question Strategist"]
-  Strategist --> QuestionGate["App validates schema, evidence,<br/>target, consent, and duplicates"]
-  QuestionGate --> Speaker["Speaker selects validated<br/>question / finding IDs"]
-
-  Decision -->|"present findings"| Speaker
-  Speaker --> Render["App renders text<br/>from validated objects"]
-  Render --> FinalJudge["Final Judge review"]
-  FinalJudge -->|"accepted"| Publish["Publish to authorized views"]
-  FinalJudge -->|"another option needed"| Negotiator
-  FinalJudge -->|"questions published"| Wait["Wait for participant input"]
-  Wait -->|"new input"| Input
-
-  Decision -->|"complete or stop"| Outcome["Complete / stop<br/>readiness is deterministic"]
-  Decision -.->|"stale, malformed, cancelled,<br/>or provider failure"| Blocked["Blocked — fail closed"]
-  FinalJudge -.->|"rejected handoff"| Blocked
-
-  classDef role fill:#e6fffb,stroke:#0f766e,color:#0f172a,stroke-width:1.5px;
-  classDef human fill:#fff7ed,stroke:#c2410c,color:#431407,stroke-width:1.5px;
-  classDef gate fill:#eff6ff,stroke:#1d4ed8,color:#0f172a,stroke-width:1.5px;
-  classDef state fill:#f8fafc,stroke:#64748b,color:#0f172a;
-  class Listener,Judge,Negotiator,Strategist,Speaker role;
-  class Owner human;
-  class OptionGate,QuestionGate,Render,FinalJudge,Publish gate;
-  class Input,Candidate,Context,Decision,Wait,Outcome,Blocked state;
-```
-
-**Diagram key:** Teal nodes are model roles, blue nodes are application checks and rendering, orange is owner control, and gray nodes are room state. Solid arrows show conditional transitions; dashed arrows show fail-closed outcomes.
-
-| Role                    | When it runs and what it sees                                                                       | Output and application boundary                                                                                                                                                          |
-| ----------------------- | --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Listener**            | When a participant has pending input. It sees that person’s text and their own private facts.       | Creates private, owner-scoped candidates. The owner must explicitly confirm or share a candidate before it enters group context.                                                         |
-| **Judge**               | When there is authorized context to review: evidence, constraints, findings, and candidate options. | Returns a typed next action. The application determines which role runs next.                                                                                                            |
-| **Negotiator**          | Only when the Judge requests another option.                                                        | Returns typed alternatives. The application parses them and checks hard constraints before an option can be accepted.                                                                    |
-| **Question Strategist** | When participant answers are needed.                                                                | Returns typed questions. The application checks schemas, finding references, targets, consent for public targeting, and repeated questions.                                              |
-| **Speaker**             | When validated findings or questions need to be presented.                                          | Selects validated question/finding IDs and a bounded mascot state. The application renders text from those objects, then a final Judge pass reviews the presentation before publication. |
-
-Role contracts use strict Zod schemas; the Meta gateway converts them to structured JSON Schema output. Findings reference known group facts or constraints. Application code, not model prose, enforces hard-constraint comparisons, deterministic readiness, privacy projections, request reservations, and versioned approvals.
-
-The engine can continue, wait for participant input, complete, or block. Provider output/context limits, timeouts, and the no-progress/revision safeguards remain bounded, but the application does not impose a lifetime, per-cycle, token, or spending quota on normal Meta planning. Agent requests reserve an attempt for historical accounting before sending it and disable automatic retries. Cancellation, stale room revisions, malformed output, unsupported evidence, and interrupted work fail closed. A blocked or stale cycle cannot publish a new readiness result.
-
-The four homepage cards are focused demonstrations, not a full group-planning session: they do not create a room or collect participant approvals. The room engine separately manages multi-step cycles, privacy projections, proposal versions, and human approval.
+The project uses Meta-hosted Muse Spark 1.3; it does not depend on or ship fine-tuned adapters or custom model-weight files.
 
 ## Six Reality Checks
 
-The policy supports six categories. It decides which categories apply, which facts are required, how much weight each category has, and whether evidence is needed for each participant.
+Each room can apply the checks relevant to its plan. They highlight what is known, what conflicts, and what still needs evidence or a person’s decision.
 
-The examples use one fictional Sunday beach trip; the outcomes are illustrative and do not use live venue, route, price, or weather data.
+| Check | What it reviews | Example question |
+| --- | --- | --- |
+| **Schedule** | Availability, timing conflicts, duration, and deadlines. | Do the proposed hours fit everyone’s confirmed availability? |
+| **Budget** | Individual limits, shared costs, and estimates. | Is the estimated cost within each person’s stated limit? |
+| **People** | Attendance, accessibility needs, responses, and responsibilities. | Are the required participants accounted for, and is each task owned? |
+| **Logistics** | Destination, transport, route, and coordination. | Is there a confirmed way for everyone to reach the venue? |
+| **Preparation** | Supplies, equipment, materials, and preparation tasks. | What needs to be brought, and who will bring it? |
+| **Safety** | Hazards, precautions, current guidance, and missing information. | Has someone reviewed current conditions and relevant guidance? |
 
-| Check                 | What it checks                                    | Useful evidence                                 | Example (fictional trip)                                         |
-| --------------------- | ------------------------------------------------- | ----------------------------------------------- | ---------------------------------------------------------------- |
-| **Schedule Check**    | Availability, conflicts, duration, and deadlines. | Participant calendars and the proposed time.    | Return at 5 PM conflicts with a 4 PM hard limit → blocked.       |
-| **Budget Check**      | Individual caps, shared costs, and estimates.     | Confirmed caps and scoped cost estimates.       | Estimate is ₱1,250; hard cap is ₱1,000 → blocked.                |
-| **People Check**      | Responses, access needs, attendance, and roles.   | Attendees, access details, and task owners.     | A required attendee has not responded → incomplete.              |
-| **Logistics Check**   | Transport, venue, route, and coordination.        | Destination, transport plan, and sourced route. | Meeting point is set; route time lacks a source → incomplete.    |
-| **Preparation Check** | Supplies, equipment, and responsibilities.        | Checklist and a named owner for each item.      | Water and sunscreen are listed; nobody owns pickup → incomplete. |
-| **Safety Check**      | Hazards, precautions, and current local guidance. | Current reliable sources and human review.      | No current forecast or advisory has been reviewed → unresolved.  |
+For example, a fictional beach-trip plan might show a Sunday 10 AM–12 PM availability overlap while leaving travel time unknown. Setvia can surface the open logistics question; it cannot verify a route, forecast, price, venue, or safety condition by itself. Examples in the public demos are fictional.
 
-Missing or uncertain information is represented as absent or null facts, unconfirmed candidates, and findings with `missing`, `estimated`, or `conflicting` uncertainty. Required missing values leave a category unknown or incomplete. A hard constraint that the proposal fails to satisfy, a conflict in shared facts, or an unresolved critical finding can block readiness.
+## From conversation to a decision
 
-Readiness is a deterministic summary of the current policy and confirmed group-visible evidence. **It is not a safety guarantee, external fact check, or participant approval.** Real prices, routes, venues, accessibility, weather, and hazards are not independently verified by the released app.
+1. A participant shares a preference or concern. The Listener turns it into a private candidate for that participant to review.
+2. The participant can confirm, edit, or share information. Only authorized, confirmed facts enter the group context.
+3. The Judge chooses whether to assess the plan, seek another option, ask a participant, or stop for missing information.
+4. The application validates evidence and constraints, computes readiness deterministically, and publishes an authorized room view.
+5. Participants review and approve the same proposal version. A changed proposal requires fresh approval; the AI cannot approve on anyone’s behalf.
 
-## Readiness, revisions, and human approval
+## Engineering and trust boundaries
 
-The room domain has two counters with different jobs:
+- **Conditional orchestration:** the Judge selects the next role needed; Setvia does not run a fixed chain of five model calls for every update.
+- **Structured model output:** role responses are checked against strict Zod contracts and known evidence references before use.
+- **Deterministic readiness:** the application evaluates confirmed room data and hard constraints. Model-generated percentages do not become the room score.
+- **Participant privacy:** private answers and targeted questions are returned only to authorized participant views. Personal Listener inputs in the public playground are not saved or added to a shared cache.
+- **Freshness and human control:** room revisions prevent stale work from being published; approvals bind to a specific proposal version.
+- **Bounded execution:** provider limits, timeouts, cancellation, request accounting, and no-progress safeguards protect inference and room workflows.
 
-- **Room revision** is the freshness guard. Each accepted room update advances it. Agent work is based on one revision; if the room changes before commit, that work is cancelled or rejected as stale.
-- **Proposal version** identifies the exact plan that people review. Plan changes, shared facts, constraints, policy changes, and membership changes advance it in this base commit and clear approvals/questions that no longer apply.
+See the [architecture](docs/architecture.md), [judge guide](docs/judge-guide.md), [living playground details](docs/living-playground.md), and [Meta API notes](docs/meta-api.md) for implementation specifics.
 
-Joining or leaving also advances the proposal version in the released base. Leaving removes that participant’s private facts, candidates, constraints, and pending inputs. Approvals are stored against the exact current version; stale-version approvals are rejected. The room rule requires each joined participant, not every estimated event attendee, to approve the same version. AI completion and a 100% readiness score cannot approve on anyone’s behalf.
+## Judge quickstart and reproducibility
 
-## Evaluation and engineering evidence
+The client and API source, lockfile, synthetic scenarios, tests, and CI workflow are all in this public repository. The public demos above open directly in a browser. To reproduce the repository checks from a clean clone, use Node.js 24 or newer:
 
-The repository’s existing live-call accounting covers **11 synthetic runs across five scenario templates**. These figures are protocol and accounting evidence, not human evaluation or a model-quality benchmark.
+```bash
+git clone https://github.com/rayvin04/setvia.git
+cd setvia
+npm ci
+npm test
+npm run build
+npm run lab
+```
 
-| Measure                               | Recorded result | What it means                                                                                          |
-| ------------------------------------- | --------------: | ------------------------------------------------------------------------------------------------------ |
-| Client HTTP attempts                  |              39 | Includes one cancelled/transport-error attempt without an HTTP response.                               |
-| Attempts reserved before requests     |              39 | The ledger reserved budget before each client attempt.                                                 |
-| HTTP 200 responses with usage records |              38 | These responses supplied the usage metadata used for the estimate.                                     |
-| Automated assertions                  |       48 passed | No completed human ratings are available.                                                              |
-| Estimated usage from reported tokens  | **US$0.296678** | Calculated from the 38 usage records at the documented Meta Standard input/output rates.               |
-| At-risk reserved amount               | **US$0.400678** | Includes the additional US$0.104 reservation for the attempt with unknown usage; this is not a charge. |
+`npm test` passed **210 tests**, and `npm run lab` passed **16 of 16 synthetic scenarios** in the reviewed release. The lab uses a mock gateway and makes **zero live model requests**; the test suite and production build also need no Meta key or GPU.
 
-The estimate omits cached-input discounts and is not a Meta invoice. The automated assertions check expected protocol behavior on synthetic inputs; they do not establish planning accuracy, reliability, or real-world impact. See the [accounting details](docs/agent-foundation.md#recorded-muse-spark-evaluation).
+For local model-backed text/image extraction, copy `.env.example` to `.env` and supply `MODEL_API_KEY` there. Start `npm run dev:server` in one terminal and `npm run dev` in another. The browser never receives the key; do not rename it to a `VITE_` variable. See the [judge guide](docs/judge-guide.md) for API details.
 
-The full group-planning cycle is separate from the four-card playground. The playground guide documents its bounded API, model roles, and verification; the synthetic accounting above does not claim a real-world planning-accuracy benchmark.
+### Observed live inference
 
-The repository includes offline tests, a server TypeScript check, and a frontend build. CI runs those checks without a Meta key; the separate `npm run test:meta` command can make billable Meta requests. No live Meta call was made as part of this documentation work.
+In one production smoke check, the four public cards returned **five successful Muse Spark 1.3 responses**: one each for Listener, Judge, and Negotiator, plus the Question Strategist → Speaker pair. The provider journal recorded these response times:
 
-## Where to find things
+| Role | Observed time |
+| --- | ---: |
+| Listener | 5.1 s |
+| Judge | 8.8 s |
+| Negotiator | 4.2 s |
+| Question Strategist | 9.4 s |
+| Speaker | 5.5 s |
 
-Source links below point to the current `main` branch.
+These are single-run smoke measurements, not a statistically sized latency or model-quality benchmark. They show successful live inference; they should not be read as a performance guarantee.
 
-| Concern                                 | Source                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Landing page and story                  | [`client/Home.tsx`](https://github.com/rayvin04/setvia/blob/main/client/Home.tsx) · [`client/HomeStory.tsx`](https://github.com/rayvin04/setvia/blob/main/client/HomeStory.tsx)                                                                                                                                                                                                         |
-| Planning input                          | [`client/StartPlanning.tsx`](https://github.com/rayvin04/setvia/blob/main/client/StartPlanning.tsx) · [`server/src/http/app.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/http/app.ts)                                                                                                                                                                                   |
-| Demo scenarios                          | [`client/Scenarios.tsx`](https://github.com/rayvin04/setvia/blob/main/client/Scenarios.tsx) · [`client/demoData.ts`](https://github.com/rayvin04/setvia/blob/main/client/demoData.ts) · [`client/demoDetails.ts`](https://github.com/rayvin04/setvia/blob/main/client/demoDetails.ts)                                                               |
-| Dashboard preview                       | [`client/dashboard/Dashboard.tsx`](https://github.com/rayvin04/setvia/blob/main/client/dashboard/Dashboard.tsx) · [`client/dashboard/api.ts`](https://github.com/rayvin04/setvia/blob/main/client/dashboard/api.ts) · [preview fixtures](https://github.com/rayvin04/setvia/tree/main/public/dashboard-preview)                                     |
-| Meta Responses API                      | [`server/src/ai/meta-client.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/ai/meta-client.ts) · [text extraction](https://github.com/rayvin04/setvia/blob/main/server/src/ai/extract-plan.ts) · [image extraction](https://github.com/rayvin04/setvia/blob/main/server/src/ai/extract-image.ts)                                       |
-| Agent contracts and orchestration       | [`server/src/agents/contracts.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/contracts.ts) · [`server/src/agents/engine.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/engine.ts) · [`server/src/agents/meta-gateway.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/meta-gateway.ts) |
-| Judge and deterministic readiness       | [`server/src/agents/readiness.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/readiness.ts) · [`server/src/agents/engine.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/engine.ts)                                                                                                                                                             |
-| Room management and privacy projections | [`server/src/agents/rooms.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/rooms.ts) · [`shared/room-model.ts`](https://github.com/rayvin04/setvia/blob/main/shared/room-model.ts)                                                                                                                                                                                   |
-| Persistence adapters                    | [`server/src/agents/store.ts`](https://github.com/rayvin04/setvia/blob/main/server/src/agents/store.ts)                                                                                                                                                                                                                                                                                                                     |
-| Tests                                   | [agent tests](https://github.com/rayvin04/setvia/blob/main/server/src/agents/agents.test.ts) · [Meta client tests](https://github.com/rayvin04/setvia/blob/main/server/src/ai/ai.test.ts) · [HTTP tests](https://github.com/rayvin04/setvia/blob/main/server/src/http/app.test.ts)                                                                  |
-| CI                                      | [`.github/workflows/ci.yml`](https://github.com/rayvin04/setvia/blob/main/.github/workflows/ci.yml)                                                                                                                                                                                                                                                                                                                         |
-| Architecture and demo docs              | [`docs/architecture.md`](docs/architecture.md) · [`docs/judge-guide.md`](docs/judge-guide.md) · [`docs/agent-foundation.md`](docs/agent-foundation.md)                                                                                                                                                                                                                                                                                                          |
+## Key source files
 
+| Area | Source |
+| --- | --- |
+| Meta API client and extraction | [`server/src/ai/meta-client.ts`](server/src/ai/meta-client.ts) · [`server/src/ai/extract-plan.ts`](server/src/ai/extract-plan.ts) · [`server/src/ai/extract-image.ts`](server/src/ai/extract-image.ts) |
+| Role contracts and orchestration | [`server/src/agents/contracts.ts`](server/src/agents/contracts.ts) · [`server/src/agents/engine.ts`](server/src/agents/engine.ts) · [`server/src/agents/meta-gateway.ts`](server/src/agents/meta-gateway.ts) |
+| Readiness and room state | [`server/src/agents/readiness.ts`](server/src/agents/readiness.ts) · [`server/src/agents/rooms.ts`](server/src/agents/rooms.ts) · [`shared/room-model.ts`](shared/room-model.ts) |
+| Public Muse Spark playground | [`client/LivingPlayground.tsx`](client/LivingPlayground.tsx) · [`server/src/playground/router.ts`](server/src/playground/router.ts) · [`server/src/playground/service.ts`](server/src/playground/service.ts) |
+| Tests and CI | [`server/src/agents/agents.test.ts`](server/src/agents/agents.test.ts) · [`server/src/playground/playground.test.ts`](server/src/playground/playground.test.ts) · [CI workflow](.github/workflows/ci.yml) |
 
 ## License
 
-Setvia's original software and documentation are licensed under the [Apache License, Version 2.0](LICENSE). Third-party packages and assets retain their own licenses; see the [third-party notices](docs/third-party-notices.md) and [asset provenance](docs/ASSETS.md). The repository cover is AI-generated, and this project does not claim exclusive rights in AI-generated elements.
+Setvia’s original software and documentation are available under the [Apache License 2.0](LICENSE). Third-party packages and assets retain their respective licenses; see [third-party notices](docs/third-party-notices.md) and [asset provenance](docs/ASSETS.md).
