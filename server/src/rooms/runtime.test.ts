@@ -48,13 +48,17 @@ test("creating a room automatically starts analysis without an unrelated message
     const input = CreateRoomRequestSchema.parse({
       creatorName: "Alex",
       eventType: "Weekend hike",
-      proposal: { id: "hike-plan", label: "Saturday trail walk", values: { startTime: "08:00" } },
+      proposal: { id: "hike-plan", label: "Saturday trail walk", values: { time: "08:00" } },
+      reviewedKeys: ["time"],
       estimatedAttendeeCount: 6,
       confirmedAttendeeCount: 2,
     });
     const created = await runtime.create(input, input.creatorName);
     const joined = await runtime.join(created.roomId, created.invitation, "Joy");
     assert.equal(created.snapshot.source, "room");
+    assert.deepEqual(created.snapshot.contributions, []);
+    assert.equal(created.snapshot.responses.some((response) => response.responded), false);
+    assert.equal((await engine.store.read(created.roomId)).facts.some((fact) => fact.key === "time" && fact.confirmed), true);
     assert.equal(joined.snapshot.room.participants.length, 2);
     assert.notEqual(created.session.token, joined.session.token);
     assert.equal(calls, 0);

@@ -90,7 +90,9 @@ export const MessageComposer = forwardRef<
   const draft = useRef("");
   const retryMessage = useRef<{ id: string; text: string } | null>(null);
   const [text, setText] = useState("");
-  const [visibility, setVisibility] = useState<MessageVisibility>("private");
+  const [visibility, setVisibility] = useState<MessageVisibility>(
+    mode === "room" && allowedVisibilities.includes("group") ? "group" : "private",
+  );
   const [answering, setAnswering] = useState(Boolean(question));
   const [selectedReply, setSelectedReply] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
@@ -181,7 +183,7 @@ export const MessageComposer = forwardRef<
   useEffect(() => {
     setSelectedReply(null);
     setAnswering(Boolean(question) && !draft.current.trim());
-    if (question?.visibility === "private") setVisibility("private");
+    if (question && !draft.current.trim()) setVisibility(question.visibility);
   }, [question?.id, question?.visibility, proposalVersion]);
   useLayoutEffect(() => {
     const input = textarea.current;
@@ -323,8 +325,8 @@ export const MessageComposer = forwardRef<
         receipt.mode === "preview"
           ? `Response recorded in preview · ${receipt.visibility === "private" ? "Private answer" : "Shared with room members"}. No AI analysis ran.`
           : receipt.visibility === "private"
-            ? "Private response sent. Extracted planning details are shared with the room."
-            : "Message shared with the room.",
+            ? "Private note sent. Review and confirm an extracted suggestion to update the shared plan."
+            : "Thought shared. The planning team will review it and ask about the next unresolved detail.",
       );
     } catch (failure) {
       if (!controller.signal.aborted)
@@ -552,7 +554,9 @@ export const MessageComposer = forwardRef<
           </div>
           {mode === "preview" ? (
             <span className="sv-composer-mode">Preview only · no live AI</span>
-          ) : null}
+          ) : <span className="sv-composer-mode">{effectiveVisibility === "group"
+            ? "Sending starts a new shared review."
+            : "Private note · confirm suggestions to update the shared plan."}</span>}
           {mode === "preview" ? sendButton : null}
         </div>
         <p
@@ -563,7 +567,7 @@ export const MessageComposer = forwardRef<
           {effectiveVisibility === "private"
             ? mode === "preview"
               ? "Only you can see this response in the preview. No AI processing runs here. In a live room, private answers are still sent to Meta’s Model API for analysis."
-              : "Only you can see this response among room members. Setvia sends the text to Meta’s Model API for private analysis and shares only the planning details it extracts with the room."
+              : "Only you can see this response among room members. Setvia sends the text to Meta’s Model API for private analysis. Extracted suggestions stay private until you explicitly confirm and share them."
             : mode === "preview"
               ? "Your message is visible to other room members in this preview. No AI processing runs here."
               : "Your message is shared with room members and sent to Meta’s Model API for analysis."}

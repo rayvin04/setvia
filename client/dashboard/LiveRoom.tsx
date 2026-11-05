@@ -475,9 +475,9 @@ export default function LiveRoom() {
             agentActivity={streamStatus !== "connected" ? "idle" : snapshot.room.analysisStatus === "running" ? "active" : snapshot.room.analysisStatus === "queued" ? "queued" : "idle"}
           />
           {snapshot.room.candidates.some((candidate) => candidate.ownerId === session.participantId) ? (
-            <details className="live-suggestion-review">
-              <summary>Review your extracted suggestions</summary>
-              <p>Suggestions remain tentative. Confirm only details you want to share with the group.</p>
+            <details className="live-suggestion-review" open>
+              <summary>Confirm your extracted planning details</summary>
+              <p>Confirm accurate details to advance validation. Private suggestions join the shared plan only when you confirm and share them.</p>
               {snapshot.room.candidates.filter((candidate) => candidate.ownerId === session.participantId).map((candidate) => (
                 <div key={candidate.id}><span>{candidate.key}: {String(candidate.value)}</span>
                   <button type="button" className="dashboard-button subtle" disabled={busy} onClick={async () => {

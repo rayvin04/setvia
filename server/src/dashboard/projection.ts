@@ -44,7 +44,11 @@ export function projectDashboardRoom(view: AuthorizedView): DashboardRoom {
 export function projectDashboardSnapshot(view: AuthorizedView) {
   const room = projectDashboardRoom(view);
   const currentResponses = view.responses.filter(
-    (response) => response.proposalVersion === room.proposalVersion,
+    (response, index) => response.proposalVersion === room.proposalVersion &&
+      // Compatibility with rooms created before intake stopped being inserted
+      // as a synthetic first response. Keep the durable evidence untouched.
+      !(index === 0 && response.visibility === "group" && response.questionId === null &&
+        response.replyOption === null && response.text.startsWith("Organizer submitted the draft: ")),
   );
   const responses = room.participants.map((person) => ({
     participantId: person.id,

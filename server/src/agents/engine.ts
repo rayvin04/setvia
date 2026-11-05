@@ -55,11 +55,12 @@ const fingerprint = (value: unknown) => {
     .digest("hex");
 };
 
-// Runtime policy, independent of model confidence. A low score with known
-// evidence gaps must lead to an answerable next step rather than silent completion.
+// Runtime policy, independent of model confidence. Unvalidated planning areas
+// must lead to an answerable next step rather than silent completion.
 export function requirePlanningFollowUp(room: Room, evaluation: JudgeEvaluation, threshold: number, negotiated: boolean): JudgeEvaluation {
   const readiness = calculateReadiness(room, evaluation.findings);
-  if (readiness.percentage >= threshold) return evaluation;
+  if (readiness.percentage >= threshold && readiness.status === "ready_for_human_review" &&
+      evaluation.findings.every((finding) => finding.status === "resolved")) return evaluation;
   const findings = [...evaluation.findings];
   for (const policy of room.policy.filter((entry) => entry.enabled)) {
     const category = readiness.categories.find((entry) => entry.category === policy.category);
@@ -701,7 +702,7 @@ export class AgentEngine {
         task: phase,
         planningPolicy: this.limits.questionBelowReadiness ? {
           questionBelowReadiness: this.limits.questionBelowReadiness,
-          instruction: "Below this readiness score, inspect the actual evidence gaps and conflicts, propose feasible alternatives, and ask a specific question with safe contextual choices. Wait for the participant after publishing a validated question.",
+          instruction: "After each new shared response, review its implications, conflicts and remaining gaps. Below this readiness score or while any planning area remains unvalidated, propose feasible alternatives and ask a specific next question with safe contextual choices. Stop only when the plan is validated; otherwise publish a question and wait for an answer.",
         } : undefined,
       };
       const judge = validateJudge(
@@ -834,6 +835,12 @@ export class AgentEngine {
                 existingQuestions: room.questions.filter(
                   (question) => question.visibility === "group",
                 ),
+                recentlyAnsweredQuestions: currentGroupResponses(room).filter((response) => response.questionId !== null).map((response) => ({
+                  questionId: response.questionId,
+                  question: room.lastCycle?.questions.find((question) => question.id === response.questionId)?.text ?? null,
+                  answer: response.text,
+                })),
+                instruction: "Use the latest shared answer to advance the plan. Ask a new specific question about the next unresolved gap, or clarify a real ambiguity in that answer. Do not repeat a question whose answer is already supported by current evidence.",
                 feasibleOptions: planned.filter((o) =>
                   judge.verdicts.some((v) => v.optionId === o.id && v.accepted),
                 ),
@@ -896,7 +903,7 @@ export class AgentEngine {
         }
         if (
           this.limits.questionBelowReadiness &&
-          calculateReadiness(room, judge.findings).percentage < this.limits.questionBelowReadiness &&
+          calculateReadiness(room, judge.findings).status !== "ready_for_human_review" &&
           judge.findings.some((finding) => finding.status !== "resolved") &&
           !draftQuestions.length
         ) throw new StateError("QUESTION_REQUIRED");

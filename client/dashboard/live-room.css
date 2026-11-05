@@ -447,6 +447,10 @@
 .agent-team-roles li { display: flex; align-items: center; gap: 7px; min-width: 0; color: #b9c9cf; font-size: 11px; line-height: 1.35; }
 .agent-team-roles li > span:first-child { flex: 0 0 5px; width: 5px; height: 5px; border-radius: 50%; background: #516872; }
 .agent-team-roles small { display: block; margin-top: 3px; font-size: 10px; color: #a2b6c1; }
+.agent-team-question { margin-top: 13px; padding-top: 12px; border-top: 1px solid #2a3e48; }
+.agent-team-question strong { color: #ffb397; font-size: 11px; }
+.agent-team-question p { margin: 6px 0; color: #eaf1f4; font-size: 14px; line-height: 1.5; }
+.agent-team-question small { color: #a2b6c1; font-size: 11px; }
 .agent-team-roles li[data-state="running"] > span:first-child { background: #fc734d; }
 .agent-team-roles li[data-state="running"] { color: #ffb397; text-shadow: 0 0 12px #fc734d70; }
 .agent-team-roles li[data-state="running"] > span:first-child { animation: live-role-working 1s ease-in-out infinite alternate; }
@@ -542,7 +546,8 @@
 .sv-composer-dock[data-mode="room"] .sv-input-row { display: contents; }
 .sv-composer-dock[data-mode="room"] .sv-input-row textarea { grid-area: input; min-height: 44px; margin: 0; padding: 8px 0 4px; color: #f0f5f6; font-size: 16px; font-weight: 400; line-height: 1.5; caret-color: #fc734d; scrollbar-color: #fc734d70 transparent; }
 .sv-composer-dock[data-mode="room"] .sv-input-row textarea::placeholder { color: #b1c0c8; }
-.sv-composer-dock[data-mode="room"] .sv-composer-footer { grid-area: footer; display: flex; align-items: center; min-height: 30px; margin: 0; gap: 8px; }
+.sv-composer-dock[data-mode="room"] .sv-composer-footer { grid-area: footer; display: flex; flex-wrap: wrap; align-items: center; min-height: 30px; margin: 0; gap: 0 8px; }
+.sv-composer-dock[data-mode="room"] .sv-composer-mode { margin-left: 0; color: #a2b6c1; font-size: 10px; white-space: normal; }
 .sv-composer-dock[data-mode="room"] .sv-visibility-control { gap: 6px; color: #bacdd6; }
 .sv-composer-dock[data-mode="room"] .sv-visibility-control select { min-height: 30px; padding: 3px 1px; color: #bdced7; font-size: 12px; }
 .sv-composer-dock[data-mode="room"] .sv-privacy-toggle { width: 30px; min-height: 30px; color: #b0c3cc; }

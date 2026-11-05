@@ -210,19 +210,9 @@ export class RoomRuntime {
     const joined = await this.rooms.join(created.roomId, created.invitation, creatorName);
     const auth = { participantId: joined.participantId, token: joined.token };
     await this.rooms.acceptReviewedDraft(created.roomId, auth, input.reviewedKeys ?? []);
-    const state = await this.options.engine.store.read(created.roomId);
-    const details = Object.entries(input.proposal.values)
-      .filter(([, value]) => value !== null && value !== "")
-      .map(([key, value]) => `${key}: ${value}`).join("\n");
-    // The submitted draft is group-visible. Use the same authorized domain
-    // submission path as subsequent answers, with a durable pending input.
-    if (input.reviewedKeys !== undefined) await this.rooms.submit(created.roomId, auth, {
-      messageId: randomUUID(), expectedRevision: state.revision,
-      proposalVersion: state.proposalVersion, visibility: "group",
-      questionId: null, replyOption: null,
-      text: `Organizer submitted the draft: ${input.proposal.label}\n${details}`.slice(0, 1000),
-    });
-    else await this.rooms.queueAnalysis(created.roomId, auth);
+    // Intake is already available as the proposal and reviewed facts. It is
+    // planning context, never a participant-authored room contribution.
+    await this.rooms.queueAnalysis(created.roomId, auth);
     this.scheduleGroup(created.roomId, auth);
     return {
       roomId: created.roomId,

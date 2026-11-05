@@ -79,6 +79,52 @@ test("below 70 percent reviews every missing planning area then asks a validated
   assert.equal((await engine.rooms.view(f.roomId, f.auth)).questions[0]?.text, question.text);
 });
 
+test("answers restart all needed roles above 70 percent until the plan is validated", async () => {
+  const f = await fixture([]);
+  await f.store.transaction(f.roomId, (room) => { if (room) room.facts = room.facts.filter((fact) => fact.key !== "check_1"); });
+  const first: Question = { id: "budget_first", findingId: "policy_missing_budget_check", targetId: null,
+    visibility: "group", kind: "choice", text: "Which per-person budget works?", options: ["₱1,000", "₱1,500"] };
+  const second: Question = { ...first, id: "budget_scope", text: "Does ₱1,000 include food and transport?", options: ["Both included", "Transport only"] };
+  const rounds = (question: Question) => [
+    { role: "Judge" as const, output: judge() },
+    { role: "Negotiator" as const, output: { options: [{ id: "affordable", label: "Shared budget", values: { cost: 100 } }] } },
+    { role: "Judge" as const, output: judge({ verdicts: [{ optionId: "affordable", accepted: true }] }) },
+    { role: "Question Strategist" as const, output: { questions: [question] } },
+    { role: "Speaker" as const, output: { mascot: "curious", replies: [{ questionId: question.id, findingId: null, text: question.text }] } },
+    { role: "Judge" as const, output: judge({ next: "question", participantInputRequired: true, acceptedQuestionIds: [question.id] }) },
+  ];
+  const scripted = scriptedGateway([...rounds(first),
+    { role: "Listener", output: { candidates: [{ key: "budgetAmount", value: 1000 }] } },
+    ...rounds(second),
+    { role: "Judge", output: judge({ findings: [finding({ id: first.findingId, status: "resolved", uncertainty: "none", evidenceIds: ["restored_check"] })] }) },
+  ]);
+  const engine = new AgentEngine(f.store, scripted.gateway, { ...MOCK_LIMITS, questionBelowReadiness: 70 });
+  const initial = await engine.run(f.roomId, f.auth);
+  assert.equal(initial.outcome, "WAIT_FOR_PARTICIPANT");
+  assert.ok(initial.readiness!.percentage >= 70);
+  const before = await engine.rooms.view(f.roomId, f.auth);
+  await engine.rooms.submit(f.roomId, f.auth, { messageId: "answer_budget", text: "₱1,000", visibility: "group",
+    questionId: first.id, replyOption: "₱1,000", expectedRevision: before.revision, proposalVersion: before.proposalVersion });
+  const queued = await engine.rooms.view(f.roomId, f.auth);
+  assert.equal(queued.analysisStatus, "queued");
+  assert.equal(queued.analysisRoles.some((role) => role.status === "complete"), false);
+  const followup = await engine.run(f.roomId, f.auth);
+  assert.equal(followup.outcome, "WAIT_FOR_PARTICIPANT");
+  assert.equal(followup.questions[0]?.text, second.text);
+  assert.deepEqual(scripted.calls.slice(6, 13).map((call) => call.role),
+    ["Listener", "Judge", "Negotiator", "Judge", "Question Strategist", "Speaker", "Judge"]);
+  const strategy = scripted.calls[10]!.input as { recentlyAnsweredQuestions: Array<{ answer: string }> };
+  assert.equal(strategy.recentlyAnsweredQuestions[0]?.answer, "₱1,000");
+  const current = await engine.rooms.view(f.roomId, f.auth);
+  await engine.rooms.confirmFact(f.roomId, f.auth, current.revision, { id: "restored_check", key: "check_1", value: true,
+    ownerId: f.auth.participantId, visibility: "group", confirmed: true });
+  const final = await engine.run(f.roomId, f.auth);
+  assert.equal(final.outcome, "COMPLETED");
+  assert.equal(final.readiness?.status, "ready_for_human_review");
+  assert.deepEqual(final.questions, []);
+  assert.equal((await engine.rooms.view(f.roomId, f.auth)).approved, false, "completion still requires human approval");
+});
+
 test("choice options that conflict with confirmed shared hard constraints require explicit reconsideration", async () => {
   const f = await fixture([]);
   const room = await f.store.read(f.roomId);

@@ -456,6 +456,13 @@ test("composer renders labeled pending, disabled and safe error states", async (
   assert.match(error, /aria-describedby=/);
   assert.match(error, /Wait for this update/);
   assert.match(error, /Message visibility/);
+  const live = renderToStaticMarkup(createElement(MessageComposer, { ...props, mode: "room", question: undefined, replies: [] }));
+  assert.match(live, /value="group" selected=/);
+  assert.match(live, /Sending starts a new shared review/);
+  const privateQuestion = renderToStaticMarkup(createElement(MessageComposer, { ...props, mode: "room",
+    question: { ...props.question!, visibility: "private", targetId: room.viewerId } }));
+  assert.match(privateQuestion, /value="private" selected=/);
+  assert.doesNotMatch(privateQuestion, /value="group"/);
 });
 test("event attendees remain separate from response and approval denominators", async () => {
   const snapshot = structuredClone((await beach).initial.alex!);

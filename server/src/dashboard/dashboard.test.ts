@@ -26,6 +26,23 @@ test("departed participants' shared contributions remain renderable in an author
 const beach = createPreviewFixture("beach");
 const family = createPreviewFixture("family");
 
+test("legacy intake context is hidden from contributions while subsequent live thoughts remain visible", async () => {
+  const f = await fixture([]);
+  const submit = async (messageId: string, text: string) => {
+    const room = await f.store.read(f.roomId);
+    await f.engine.rooms.submit(f.roomId, f.auth, { messageId, text, visibility: "group",
+      expectedRevision: room.revision, proposalVersion: room.proposalVersion, questionId: null, replyOption: null });
+  };
+  await submit("old_intake", "Organizer submitted the draft: Synthetic plan\ntime: 08:00");
+  let snapshot = projectDashboardSnapshot(await f.engine.rooms.view(f.roomId, f.auth));
+  assert.deepEqual(snapshot.contributions, []);
+  assert.equal(snapshot.responses.some((response) => response.responded), false);
+  await submit("live_thought", "Organizer submitted the draft: I want to discuss a different time.");
+  snapshot = projectDashboardSnapshot(await f.engine.rooms.view(f.roomId, f.auth));
+  assert.deepEqual(snapshot.contributions.map((entry) => entry.id), ["live_thought"]);
+  assert.equal((await f.store.read(f.roomId)).responses.length, 2, "preserve durable evidence");
+});
+
 test("dashboard frames use actual deterministic readiness and proposal revisions", async () => {
   const frames = await beach;
   const initial = frames.initial.alex!;

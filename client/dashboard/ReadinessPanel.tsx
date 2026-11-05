@@ -14,6 +14,7 @@ import {
 import type { DashboardSnapshot } from "../../shared/dashboard";
 import { readinessChange, readinessPresentation } from "./model";
 import { PlanPanel } from "./PlanningPanels";
+import { currentQuestion } from "./composer-model";
 
 function AnimatedScore({
   value,
@@ -73,6 +74,7 @@ export function ReadinessPanel({
   const reduced = useReducedMotion();
   const unresolved = room.findings.filter((f) => f.status !== "resolved");
   const critical = unresolved.filter((f) => f.severity === "critical");
+  const nextQuestion = currentQuestion(room);
   return (
     <section
       className={`readiness-panel dashboard-panel tone-${state.tone}${compact ? " is-compact" : ""}${state.historical ? " is-historical" : ""}`}
@@ -110,11 +112,16 @@ export function ReadinessPanel({
             {["Listener", "Judge", "Negotiator", "Question Strategist", "Speaker"].map((role) => {
               const status = room.analysisRoles.find((entry) => entry.role === role)?.status ?? "idle";
               return <li key={role} data-state={status}><span aria-hidden="true" /><span>{role}<small>{
-                status === "running" ? "Working" : status === "complete" ? "Done" : status === "failed" ? "Needs retry"
+                status === "running" ? "Working" : status === "complete" ? "Reviewed this cycle" : status === "failed" ? "Needs retry"
                   : status === "not_required" ? "Not needed this cycle" : "Not started"
               }</small></span></li>;
             })}
           </ul>
+          {nextQuestion ? <div className="agent-team-question">
+            <strong>Setvia’s next question for you</strong>
+            <p>{nextQuestion.text}</p>
+            <small>Use the answer options or type your answer in the message box.</small>
+          </div> : null}
         </section>
       ) : null}
       <div className="readiness-and-plan">
