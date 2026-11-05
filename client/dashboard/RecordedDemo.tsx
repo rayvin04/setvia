@@ -22,12 +22,12 @@ export default function RecordedDemo() {
     void fetch(apiEndpoint(`/demo/recordings/${encodeURIComponent(recordingId)}`), {
       signal: controller.signal, cache: "no-store", credentials: "omit", referrerPolicy: "no-referrer", redirect: "error",
     }).then(async (response) => {
-      if (!response.ok) throw new Error("This scripted recording is unavailable.");
+      if (!response.ok) throw new Error("This demo preview is unavailable.");
       const parsed = RecordedDemoSchema.parse(await response.json());
       if (parsed.recordingId !== recordingId) throw new Error("This recording could not be verified.");
       setRecording(parsed);
       setFrame(parsed.frames.length - 1);
-    }).catch(() => { if (!controller.signal.aborted) setError("This scripted recording is unavailable. Refresh to try again."); });
+    }).catch(() => { if (!controller.signal.aborted) setError("This demo preview is unavailable. Refresh to try again."); });
     return () => controller.abort();
   }, [recordingId]);
   useEffect(() => {
@@ -37,17 +37,17 @@ export default function RecordedDemo() {
     return () => window.clearTimeout(timer);
   }, [playing, frame, recording]);
   if (!recording) return <div className="room-access-state" role={error ? "alert" : "status"}>
-    <h1>{error ? "Recording unavailable" : "Opening scripted demo…"}</h1>
+    <h1>{error ? "Recording unavailable" : "Opening demo preview…"}</h1>
     <p>{error || "Loading the recorded fictional planning story."}</p>
     {error ? <Link to="/demos" className="dashboard-button primary">Explore demos</Link> : null}
   </div>;
   const snapshot = recording.frames[frame]!.snapshot;
   const receipt = projectDecisionReceipt(snapshot);
-  const disclosedReceipt = { ...receipt, title: `Scripted demo · ${receipt.title}`,
-    eventCard: { ...receipt.eventCard, description: `Fictional scripted demo; mock inference. ${receipt.eventCard.description ?? ""}` } };
+  const disclosedReceipt = { ...receipt, title: `Demo preview · ${receipt.title}`,
+    eventCard: { ...receipt.eventCard, description: `Prepared demo preview; mock inference. ${receipt.eventCard.description ?? ""}` } };
   return <div className="live-room-shell recorded-demo-shell">
-    <section className="recorded-demo-toolbar" aria-label="Scripted recording controls">
-      <div className="recorded-demo-disclosure"><strong>Scripted demo</strong><span>Fictional participants · Mock inference · Read only</span></div>
+    <section className="recorded-demo-toolbar" aria-label="Recorded preview controls">
+      <div className="recorded-demo-disclosure"><strong>Demo preview</strong><span>Sample participants · Mock inference · Read only</span></div>
       <div className="recorded-demo-controls">
         {recording.frames.map((entry, index) => <button key={entry.label} className="dashboard-button subtle" type="button"
           aria-pressed={frame === index} onClick={() => { setPlaying(false); setFrame(index); }}>
@@ -64,7 +64,7 @@ export default function RecordedDemo() {
     <section id="recorded-next-step" className="recorded-demo-next" aria-label="Recorded next step">
       <strong>{snapshot.room.readiness?.percentage === 90 ? "Five checks complete. One final concern remains." : "A recorded planning milestone."}</strong>
       <p>{snapshot.room.questions[0]?.text ?? "Review the recorded group decisions above."}</p>
-      <small>This is a scripted copy for recording. It does not modify or run inference in the original live room.</small>
+      <small>Prepared preview · Original live room unchanged.</small>
     </section>
     <section className="live-decision-receipt"><DecisionReceipt receipt={disclosedReceipt} evidence={projectReceiptEvidence(snapshot)} /></section>
   </div>;

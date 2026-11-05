@@ -157,7 +157,7 @@ export default function App() {
                 </Suspense>
               }
             />
-            <Route path="/recordings/:recordingId" element={<Suspense fallback={<div className="planning-loading" role="status">Opening scripted demo…</div>}><RecordedDemo /></Suspense>} />
+            <Route path="/recordings/:recordingId" element={<Suspense fallback={<div className="planning-loading" role="status">Opening demo preview…</div>}><RecordedDemo /></Suspense>} />
             <Route path="/" element={<Home />} />
             <Route path="/privacy" element={<PrivacyNotice />} />
             <Route
