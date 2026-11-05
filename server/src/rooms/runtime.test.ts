@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import test from "node:test";
 import { AgentEngine, MOCK_LIMITS } from "../agents/engine.js";
-import { Roles, type AgentGateway, type Role } from "../agents/contracts.js";
+import { Roles, type AgentGateway, type Role, type Question } from "../agents/contracts.js";
 import { createMetaGateway } from "../agents/meta-gateway.js";
 import { META_API_BASE_URL, META_SPARK_MODEL } from "../ai/meta-client.js";
 import { MemoryPersistence, RoomStore } from "../agents/store.js";
@@ -175,6 +175,92 @@ test("HTTP message receipts match the browser contract and idempotent retries do
     await new Promise<void>((done) => server.close(() => done()));
     await rm(directory, { recursive: true, force: true });
   }
+});
+
+test("private question answers resume the shared team once, including recovery of an already stalled room", async (t) => {
+  for (const mode of ["live", "restored"] as const) await t.test(mode, async () => {
+    const directory = await mkdtemp(resolve(process.cwd(), `.setvia-private-handoff-${randomUUID()}-`));
+    const calls: Array<{ role: Role; input: unknown }> = [];
+    const issue = finding();
+    let listenerOwner: { roomId: string; participantId: string; token: string } | null = null;
+    let listenerGuest: { participantId: string; token: string } | null = null;
+    const gateway: AgentGateway = { mode: "MOCK", async call(role, raw, context) {
+      await context.reserveAttempt();
+      calls.push({ role, input: structuredClone(raw) });
+      const input = raw as { task?: string; participants?: Array<{ id: string }>; proposedOptions?: Array<{ id: string }>;
+        questions?: Question[]; draftQuestions?: Question[]; answeredPrivateQuestionIds?: string[];
+        evidenceFields?: Array<{ category: string; keys: string[] }> };
+      let output: unknown;
+      if (role === "Listener") {
+        assert.ok(listenerOwner && listenerGuest);
+        assert.ok(input.evidenceFields?.some((field) => field.category === "Budget Check" && field.keys.includes("budgetAmount")));
+        assert.equal((await engine.rooms.view(listenerOwner.roomId, listenerOwner)).analysisRoles.find((entry) => entry.role === "Listener")?.status, "running");
+        assert.notEqual((await engine.rooms.view(listenerOwner.roomId, listenerGuest)).analysisRoles.find((entry) => entry.role === "Listener")?.status, "running");
+        output = { candidates: [{ key: "budgetAmount", value: "PRIVATE_HANDOFF_CANARY" }] };
+      }
+      else if (role === "Judge") output = judge({ findings: [issue], next: "question", participantInputRequired: true,
+        verdicts: (input.proposedOptions ?? []).map((option) => ({ optionId: option.id, accepted: true })),
+        acceptedQuestionIds: (input.draftQuestions ?? []).map((question) => question.id) });
+      else if (role === "Negotiator") output = { options: [{ id: "budget_option", label: "Keep costs open for confirmation", values: { cost: 100 } }] };
+      else if (role === "Question Strategist") output = { questions: input.answeredPrivateQuestionIds?.includes("sensitive_budget")
+        ? [{ id: "transport_next", findingId: "policy_missing_logistics_check", targetId: null, visibility: "group", kind: "choice",
+          text: "How will the group travel?", options: ["Two cars", "Public transport"] }]
+        : [{ id: "sensitive_budget", findingId: issue.id, targetId: input.participants![0]!.id, visibility: "private", kind: "clarification",
+          text: "What personal budget limit would you like to keep private?", options: [] }] };
+      else output = { mascot: "curious", replies: (input.questions ?? []).map((question) =>
+        ({ questionId: question.id, findingId: null, text: question.text })) };
+      return { output, usage: null };
+    } };
+    let runtime!: RoomRuntime;
+    const engine = new AgentEngine(new RoomStore(new MemoryPersistence()), gateway, { ...MOCK_LIMITS, questionBelowReadiness: 80 },
+      (id) => { void runtime.events.publishGroup(id); }, (id, owner) => { void runtime.events.publishPrivate(id, owner); });
+    runtime = new RoomRuntime({ engine, privateRoot: directory, publicRoot: join(directory, "public"), syntheticDemo: false,
+      persistenceLock: async () => {}, journal: { release: async () => {} } as never });
+    const waitFor = async (condition: () => Promise<boolean>) => {
+      for (let i = 0; i < 160; i++) { if (await condition()) return; await new Promise((done) => setTimeout(done, 25)); }
+      throw new Error("Private-answer handoff did not settle.");
+    };
+    try {
+      const created = await runtime.create(CreateRoomRequestSchema.parse({ creatorName: "Alex", eventType: "Beach trip",
+        proposal: { id: "beach", label: "Beach trip", values: { time: "08:00" } }, reviewedKeys: ["time"] }), "Alex");
+      const auth = created.session;
+      const other = (await runtime.join(created.roomId, created.invitation, "Sam")).session;
+      listenerOwner = auth;
+      listenerGuest = other;
+      await waitFor(async () => (await engine.rooms.view(created.roomId, auth)).questions.some((question) => question.id === "sensitive_budget"));
+      const before = await engine.store.read(created.roomId);
+      const viewer = await engine.rooms.view(created.roomId, auth);
+      const message = { messageId: "private_budget_answer", expectedRevision: viewer.revision, proposalVersion: viewer.proposalVersion,
+        questionId: "sensitive_budget", replyOption: null, visibility: "private" as const, text: "PRIVATE_HANDOFF_CANARY" };
+      if (mode === "live") await runtime.submit(created.roomId, auth, message);
+      else {
+        await engine.rooms.submit(created.roomId, auth, message);
+        await engine.processPrivate(created.roomId, auth.participantId);
+        const stalled = await engine.store.read(created.roomId);
+        assert.equal(stalled.lastCycle?.outcome, "WAIT_FOR_PARTICIPANT");
+        assert.deepEqual(stalled.questions, []);
+        await runtime.snapshot(created.roomId, auth);
+      }
+      await waitFor(async () => (await engine.rooms.view(created.roomId, auth)).questions.some((question) => question.id === "transport_next"));
+      const after = await engine.store.read(created.roomId);
+      const owner = await runtime.snapshot(created.roomId, auth);
+      const guest = await runtime.snapshot(created.roomId, other);
+      assert.equal(owner.room.loopState, "WAIT_FOR_PARTICIPANT");
+      assert.equal(owner.room.questions[0]?.visibility, "group");
+      assert.equal(after.revision, before.revision, "private answers do not change the shared proposal revision");
+      assert.equal(after.proposalVersion, before.proposalVersion);
+      assert.deepEqual(after.approvals, before.approvals);
+      assert.equal(after.readiness?.percentage, before.readiness?.percentage, "do not inflate readiness with unconfirmed private details");
+      assert.equal(owner.room.candidates[0]?.visibility, "private");
+      assert.equal(JSON.stringify(guest).includes("PRIVATE_HANDOFF_CANARY"), false);
+      assert.equal(JSON.stringify(calls.filter((call) => call.role !== "Listener")).includes("PRIVATE_HANDOFF_CANARY"), false);
+      assert.equal(after.privateAnalyses[0]?.sharedFollowUpQueued, true);
+      const count = calls.length;
+      for (let i = 0; i < 8; i++) await runtime.snapshot(created.roomId, auth);
+      await new Promise((done) => setTimeout(done, 400));
+      assert.equal(calls.length, count, "refresh must not cause repeated paid reviews");
+    } finally { await runtime.close(); await rm(directory, { recursive: true, force: true }); }
+  });
 });
 
 test("joining after completed analysis schedules a fresh cycle without changing proposal version", async () => {

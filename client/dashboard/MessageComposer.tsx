@@ -321,6 +321,10 @@ export const MessageComposer = forwardRef<
       draft.current = "";
       retryMessage.current = null;
       setSelectedReply(null);
+      // A private targeted answer must not silently make all later, unrelated
+      // thoughts private. Change only the fresh, now-empty composer.
+      if (mode === "room" && parsed.data.questionId && receipt.visibility === "private" && allowedVisibilities.includes("group"))
+        setVisibility("group");
       setAcknowledgment(
         receipt.mode === "preview"
           ? `Response recorded in preview · ${receipt.visibility === "private" ? "Private answer" : "Shared with room members"}. No AI analysis ran.`
@@ -426,13 +430,15 @@ export const MessageComposer = forwardRef<
                 type="button"
                 className="sv-thought-toggle"
                 onClick={() => {
+                  if (answering && question.visibility === "private" && !draft.current.trim() && allowedVisibilities.includes("group"))
+                    setVisibility("group");
                   setAnswering((value) => !value);
                   setSelectedReply(null);
                   textarea.current?.focus();
                 }}
                 disabled={disabled || busy}
               >
-                {answering ? "New thought" : "Answer this"}
+                {answering ? question.visibility === "private" && !text.trim() ? "New shared thought" : "New thought" : "Answer this"}
               </button>
             </div>
             <div

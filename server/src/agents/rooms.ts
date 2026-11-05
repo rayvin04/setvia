@@ -162,6 +162,34 @@ export class RoomService {
     if (queued) this.onGroupChange(roomId);
     return queued;
   }
+  async queuePrivateAnswerFollowUp(roomId: string, ownerId: string) {
+    const queued = await this.store.transaction(roomId, (room) => {
+      if (!room || !room.participants.some((participant) => participant.id === ownerId))
+        throw new StateError("UNAUTHORIZED");
+      if (room.activeCycleId || room.analysisStatus !== "complete" ||
+          room.lastCycle?.outcome !== "WAIT_FOR_PARTICIPANT" || room.lastCycle.baseRevision !== room.revision)
+        return false;
+      const answered = room.privateAnalyses.filter((analysis) => {
+        if (analysis.ownerId !== ownerId || analysis.sharedFollowUpQueued ||
+            analysis.proposalVersion !== room.proposalVersion || analysis.cycle.outcome !== "COMPLETED") return false;
+        const response = room.responses.find((entry) => entry.id === analysis.sourceMessageId &&
+          entry.ownerId === ownerId && entry.visibility === "private" && entry.proposalVersion === room.proposalVersion);
+        return response?.questionId && room.lastCycle!.questions.some((question) =>
+          question.id === response.questionId && question.visibility === "private" && question.targetId === ownerId);
+      });
+      if (!answered.length) return false;
+      for (const analysis of answered) analysis.sharedFollowUpQueued = true;
+      // Only the workflow resumes. No private text, candidate, fact, proposal
+      // version, approval, readiness value or public revision is promoted.
+      room.analysisStatus = "queued";
+      room.publicSequence++;
+      room.eventSequence++;
+      return true;
+    });
+    if (queued) this.onGroupChange(roomId);
+    return queued;
+  }
+
   async create(
     eventType: string,
     policy: PolicyInput,
@@ -608,7 +636,8 @@ export class RoomService {
     let room = await this.store.read(roomId);
     authorize(room, auth);
     // Reading a projection must never publish private suggestions or mutate a plan.
-    const latest = room.lastCycle?.baseRevision === room.revision && room.activeCycleId === null;
+    const latest = room.lastCycle?.baseRevision === room.revision && room.activeCycleId === null &&
+      room.analysisStatus !== "queued" && room.analysisStatus !== "running";
     const failedTrace = latest && room.lastCycle?.outcome === "BLOCKED"
       ? [...(room.lastCycle.traces ?? [])]
           .reverse()
@@ -627,7 +656,9 @@ export class RoomService {
       },
       analysisStatus: room.analysisStatus,
       analysisRoles: Roles.map((role) => {
-        const cycle = room.lastCycle?.baseRevision === room.revision ? room.lastCycle : null;
+        if (role === "Listener" && room.privateAnalysisStatus[auth.participantId] === "running")
+          return { role, status: "running" as const };
+        const cycle = room.analysisStatus !== "queued" && room.lastCycle?.baseRevision === room.revision ? room.lastCycle : null;
         const trace = cycle?.traces.filter((trace) => trace.role === role).at(-1);
         const status = !trace
           ? cycle && cycle.outcome !== "CONTINUE" ? "not_required" as const : "idle" as const

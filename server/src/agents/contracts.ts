@@ -315,6 +315,7 @@ export const PrivateAnalysisSchema = z
   .object({
     ownerId: id,
     sourceMessageId: id,
+    sharedFollowUpQueued: z.boolean().optional(),
     proposalVersion: z.number().int().positive(),
     updatedAt: z.iso.datetime(),
     cycle: CycleSchema,

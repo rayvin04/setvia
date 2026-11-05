@@ -473,6 +473,7 @@ export class AgentEngine {
       if (auth) authorize(state, auth);
       else if (!state.participants.length) throw new StateError("ROOM_EMPTY");
       if (
+        state.analysisStatus !== "queued" &&
         state.lastCycle?.baseRevision === state.revision &&
         state.activeCycleId === null &&
         (state.lastCycle.outcome !== "BLOCKED" || !options.retryBlocked)
@@ -553,6 +554,13 @@ export class AgentEngine {
     const analysisContext = () => ({
       ...sharedContext(room),
       groupObservations: structuredClone(groupObservations),
+      // The shared model knows only that its own private question was answered;
+      // the answer and Listener extraction remain isolated to their owner.
+      answeredPrivateQuestionIds: (room.lastCycle?.questions ?? []).filter((question) =>
+        question.visibility === "private" && room.responses.some((response) =>
+          response.visibility === "private" && response.ownerId === question.targetId &&
+          response.questionId === question.id && response.proposalVersion === room.proposalVersion))
+        .map((question) => question.id),
     });
     let planned: PlanOption[] = [];
     let draftQuestions: Question[] = [];
@@ -748,6 +756,9 @@ export class AgentEngine {
                 questionId: pendingInput.questionId,
                 replyOption: pendingInput.replyOption,
               },
+              evidenceFields: room.policy.map((policy) => ({ category: policy.category,
+                keys: [...policy.requiredKeys, ...policy.requiredPerParticipantKeys] })),
+              instruction: "Extract explicit planning details using the exact evidenceFields keys so the participant can confirm them for readiness. Keep budgetAmount, perPersonCost and totalCost distinct. Do not invent amounts, confirmations, people, safety assurances or decisions. Ambiguous statements remain tentative.",
             },
             "orchestrator",
           ),
@@ -840,7 +851,7 @@ export class AgentEngine {
                   question: room.lastCycle?.questions.find((question) => question.id === response.questionId)?.text ?? null,
                   answer: response.text,
                 })),
-                instruction: "Use the latest shared answer to advance the plan. Ask a new specific question about the next unresolved gap, or clarify a real ambiguity in that answer. Do not repeat a question whose answer is already supported by current evidence.",
+                instruction: "Advance toward at least 80% readiness and then full validation. Use the latest shared answer and propose concrete feasible choices for the next gap. Ordinary shared event details must use visibility group and targetId null. Use private questions only for genuinely sensitive participant details. Never repeat an answeredPrivateQuestionIds question: its private answer awaits owner confirmation, so ask about a different shared gap. Do not repeat a question already answered by current evidence.",
                 feasibleOptions: planned.filter((o) =>
                   judge.verdicts.some((v) => v.optionId === o.id && v.accepted),
                 ),
@@ -1154,6 +1165,9 @@ export class AgentEngine {
             "Listener",
             {
               privateInput: { text: pending.text },
+              evidenceFields: room.policy.map((policy) => ({ category: policy.category,
+                keys: [...policy.requiredKeys, ...policy.requiredPerParticipantKeys] })),
+              instruction: "Extract explicit details using exact evidenceFields keys so the owner can review them for the shared plan. Keep budgetAmount, perPersonCost and totalCost distinct. Do not invent missing values or confirmations. These are private suggestions; the owner must explicitly confirm and share them.",
               privateFacts: room.facts.filter(
                 (fact) => fact.ownerId === ownerId && fact.visibility === "private",
               ),

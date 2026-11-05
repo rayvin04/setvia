@@ -75,6 +75,7 @@ export function ReadinessPanel({
   const unresolved = room.findings.filter((f) => f.status !== "resolved");
   const critical = unresolved.filter((f) => f.severity === "critical");
   const nextQuestion = currentQuestion(room);
+  const pendingDetails = room.candidates.filter((candidate) => candidate.ownerId === room.viewerId).length;
   return (
     <section
       className={`readiness-panel dashboard-panel tone-${state.tone}${compact ? " is-compact" : ""}${state.historical ? " is-historical" : ""}`}
@@ -117,6 +118,10 @@ export function ReadinessPanel({
               }</small></span></li>;
             })}
           </ul>
+          <p className="agent-team-goal">Goal: 80%+ readiness, then full validation and participant approval.</p>
+          {pendingDetails ? <a className="agent-team-confirm" href="#planning-detail-confirmations">
+            Review and confirm {pendingDetails} extracted detail{pendingDetails === 1 ? "" : "s"} to advance readiness. Private details stay private until you confirm and share.
+          </a> : null}
           {nextQuestion ? <div className="agent-team-question">
             <strong>Setvia’s next question for you</strong>
             <p>{nextQuestion.text}</p>

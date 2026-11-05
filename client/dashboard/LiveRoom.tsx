@@ -342,6 +342,7 @@ export default function LiveRoom() {
 
   const participant = snapshot?.room.participants.find((person) => person.id === session.participantId);
   const question = snapshot ? currentQuestion(snapshot.room) : undefined;
+  const ownedSuggestions = snapshot?.room.candidates.filter((candidate) => candidate.ownerId === session.participantId) ?? [];
   const contributions = snapshot?.contributions.map((entry) => ({
     id: entry.id,
     participantId: entry.participantId,
@@ -386,7 +387,7 @@ export default function LiveRoom() {
       : analysisActivityState === "blocked"
         ? "Analysis needs attention."
         : snapshot?.room.loopState === "WAIT_FOR_PARTICIPANT"
-          ? question ? "Setvia needs an answer." : "Waiting for a participant."
+          ? question ? "Setvia needs an answer." : ownedSuggestions.length ? "Confirm extracted details to advance the plan." : "Waiting for another participant’s answer."
           : snapshot?.room.analysisStatus === "complete" ? "Analysis complete."
             : "Preparing the first review.";
   const analysisVisualState = analysisActivityState === "running" ? "active"
@@ -475,7 +476,7 @@ export default function LiveRoom() {
             agentActivity={streamStatus !== "connected" ? "idle" : snapshot.room.analysisStatus === "running" ? "active" : snapshot.room.analysisStatus === "queued" ? "queued" : "idle"}
           />
           {snapshot.room.candidates.some((candidate) => candidate.ownerId === session.participantId) ? (
-            <details className="live-suggestion-review" open>
+            <details id="planning-detail-confirmations" className="live-suggestion-review" open>
               <summary>Confirm your extracted planning details</summary>
               <p>Confirm accurate details to advance validation. Private suggestions join the shared plan only when you confirm and share them.</p>
               {snapshot.room.candidates.filter((candidate) => candidate.ownerId === session.participantId).map((candidate) => (

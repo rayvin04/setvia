@@ -328,8 +328,12 @@ export class RoomRuntime {
           if (queued) this.scheduleGroup(roomId, auth);
         }).catch(() => {});
       }
-      if (room.analysisStatus === "queued" && room.pendingInputs.length && !this.groupTimers.has(roomId))
+      if (room.analysisStatus === "queued" && !this.groupTimers.has(roomId))
         this.scheduleGroup(roomId, auth);
+      if (room.analysisStatus === "complete" && room.lastCycle?.outcome === "WAIT_FOR_PARTICIPANT")
+        void this.rooms.queuePrivateAnswerFollowUp(roomId, auth.participantId).then((queued) => {
+          if (queued) this.scheduleSystemGroup(roomId);
+        }).catch(() => {});
       if (room.privatePendingInputs.some((input) => input.actorId === auth.participantId) &&
         !this.privateTimers.has(roomId + ":" + auth.participantId) &&
         !this.privateRuns.has(roomId + ":" + auth.participantId))
@@ -418,6 +422,8 @@ export class RoomRuntime {
 
   private async processPrivate(roomId: string, ownerId: string) {
     const analyses = await this.options.engine.processPrivate(roomId, ownerId).catch(() => []);
+    if (analyses.length && await this.rooms.queuePrivateAnswerFollowUp(roomId, ownerId).catch(() => false))
+      this.scheduleSystemGroup(roomId);
     const room = await this.options.engine.store.read(roomId).catch(() => null);
     if (!room?.syntheticDemo) return;
     const ownerIndex = room.participants.findIndex((participant) => participant.id === ownerId);
@@ -532,7 +538,7 @@ export async function createLocalRoomRuntime(options: {
     const gateway: AgentGateway = base;
     const limits: Limits = {
       maxRevisions: 2,
-      questionBelowReadiness: 70,
+      questionBelowReadiness: 80,
       timeoutMs: 120_000,
       callTokens: CALL_TOKEN_ALLOWANCE,
       callCostMicros: CALL_COST_MICROS,
