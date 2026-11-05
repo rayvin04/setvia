@@ -9,6 +9,7 @@ import { createScenarioGenerationRouter } from "./synthetic/generation-router.js
 import { createMeteredExtractionClient } from "./ai/metered-extraction.js";
 import { createPlaygroundService } from "./playground/service.js";
 import { createPlaygroundRouter } from "./playground/router.js";
+import { createRecordedDemoRouter } from "./recordings/router.js";
 
 const port = Number(process.env.PORT ?? "3001");
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
@@ -128,6 +129,7 @@ const app = createApp({
   trustProxy: production ? 1 : undefined,
   demoScenarioRouter,
   playgroundRouter: createPlaygroundRouter(playgroundService),
+  recordedDemoRouter: createRecordedDemoRouter(resolve(privateRoot, "recorded-demos")),
   inferenceEnabled,
 });
 const server = app.listen(port, host);

@@ -252,6 +252,7 @@ export function PlanningDashboard({
   titleActions,
   titleStatus,
   agentActivity = "idle",
+  recorded = false,
 }: {
   snapshot: DashboardSnapshot;
   onAction?: (action: DashboardAction) => void;
@@ -266,6 +267,7 @@ export function PlanningDashboard({
   titleActions?: ReactNode;
   titleStatus?: ReactNode;
   agentActivity?: "active" | "queued" | "idle";
+  recorded?: boolean;
 }) {
   const compact = useSyncExternalStore(
     subscribeViewport,
@@ -292,7 +294,7 @@ export function PlanningDashboard({
           >
             {activeSection === "overview" ? (
               <div className="mobile-overview">
-                <ReadinessPanel snapshot={snapshot} compact titleStatus={contributionMode === "room" ? titleStatus : undefined} agentActivity={contributionMode === "room" ? agentActivity : undefined} />
+                <ReadinessPanel snapshot={snapshot} compact titleStatus={contributionMode === "room" || recorded ? titleStatus : undefined} agentActivity={contributionMode === "room" || recorded ? agentActivity : undefined} />
                 <div className="overview-companion">
                   <SpeakerPanel
                     snapshot={snapshot}
@@ -349,7 +351,7 @@ export function PlanningDashboard({
             </div>
           </div>
           <div className="dashboard-column dashboard-center">
-            <ReadinessPanel snapshot={snapshot} titleActions={titleActions} titleStatus={titleStatus} agentActivity={contributionMode === "room" ? agentActivity : undefined} />
+            <ReadinessPanel snapshot={snapshot} titleActions={titleActions} titleStatus={titleStatus} agentActivity={contributionMode === "room" || recorded ? agentActivity : undefined} />
             <details className="advanced-plan dashboard-panel">
               <summary>
                 <Layers size={16} aria-hidden="true" />

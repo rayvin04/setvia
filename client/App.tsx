@@ -14,6 +14,7 @@ const StartPlanning = lazy(() =>
 );
 const Dashboard = lazy(() => import("./dashboard/Dashboard"));
 const LiveRoom = lazy(() => import("./dashboard/LiveRoom"));
+const RecordedDemo = lazy(() => import("./dashboard/RecordedDemo"));
 const JoinRoomPage = lazy(() => import("./JoinRoomPage").then((module) => ({ default: module.JoinRoomPage })));
 const DemoStudio = import.meta.env.DEV ? lazy(() => import("./DemoStudio")) : null;
 
@@ -111,7 +112,7 @@ function Missing() {
 export default function App() {
   const { pathname } = useLocation();
   const planningRoom =
-    pathname === "/dashboard" || pathname.startsWith("/rooms/");
+    pathname === "/dashboard" || pathname.startsWith("/rooms/") || pathname.startsWith("/recordings/");
   const liveRoomPage = pathname.startsWith("/rooms/");
   const localHost = ["127.0.0.1", "localhost", "[::1]"].includes(window.location.hostname);
   const studioEnabled = import.meta.env.DEV && localHost;
@@ -156,6 +157,7 @@ export default function App() {
                 </Suspense>
               }
             />
+            <Route path="/recordings/:recordingId" element={<Suspense fallback={<div className="planning-loading" role="status">Opening scripted demo…</div>}><RecordedDemo /></Suspense>} />
             <Route path="/" element={<Home />} />
             <Route path="/privacy" element={<PrivacyNotice />} />
             <Route

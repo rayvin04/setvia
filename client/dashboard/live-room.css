@@ -451,8 +451,6 @@
 .agent-team-question strong { color: #ffb397; font-size: 11px; }
 .agent-team-question p { margin: 6px 0; color: #eaf1f4; font-size: 14px; line-height: 1.5; }
 .agent-team-question small { color: #a2b6c1; font-size: 11px; }
-.agent-team-goal { margin: 12px 0 0; color: #a2b6c1; font-size: 11px; line-height: 1.5; }
-.agent-team-confirm { display: block; margin-top: 8px; color: #ffb397; font-size: 12px; line-height: 1.5; text-underline-offset: 3px; }
 .agent-team-roles li[data-state="running"] > span:first-child { background: #fc734d; }
 .agent-team-roles li[data-state="running"] { color: #ffb397; text-shadow: 0 0 12px #fc734d70; }
 .agent-team-roles li[data-state="running"] > span:first-child { animation: live-role-working 1s ease-in-out infinite alternate; }

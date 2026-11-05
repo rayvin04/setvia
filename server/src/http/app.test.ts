@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import { test } from "node:test";
 import type { AddressInfo } from "node:net";
 import {
@@ -14,6 +15,8 @@ import { MetaApiError } from "../ai/errors.js";
 import { MAX_IMAGE_BYTES } from "../ai/extract-image.js";
 import type { PlanExtraction } from "../../../shared/plan-schema.js";
 import { createApp } from "./app.js";
+import { createRecordedDemoRouter } from "../recordings/router.js";
+import { RecordedDemoSchema } from "../../../shared/recorded-demo.js";
 
 const validPlan: PlanExtraction = {
   title: "Fictional planning test",
@@ -106,6 +109,56 @@ async function withServer<T>(
 async function responseBody(response: Response): Promise<Record<string, unknown>> {
   return (await response.json()) as Record<string, unknown>;
 }
+
+test("scripted recording endpoint serves only read-only fictional projections without inference", async () => {
+  const directory = await mkdtemp(resolve(process.cwd(), "..", ".setvia-recording-test-"));
+  const { createPreviewFixture } = await import("../dashboard/fixtures.js");
+  const snapshot = structuredClone((await createPreviewFixture("beach")).updated.alex!);
+  snapshot.contributions = snapshot.contributions.filter((entry) => entry.visibility === "group" && entry.targetId === null);
+  snapshot.room.questions = snapshot.room.questions.filter((entry) => entry.visibility === "group" && entry.targetId === null);
+  snapshot.room.messages = snapshot.room.messages.filter((entry) => entry.visibility === "group" && entry.targetId === null);
+  snapshot.room.candidates = [];
+  const recording = RecordedDemoSchema.parse({ formatVersion: "setvia-recorded-demo-v1", recordingId: "test-recording", title: "Fictional recording",
+    fictional: true, inference: "mock", createdAt: "2026-11-05T00:00:00.000Z", frames: [{ label: "Recorded result", snapshot }] });
+  const { client, requests } = mockClient();
+  try {
+    await writeFile(resolve(directory, "test-recording.json"), JSON.stringify(recording));
+    await withServer(createApp({ client, recordedDemoRouter: createRecordedDemoRouter(directory) }), async (baseUrl) => {
+      const result = await fetch(baseUrl + "/api/demo/recordings/test-recording");
+      assert.equal(result.status, 200);
+      assert.equal(result.headers.get("cache-control"), "no-store");
+      assert.deepEqual(RecordedDemoSchema.parse(await result.json()), recording);
+      assert.equal((await fetch(baseUrl + "/api/demo/recordings/not.present")).status, 400);
+      assert.equal((await fetch(baseUrl + "/api/demo/recordings/missing-recording")).status, 404);
+      assert.equal((await fetch(baseUrl + "/api/demo/recordings/test-recording", { method: "POST" })).status, 404);
+    });
+    assert.equal(requests.length, 0);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
+
+test("scripted recording endpoint rejects live, private and mismatched data without revealing it", async () => {
+  const directory = await mkdtemp(resolve(process.cwd(), "..", ".setvia-recording-private-test-"));
+  const { createPreviewFixture } = await import("../dashboard/fixtures.js");
+  const snapshot = structuredClone((await createPreviewFixture("beach")).updated.alex!);
+  const recording = { formatVersion: "setvia-recorded-demo-v1", recordingId: "private-recording", title: "Fictional recording",
+    fictional: true, inference: "mock", createdAt: "2026-11-05T00:00:00.000Z", frames: [{ label: "Recorded result", snapshot }] };
+  snapshot.contributions.push({ id: "private_canary", participantId: snapshot.room.viewerId, participantName: "Alex", visibility: "private",
+    targetId: snapshot.room.viewerId, text: "RECORDING_PRIVATE_CANARY", questionId: null, recordedAt: "2026-11-05T00:00:00.000Z", proposalVersion: snapshot.room.proposalVersion });
+  const { client, requests } = mockClient();
+  try {
+    await writeFile(resolve(directory, "private-recording.json"), JSON.stringify(recording));
+    await withServer(createApp({ client, recordedDemoRouter: createRecordedDemoRouter(directory) }), async (baseUrl) => {
+      const result = await fetch(baseUrl + "/api/demo/recordings/private-recording");
+      assert.equal(result.status, 503);
+      assert.doesNotMatch(await result.text(), /RECORDING_PRIVATE_CANARY|\.json|Zod/);
+    });
+    snapshot.contributions = [];
+    snapshot.source = "room";
+    snapshot.responseTracking = "room";
+    assert.equal(RecordedDemoSchema.safeParse(recording).success, false);
+    assert.equal(requests.length, 0);
+  } finally { await rm(directory, { recursive: true, force: true }); }
+});
 
 test("CORS allows the configured frontend origin on API preflight and blocks unlisted origins", async () => {
   const { client, requests } = mockClient();

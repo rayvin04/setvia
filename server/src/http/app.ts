@@ -57,6 +57,7 @@ export interface AppOptions {
   trustProxy?: boolean | number | string;
   demoScenarioRouter?: RequestHandler;
   playgroundRouter?: RequestHandler;
+  recordedDemoRouter?: RequestHandler;
   inferenceEnabled?: () => boolean;
   rateLimit?: {
     limit?: number;
@@ -247,6 +248,8 @@ export function createApp(options: AppOptions) {
   app.use("/api/rooms", restrictBrowserOrigin);
   app.use("/api/ai", restrictBrowserOrigin);
   app.use("/api/playground", restrictBrowserOrigin);
+  app.use("/api/demo/recordings", restrictBrowserOrigin);
+  if (options.recordedDemoRouter) app.use("/api/demo/recordings", options.recordedDemoRouter);
   if (options.playgroundRouter) app.use("/api/playground", options.playgroundRouter);
   app.get("/api/rooms/health", async (_request, response) => {
     const health = {
